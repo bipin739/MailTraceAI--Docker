@@ -1,14 +1,14 @@
 import React from 'react';
 import type {
   EmailAnalysis,
-  IPIndicator,
   DomainIndicator,
   URLIndicator,
   EmailAddressIndicator,
   AttachmentIndicator
 } from '../../types/forensic';
 import { CopyButton } from './CopyButton';
-import { Link, Globe, Server, Mail, Hash, Paperclip, Shield } from 'lucide-react';
+import { IPIntelligenceSection } from './IPIntelligenceSection';
+import { Link, Globe, Mail, Hash, Paperclip, Shield } from 'lucide-react';
 
 interface IndicatorsTabProps {
   email: EmailAnalysis;
@@ -16,11 +16,6 @@ interface IndicatorsTabProps {
 
 export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
   const indicators = email.indicators || {};
-
-  // Resolve IP indicators (structured or string fallback)
-  const ipList: IPIndicator[] = indicators.ips && indicators.ips.length > 0
-    ? indicators.ips
-    : (email.ips || []).map(ip => ({ value: ip, version: ip.includes(':') ? 6 : 4, scope: 'public', source: 'extracted' }));
 
   // Resolve Domain indicators
   const domainList: DomainIndicator[] = indicators.domains && indicators.domains.length > 0
@@ -57,22 +52,6 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getScopeBadgeStyle = (scope?: string) => {
-    switch (scope?.toLowerCase()) {
-      case 'public':
-        return 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80';
-      case 'private':
-        return 'bg-amber-950/80 text-amber-300 border-amber-800/80';
-      case 'loopback':
-        return 'bg-cyan-950/80 text-cyan-300 border-cyan-800/80';
-      case 'link_local':
-      case 'reserved':
-        return 'bg-purple-950/80 text-purple-300 border-purple-800/80';
-      default:
-        return 'bg-slate-800 text-slate-400 border-slate-700';
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Evidence Hash Card */}
@@ -99,48 +78,8 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
         </div>
       </div>
 
-      {/* IP Addresses */}
-      <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3 backdrop-blur-xl shadow-lg">
-        <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-          <Server className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
-            IP Addresses ({ipList.length})
-          </h3>
-        </div>
-
-        {ipList.length === 0 ? (
-          <p className="text-xs font-mono text-slate-500 italic p-2">
-            No IP addresses detected.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {ipList.map((ip, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-2.5 rounded-lg border border-slate-800/80 bg-slate-900/50 hover:bg-slate-900 transition-colors gap-3"
-              >
-                <div className="flex items-center space-x-2 min-w-0 flex-1">
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700 shrink-0 font-bold">
-                    IPv{ip.version || 4}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono border font-extrabold uppercase shrink-0 ${getScopeBadgeStyle(ip.scope)}`}>
-                    {ip.scope || 'PUBLIC'}
-                  </span>
-                  <span className="text-xs font-mono text-slate-200 break-all select-all font-semibold">
-                    {ip.value}
-                  </span>
-                  {ip.source && (
-                    <span className="text-[10px] font-mono text-slate-400 hidden sm:inline-block truncate">
-                      ({ip.source})
-                    </span>
-                  )}
-                </div>
-                <CopyButton text={ip.value} iconOnly className="shrink-0" />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* IP Addresses Intelligence & Infrastructure */}
+      <IPIntelligenceSection email={email} />
 
       {/* Domains */}
       <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3 backdrop-blur-xl shadow-lg">

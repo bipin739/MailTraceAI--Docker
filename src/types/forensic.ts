@@ -95,11 +95,33 @@ export interface RelayPathAnalysis {
   trust_notice?: string;
 }
 
+export interface IPIntelligence {
+  ip: string;
+  scope?: 'public' | 'private' | 'loopback' | 'link_local' | 'reserved' | 'unknown' | string;
+  enrichment_available?: boolean;
+  country?: string;
+  country_code?: string;
+  region?: string;
+  city?: string;
+  latitude?: number;
+  longitude?: number;
+  timezone?: string;
+  asn?: string;
+  asn_org?: string;
+  isp?: string;
+  organization?: string;
+  is_hosting?: boolean;
+  is_proxy_vpn_tor?: boolean;
+  infrastructure_type?: string;
+  error?: string;
+}
+
 export interface EmailAnalysis {
   id?: string;
   email_sha256?: string;
   authentication?: AuthenticationAnalysis;
   relay_analysis?: RelayPathAnalysis;
+  ip_intelligence?: Record<string, IPIntelligence>;
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;
@@ -122,4 +144,5 @@ export interface EmailAnalysis {
 }
 
 export type ForensicTabType = 'overview' | 'headers' | 'content' | 'indicators' | 'attachments' | 'raw';
+
 

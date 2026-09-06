@@ -3,6 +3,7 @@ import type { EmailAnalysis } from '../../types/forensic';
 import { MetadataRow } from './MetadataRow';
 import { AuthenticationSection } from './AuthenticationSection';
 import { TransmissionPathSection } from './TransmissionPathSection';
+import { IPIntelligenceSection } from './IPIntelligenceSection';
 import { User, Info, Layers, Activity } from 'lucide-react';
 
 interface OverviewTabProps {
@@ -25,6 +26,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
 
       {/* Relay Transmission Path Reconstruction Section */}
       <TransmissionPathSection relayAnalysis={email.relay_analysis} />
+
+      {/* Section 6: IP Intelligence & Map Section */}
+      <IPIntelligenceSection email={email} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Section A: Sender Information */}
         <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4 backdrop-blur-xl shadow-lg">

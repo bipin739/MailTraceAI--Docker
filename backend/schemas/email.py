@@ -1,5 +1,6 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 from pydantic import BaseModel, Field
+from backend.schemas.ip_intelligence import IPIntelligence
 
 
 class ProtocolResult(BaseModel):
@@ -133,6 +134,7 @@ class EmailAnalysisResponse(BaseModel):
     email_sha256: Optional[str] = Field(None, description="SHA-256 hash of raw uploaded email bytes")
     authentication: Optional[AuthenticationAnalysis] = Field(None, description="Structured authentication analysis and sender alignment")
     relay_analysis: Optional[RelayPathAnalysis] = Field(None, description="Parsed Received header chain and relay transmission path")
+    ip_intelligence: Dict[str, IPIntelligence] = Field(default_factory=dict, description="Contextual IP intelligence and infrastructure metadata dictionary keyed by IP")
     indicators: IndicatorsGroup = Field(default_factory=IndicatorsGroup, description="Structured indicators group")
 
     # Top-level flat fields for direct accessibility / backwards compatibility
