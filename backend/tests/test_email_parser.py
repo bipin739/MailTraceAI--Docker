@@ -54,29 +54,32 @@ def test_parse_valid_eml_service():
     assert res.file_info.size_bytes == len(VALID_EML)
 
     # Check Headers
-    assert "Alice Security" in res.headers.from_header
-    assert "Bob Analyst" in res.headers.to
-    assert "Charlie Manager" in res.headers.cc
-    assert res.headers.subject == "Urgent: Verify Account Security"
-    assert res.headers.reply_to == "security-verify@suspicious-domain.com"
-    assert res.headers.return_path == "<bounce@suspicious-domain.com>"
-    assert res.headers.message_id == "<123456789.abcdef@company.com>"
+    assert "Alice Security" in res.from_header
+    assert "Bob Analyst" in res.to
+    assert "Charlie Manager" in res.cc
+    assert res.subject == "Urgent: Verify Account Security"
+    assert res.reply_to == "security-verify@suspicious-domain.com"
+    assert res.return_path == "<bounce@suspicious-domain.com>"
+    assert res.message_id == "<123456789.abcdef@company.com>"
 
     # Check Multi-value headers
-    assert len(res.headers.received) == 2
-    assert "198.51.100.25" in res.headers.received[0]
-    assert len(res.headers.authentication_results) == 1
-    assert "spf=softfail" in res.headers.authentication_results[0]
+    assert len(res.received) == 2
+    assert "198.51.100.25" in res.received[0]
+    assert "spf=softfail" in res.authentication_results
 
-    # Check Bodies
-    assert res.body.plain_text is not None
-    assert "http://phishing-portal.com/login" in res.body.plain_text
-    assert res.body.html is not None
-    assert "https://secure-update-portal.net/auth" in res.body.html
+    # Check Bodies & Raw Email
+    assert res.plain_text_body is not None
+    assert "http://phishing-portal.com/login" in res.plain_text_body
+    assert res.html_body is not None
+    assert "https://secure-update-portal.net/auth" in res.html_body
+    assert res.raw_email is not None
 
-    # Check extracted URLs
+    # Check extracted URLs, IPs, Domains, Emails
     assert "http://phishing-portal.com/login" in res.urls
     assert "https://secure-update-portal.net/auth" in res.urls
+    assert "198.51.100.25" in res.ips
+    assert "phishing-portal.com" in res.domains or "secure-update-portal.net" in res.domains
+    assert "alice@company.com" in res.emails
 
     # Check Attachments
     assert len(res.attachments) == 1

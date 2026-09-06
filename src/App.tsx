@@ -3,6 +3,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Navbar } from './components/layout/Navbar';
 import { Dashboard } from './pages/Dashboard';
 import { AnalyzeEmail } from './pages/AnalyzeEmail';
+import { EmailForensicView } from './pages/EmailForensicView';
 import { Cases } from './pages/Cases';
 import { CaseDetail } from './pages/CaseDetail';
 import { ThreatIntelligence } from './pages/ThreatIntelligence';
@@ -24,6 +25,8 @@ export function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/analyze" element={<AnalyzeEmail />} />
+              <Route path="/analysis" element={<EmailForensicView />} />
+              <Route path="/analysis/:id" element={<EmailForensicView />} />
               <Route path="/cases" element={<Cases />} />
               <Route path="/cases/:id" element={<CaseDetail />} />
               <Route path="/intelligence" element={<ThreatIntelligence />} />

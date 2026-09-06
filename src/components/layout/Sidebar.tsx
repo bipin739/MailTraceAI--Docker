@@ -28,7 +28,13 @@ export const Sidebar: React.FC = () => {
       name: 'Analyze Email',
       path: '/analyze',
       icon: SearchCode,
-      badge: 'PROV'
+      badge: 'UPLOAD'
+    },
+    {
+      name: 'Forensic View',
+      path: '/analysis/demo',
+      icon: FileText,
+      badge: 'EVIDENCE'
     },
     {
       name: 'Investigations',

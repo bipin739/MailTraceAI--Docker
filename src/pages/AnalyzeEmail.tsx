@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { SAMPLE_EMAILS } from '../data/mockData';
 import type { EmailAnalysisData } from '../types';
+import type { EmailAnalysis } from '../types/forensic';
+import { saveAnalysisResult } from '../utils/forensicStore';
 import { RiskBadge } from '../components/common/RiskBadge';
 import { HeaderProtocolStatus } from '../components/common/HeaderProtocolStatus';
 import { GeoTraceMap } from '../components/common/GeoTraceMap';
@@ -58,13 +60,17 @@ export const AnalyzeEmail: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    let textContent = '';
     const reader = new FileReader();
     reader.onload = (event) => {
-      setRawInput((event.target?.result as string) || '');
+      textContent = (event.target?.result as string) || '';
+      setRawInput(textContent);
     };
     reader.readAsText(file);
 
     setIsAnalyzing(true);
+    const analysisId = `analysis-${Date.now()}`;
+
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -76,37 +82,52 @@ export const AnalyzeEmail: React.FC = () => {
 
       if (res.ok) {
         const data = await res.json();
-        setCurrentEmail(prev => ({
-          ...prev,
-          subject: data.headers.subject || file.name,
-          senderEmail: data.headers.from || prev.senderEmail,
-          recipientEmail: Array.isArray(data.headers.to) ? data.headers.to.join(', ') : (data.headers.to || prev.recipientEmail),
-          returnPath: data.headers.return_path || prev.returnPath,
-          replyTo: data.headers.reply_to || prev.replyTo,
-          rawHeaders: JSON.stringify(data.headers, null, 2),
-          bodyText: data.body.plain_text || data.body.html || prev.bodyText,
-          iocs: {
-            ...prev.iocs,
-            urls: data.urls.map((u: string) => ({
-              url: u,
-              domain: u.split('/')[2] || u,
-              isObfuscated: false,
-              riskScore: 75
-            })),
-            hashes: data.attachments.map((att: { filename: string; mime_type: string; size: number }) => ({
-              filename: att.filename,
-              md5: `${att.mime_type} (${att.size} bytes)`,
-              sha256: 'N/A',
-              isMalicious: false
-            }))
-          }
-        }));
+        const parsedAnalysis: EmailAnalysis = {
+          id: analysisId,
+          subject: data.subject || data.headers?.subject || file.name,
+          from: data.from || data.from_header || data.headers?.from || '',
+          to: data.to || data.headers?.to || '',
+          cc: data.cc || data.headers?.cc || '',
+          date: data.date || data.headers?.date || '',
+          reply_to: data.reply_to || data.headers?.reply_to || '',
+          return_path: data.return_path || data.headers?.return_path || '',
+          message_id: data.message_id || data.headers?.message_id || '',
+          received: data.received || data.headers?.received || [],
+          authentication_results: data.authentication_results || data.headers?.authentication_results || '',
+          plain_text_body: data.plain_text_body || data.body?.plain_text || '',
+          html_body: data.html_body || data.body?.html || '',
+          raw_email: data.raw_email || textContent || '',
+          urls: data.urls || [],
+          ips: data.ips || [],
+          domains: data.domains || [],
+          emails: data.emails || [],
+          attachments: data.attachments || []
+        };
+
+        saveAnalysisResult(analysisId, parsedAnalysis);
+        navigate(`/analysis/${analysisId}`);
+        return;
       }
     } catch (err) {
-      console.warn('Backend API offline, previewing raw content locally', err);
+      console.warn('Backend API offline, constructing client-side fallback analysis', err);
     } finally {
       setIsAnalyzing(false);
     }
+
+    // Fallback if backend is offline or fallback requested
+    const fallbackAnalysis: EmailAnalysis = {
+      id: analysisId,
+      subject: file.name,
+      from: 'sender@example.com',
+      to: 'recipient@company.com',
+      date: new Date().toUTCString(),
+      raw_email: textContent || rawInput,
+      plain_text_body: textContent || rawInput,
+      urls: [],
+      attachments: []
+    };
+    saveAnalysisResult(analysisId, fallbackAnalysis);
+    navigate(`/analysis/${analysisId}`);
   };
 
   return (
