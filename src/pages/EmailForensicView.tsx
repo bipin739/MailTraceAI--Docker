@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { EmailAnalysis, ForensicTabType } from '../types/forensic';
 import { getAnalysisResult } from '../utils/forensicStore';
+import { resolveEmailIndicators } from '../utils/indicatorHelper';
 import { EmailSummaryHeader } from '../components/forensic/EmailSummaryHeader';
 import { ForensicTabs } from '../components/forensic/ForensicTabs';
 import { OverviewTab } from '../components/forensic/OverviewTab';
@@ -29,7 +30,7 @@ export const EmailForensicView: React.FC = () => {
     const result = getAnalysisResult(targetId);
 
     if (result) {
-      setAnalysis(result);
+      setAnalysis(resolveEmailIndicators(result));
     } else {
       setError('Unable to load the forensic analysis for this email.');
     }

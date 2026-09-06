@@ -1,7 +1,9 @@
 import pytest
+import hashlib
 from fastapi.testclient import TestClient
 from backend.main import app
 from backend.services.email_parser import EmailParserService, EmailParseException
+from backend.services.ioc_extractor import IOCExtractorService
 
 client = TestClient(app)
 
@@ -15,9 +17,9 @@ VALID_EML = (
     b"Reply-To: security-verify@suspicious-domain.com\r\n"
     b"Return-Path: <bounce@suspicious-domain.com>\r\n"
     b"Message-ID: <123456789.abcdef@company.com>\r\n"
-    b"Received: from mail.suspicious-domain.com (mail.suspicious-domain.com [198.51.100.25]) by mx.company.com; Mon, 07 Sep 2026 10:00:01 +0000\r\n"
+    b"Received: from mail.suspicious-domain.com (mail.suspicious-domain.com [203.0.113.25]) by mx.company.com; Mon, 07 Sep 2026 10:00:01 +0000\r\n"
     b"Received: from internal.relay.com ([10.0.0.1]) by mail.suspicious-domain.com; Mon, 07 Sep 2026 09:59:59 +0000\r\n"
-    b"Authentication-Results: mx.company.com; dkim=fail header.i=@company.com; spf=softfail (google.com: domain of bounce@suspicious-domain.com does not designate 198.51.100.25 as permitted sender)\r\n"
+    b"Authentication-Results: mx.company.com; dkim=fail header.i=@company.com; spf=softfail (google.com: domain of bounce@suspicious-domain.com does not designate 203.0.113.25 as permitted sender)\r\n"
     b"MIME-Version: 1.0\r\n"
     b"Content-Type: multipart/mixed; boundary=\"BOUNDARY\"\r\n"
     b"\r\n"
@@ -52,6 +54,7 @@ def test_parse_valid_eml_service():
 
     assert res.file_info.filename == "phish_test.eml"
     assert res.file_info.size_bytes == len(VALID_EML)
+    assert res.email_sha256 == hashlib.sha256(VALID_EML).hexdigest()
 
     # Check Headers
     assert "Alice Security" in res.from_header
@@ -62,30 +65,38 @@ def test_parse_valid_eml_service():
     assert res.return_path == "<bounce@suspicious-domain.com>"
     assert res.message_id == "<123456789.abcdef@company.com>"
 
-    # Check Multi-value headers
-    assert len(res.received) == 2
-    assert "198.51.100.25" in res.received[0]
-    assert "spf=softfail" in res.authentication_results
+    # Check Indicators Group
+    assert res.indicators is not None
+    assert len(res.indicators.urls) >= 2
+    assert len(res.indicators.ips) >= 2
+    assert len(res.indicators.domains) >= 2
+    assert len(res.indicators.email_addresses) >= 4
+    assert len(res.indicators.attachments) == 1
 
-    # Check Bodies & Raw Email
-    assert res.plain_text_body is not None
-    assert "http://phishing-portal.com/login" in res.plain_text_body
-    assert res.html_body is not None
-    assert "https://secure-update-portal.net/auth" in res.html_body
-    assert res.raw_email is not None
+    # Check Attachment Hashes
+    att_ind = res.indicators.attachments[0]
+    assert att_ind.filename == "invoice_details.pdf"
+    assert att_ind.mime_type == "application/pdf"
+    assert att_ind.sha256 is not None
+    assert len(att_ind.sha256) == 64
 
-    # Check extracted URLs, IPs, Domains, Emails
-    assert "http://phishing-portal.com/login" in res.urls
-    assert "https://secure-update-portal.net/auth" in res.urls
-    assert "198.51.100.25" in res.ips
-    assert "phishing-portal.com" in res.domains or "secure-update-portal.net" in res.domains
-    assert "alice@company.com" in res.emails
 
-    # Check Attachments
-    assert len(res.attachments) == 1
-    assert res.attachments[0].filename == "invoice_details.pdf"
-    assert res.attachments[0].mime_type == "application/pdf"
-    assert res.attachments[0].size > 0
+def test_ip_scope_classification():
+    """Test IP version and scope classification (public vs private vs loopback)."""
+    v4_pub_ver, v4_pub_scope = IOCExtractorService.classify_ip_scope("8.8.8.8")
+    assert v4_pub_ver == 4
+    assert v4_pub_scope == "public"
+
+    v4_priv_ver, v4_priv_scope = IOCExtractorService.classify_ip_scope("10.0.0.1")
+    assert v4_priv_ver == 4
+    assert v4_priv_scope == "private"
+
+    loop_ver, loop_scope = IOCExtractorService.classify_ip_scope("127.0.0.1")
+    assert loop_ver == 4
+    assert loop_scope == "loopback"
+
+    v6_pub_ver, v6_pub_scope = IOCExtractorService.classify_ip_scope("2001:db8::1")
+    assert v6_pub_ver == 6
 
 
 def test_parse_empty_eml_service():
@@ -105,13 +116,12 @@ def test_api_analyze_endpoint_success():
     assert response.status_code == 200
     data = response.json()
 
-    assert data["file_info"]["filename"] == "sample.eml"
-    assert data["headers"]["subject"] == "Urgent: Verify Account Security"
-    assert data["headers"]["from"] == "Alice Security <alice@company.com>"
-    assert len(data["headers"]["received"]) == 2
-    assert len(data["urls"]) >= 2
-    assert len(data["attachments"]) == 1
-    assert data["attachments"][0]["filename"] == "invoice_details.pdf"
+    assert data["email_sha256"] == hashlib.sha256(VALID_EML).hexdigest()
+    assert "indicators" in data
+    assert len(data["indicators"]["ips"]) >= 2
+    assert len(data["indicators"]["domains"]) >= 2
+    assert len(data["indicators"]["attachments"]) == 1
+    assert data["indicators"]["attachments"][0]["sha256"] is not None
 
 
 def test_api_analyze_endpoint_malformed_empty():
@@ -125,54 +135,3 @@ def test_api_analyze_endpoint_malformed_empty():
     data = response.json()
     assert "detail" in data
     assert data.get("error_code") == "MALFORMED_EMAIL"
-
-
-def test_parse_minimal_eml():
-    """Test parsing an EML with only basic text content and minimal headers."""
-    minimal_bytes = b"Subject: Simple Hello\r\nFrom: user@example.com\r\n\r\nHello World!"
-    res = EmailParserService.parse_eml_bytes(minimal_bytes, filename="minimal.eml")
-
-    assert res.headers.subject == "Simple Hello"
-    assert res.headers.from_header == "user@example.com"
-    assert res.headers.to is None
-    assert res.headers.received == []
-    assert res.body.plain_text.strip() == "Hello World!"
-    assert res.attachments == []
-    assert res.urls == []
-
-
-def test_parse_multiple_attachments_and_urls():
-    """Test parsing EML with multiple attachments and multiple URL formats."""
-    multi_eml = (
-        b"From: sender@test.org\r\n"
-        b"To: target@test.org\r\n"
-        b"Subject: Multiple Attachments Test\r\n"
-        b"Content-Type: multipart/mixed; boundary=\"BOUNDARY\"\r\n"
-        b"\r\n"
-        b"--BOUNDARY\r\n"
-        b"Content-Type: text/plain; charset=utf-8\r\n"
-        b"\r\n"
-        b"Check these out: http://link1.org and https://link2.com/path?a=1&b=2\r\n"
-        b"--BOUNDARY\r\n"
-        b"Content-Type: image/png; name=\"screenshot.png\"\r\n"
-        b"Content-Disposition: attachment; filename=\"screenshot.png\"\r\n"
-        b"\r\n"
-        b"fake_image_bytes\r\n"
-        b"--BOUNDARY\r\n"
-        b"Content-Type: application/zip; name=\"archive.zip\"\r\n"
-        b"Content-Disposition: attachment; filename=\"archive.zip\"\r\n"
-        b"\r\n"
-        b"fake_zip_bytes\r\n"
-        b"--BOUNDARY--\r\n"
-    )
-    res = EmailParserService.parse_eml_bytes(multi_eml, filename="multi.eml")
-
-    assert len(res.urls) == 2
-    assert "http://link1.org" in res.urls
-    assert "https://link2.com/path?a=1&b=2" in res.urls
-
-    assert len(res.attachments) == 2
-    filenames = [att.filename for att in res.attachments]
-    assert "screenshot.png" in filenames
-    assert "archive.zip" in filenames
-

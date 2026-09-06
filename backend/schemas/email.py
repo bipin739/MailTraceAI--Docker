@@ -2,10 +2,50 @@ from typing import List, Optional, Union
 from pydantic import BaseModel, Field
 
 
+class IPIndicator(BaseModel):
+    value: str = Field(..., description="IP address string")
+    version: int = Field(4, description="IP version (4 or 6)")
+    scope: str = Field("public", description="Scope: public, private, loopback, link_local, reserved, unknown")
+    source: Optional[str] = Field("unknown", description="Extraction source location")
+
+
+class DomainIndicator(BaseModel):
+    value: str = Field(..., description="Normalized domain name")
+    source: Optional[str] = Field("unknown", description="Extraction source location")
+
+
+class URLIndicator(BaseModel):
+    value: str = Field(..., description="Extracted URL string")
+    source: Optional[str] = Field("unknown", description="Extraction source location")
+
+
+class EmailAddressIndicator(BaseModel):
+    value: str = Field(..., description="Normalized email address")
+    source: Optional[str] = Field("unknown", description="Extraction source location")
+
+
+class AttachmentIndicator(BaseModel):
+    filename: Optional[str] = Field(None, description="Filename of the attachment")
+    mime_type: Optional[str] = Field(None, description="MIME content type of the attachment")
+    size: Optional[int] = Field(0, description="Attachment file size in bytes")
+    sha256: str = Field(..., description="SHA-256 hash of attachment payload")
+    md5: Optional[str] = Field(None, description="MD5 hash of attachment payload")
+    sha1: Optional[str] = Field(None, description="SHA-1 hash of attachment payload")
+
+
+class IndicatorsGroup(BaseModel):
+    ips: List[IPIndicator] = Field(default_factory=list)
+    domains: List[DomainIndicator] = Field(default_factory=list)
+    urls: List[URLIndicator] = Field(default_factory=list)
+    email_addresses: List[EmailAddressIndicator] = Field(default_factory=list)
+    attachments: List[AttachmentIndicator] = Field(default_factory=list)
+
+
 class AttachmentInfo(BaseModel):
     filename: Optional[str] = Field(None, description="Filename of the attachment")
     mime_type: Optional[str] = Field(None, description="MIME content type of the attachment")
     size: Optional[int] = Field(0, description="Attachment file size in bytes")
+    sha256: Optional[str] = Field(None, description="SHA-256 hash of attachment payload")
 
 
 class BodyInfo(BaseModel):
@@ -36,7 +76,10 @@ class FileMeta(BaseModel):
 
 
 class EmailAnalysisResponse(BaseModel):
-    # Top-level flat fields for direct accessibility
+    email_sha256: Optional[str] = Field(None, description="SHA-256 hash of raw uploaded email bytes")
+    indicators: IndicatorsGroup = Field(default_factory=IndicatorsGroup, description="Structured indicators group")
+
+    # Top-level flat fields for direct accessibility / backwards compatibility
     subject: Optional[str] = Field(None, description="Email subject")
     from_header: Optional[str] = Field(None, alias="from", description="From header")
     to: Optional[Union[str, List[str]]] = Field(None, description="To header")

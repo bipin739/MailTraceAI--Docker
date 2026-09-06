@@ -1,10 +1,12 @@
 import type { EmailAnalysis } from '../types/forensic';
+import { resolveEmailIndicators } from './indicatorHelper';
 
 const STORAGE_KEY_PREFIX = 'mailtrace_forensic_';
 const memoryStore = new Map<string, EmailAnalysis>();
 
-export const MOCK_SAMPLE_ANALYSIS: EmailAnalysis = {
+export const MOCK_SAMPLE_ANALYSIS: EmailAnalysis = resolveEmailIndicators({
   id: 'sample-001',
+  email_sha256: '97d4b2e811c7520e5e79603f9050d268159b360b9432df03d4083d8e57ef228a',
   subject: 'URGENT: Verify your Microsoft Account',
   from: 'Microsoft Security <security@micros0ft-example.com>',
   to: 'employee@company.com',
@@ -44,6 +46,37 @@ Content-Disposition: attachment; filename="invoice.pdf"
 
 [PDF Attachment Bytes]
 --BOUNDARY--`,
+  indicators: {
+    ips: [
+      { value: '203.0.113.25', version: 4, scope: 'public', source: 'received_header_1' },
+      { value: '198.51.100.12', version: 4, scope: 'public', source: 'received_header_2' }
+    ],
+    domains: [
+      { value: 'micros0ft-example.com', source: 'url' },
+      { value: 'example.net', source: 'reply_to' },
+      { value: 'example.org', source: 'received_header' },
+      { value: 'company.com', source: 'to' }
+    ],
+    urls: [
+      { value: 'https://micros0ft-example.com/login', source: 'plain_text_body' }
+    ],
+    email_addresses: [
+      { value: 'security@micros0ft-example.com', source: 'header_from' },
+      { value: 'employee@company.com', source: 'header_to' },
+      { value: 'support@example.net', source: 'header_reply_to' },
+      { value: 'bounce@example.net', source: 'header_return_path' }
+    ],
+    attachments: [
+      {
+        filename: 'invoice.pdf',
+        mime_type: 'application/pdf',
+        size: 241000,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        md5: 'd41d8cd98f00b204e9800998ecf8427e',
+        sha1: 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      }
+    ]
+  },
   urls: [
     'https://micros0ft-example.com/login'
   ],
@@ -67,16 +100,17 @@ Content-Disposition: attachment; filename="invoice.pdf"
     {
       filename: 'invoice.pdf',
       mime_type: 'application/pdf',
-      size: 241000
+      size: 241000,
+      sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
     }
   ]
-};
+});
 
 export const saveAnalysisResult = (id: string, data: EmailAnalysis): void => {
-  const item: EmailAnalysis = { ...data, id };
-  memoryStore.set(id, item);
+  const resolved = resolveEmailIndicators({ ...data, id });
+  memoryStore.set(id, resolved);
   try {
-    sessionStorage.setItem(STORAGE_KEY_PREFIX + id, JSON.stringify(item));
+    sessionStorage.setItem(STORAGE_KEY_PREFIX + id, JSON.stringify(resolved));
   } catch (e) {
     console.warn('Unable to persist analysis in sessionStorage', e);
   }
@@ -84,14 +118,15 @@ export const saveAnalysisResult = (id: string, data: EmailAnalysis): void => {
 
 export const getAnalysisResult = (id: string): EmailAnalysis | null => {
   if (memoryStore.has(id)) {
-    return memoryStore.get(id)!;
+    return resolveEmailIndicators(memoryStore.get(id)!);
   }
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY_PREFIX + id);
     if (raw) {
       const parsed = JSON.parse(raw);
-      memoryStore.set(id, parsed);
-      return parsed;
+      const resolved = resolveEmailIndicators(parsed);
+      memoryStore.set(id, resolved);
+      return resolved;
     }
   } catch (e) {
     console.warn('Error reading analysis from sessionStorage', e);

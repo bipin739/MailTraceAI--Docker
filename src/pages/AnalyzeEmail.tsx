@@ -84,6 +84,8 @@ export const AnalyzeEmail: React.FC = () => {
         const data = await res.json();
         const parsedAnalysis: EmailAnalysis = {
           id: analysisId,
+          email_sha256: data.email_sha256,
+          indicators: data.indicators,
           subject: data.subject || data.headers?.subject || file.name,
           from: data.from || data.from_header || data.headers?.from || '',
           to: data.to || data.headers?.to || '',

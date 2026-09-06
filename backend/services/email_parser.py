@@ -1,38 +1,22 @@
 import email
 from email import policy
 from email.header import decode_header
-import re
-from typing import List, Dict, Any, Optional, Tuple, Set
-from html.parser import HTMLParser
-from urllib.parse import urlparse
+from typing import List, Dict, Any, Optional
 
 from backend.schemas.email import (
     EmailAnalysisResponse,
     HeaderInfo,
     BodyInfo,
     AttachmentInfo,
-    FileMeta
+    FileMeta,
+    IndicatorsGroup
 )
+from backend.services.ioc_extractor import IOCExtractorService
 
 
 class EmailParseException(Exception):
     """Raised when an email file is malformed, corrupted, or invalid."""
     pass
-
-
-class HTMLLinkExtractor(HTMLParser):
-    """Simple, safe HTML parser to extract URLs from href and src attributes without executing code."""
-
-    def __init__(self):
-        super().__init__()
-        self.urls: List[str] = []
-
-    def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]):
-        for attr, value in attrs:
-            if attr.lower() in ('href', 'src', 'action', 'data-url') and value:
-                clean_val = value.strip()
-                if clean_val.startswith(('http://', 'https://', 'ftp://', 'ftps://')):
-                    self.urls.append(clean_val)
 
 
 class EmailParserService:
@@ -64,90 +48,6 @@ class EmailParserService:
         except Exception:
             return header_str.strip()
 
-    @staticmethod
-    def _extract_urls(plain_text: Optional[str], html_body: Optional[str]) -> List[str]:
-        """Extract unique URLs from both plain text and HTML body content."""
-        extracted_urls: List[str] = []
-
-        url_pattern = re.compile(
-            r'https?://[^\s<>"\'\)\(\]\[\}\s,]+',
-            re.IGNORECASE
-        )
-
-        def add_url(u: str):
-            cleaned = u.rstrip('.,;:!?"\')]>')
-            if cleaned and cleaned not in extracted_urls:
-                extracted_urls.append(cleaned)
-
-        if plain_text:
-            for match in url_pattern.findall(plain_text):
-                add_url(match)
-
-        if html_body:
-            try:
-                parser = HTMLLinkExtractor()
-                parser.feed(html_body)
-                for u in parser.urls:
-                    add_url(u)
-            except Exception:
-                pass
-
-            for match in url_pattern.findall(html_body):
-                add_url(match)
-
-        return extracted_urls
-
-    @staticmethod
-    def _extract_ips(text: str) -> List[str]:
-        """Extract valid IPv4 addresses from text."""
-        ip_pattern = re.compile(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b')
-        found_ips: List[str] = []
-        for match in ip_pattern.findall(text):
-            octets = match.split('.')
-            if all(0 <= int(o) <= 255 for o in octets):
-                if match not in found_ips:
-                    found_ips.append(match)
-        return found_ips
-
-    @staticmethod
-    def _extract_emails(text: str) -> List[str]:
-        """Extract unique email addresses from text."""
-        email_pattern = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b')
-        found_emails: List[str] = []
-        for match in email_pattern.findall(text):
-            clean_email = match.lower()
-            if clean_email not in found_emails:
-                found_emails.append(clean_email)
-        return found_emails
-
-    @staticmethod
-    def _extract_domains(urls: List[str], emails: List[str], headers_text: str) -> List[str]:
-        """Extract unique domain names from URLs, emails, and header texts."""
-        domains: List[str] = []
-
-        def add_domain(d: str):
-            clean_d = d.lower().strip('.')
-            # basic domain format check
-            if clean_d and '.' in clean_d and not re.match(r'^\d+\.\d+\.\d+\.\d+$', clean_d):
-                if clean_d not in domains:
-                    domains.append(clean_d)
-
-        for u in urls:
-            try:
-                parsed = urlparse(u)
-                if parsed.netloc:
-                    host = parsed.netloc.split(':')[0]
-                    add_domain(host)
-            except Exception:
-                pass
-
-        for e in emails:
-            if '@' in e:
-                domain_part = e.split('@')[-1]
-                add_domain(domain_part)
-
-        return domains
-
     @classmethod
     def parse_eml_bytes(cls, content_bytes: bytes, filename: str = "uploaded.eml") -> EmailAnalysisResponse:
         """
@@ -159,6 +59,8 @@ class EmailParserService:
         if not content_bytes or len(content_bytes.strip()) == 0:
             raise EmailParseException("Uploaded email file is empty.")
 
+        # 1. Calculate evidence SHA-256 hash strictly from original bytes
+        email_sha256 = IOCExtractorService.calculate_sha256(content_bytes)
         raw_email_str = content_bytes.decode("utf-8", errors="replace")
 
         try:
@@ -195,9 +97,22 @@ class EmailParserService:
         except Exception as e:
             raise EmailParseException(f"Malformed headers in email: {str(e)}")
 
+        headers_dict = {
+            "from": from_header,
+            "to": to_header,
+            "cc": cc_header,
+            "subject": subject,
+            "date": date,
+            "reply_to": reply_to,
+            "return_path": return_path,
+            "message_id": message_id,
+            "received": received_headers,
+            "authentication_results": auth_results_str
+        }
+
         plain_text_parts: List[str] = []
         html_parts: List[str] = []
-        attachments: List[AttachmentInfo] = []
+        attachments_raw: List[Dict[str, Any]] = []
 
         # Iterate over parts
         try:
@@ -223,18 +138,15 @@ class EmailParserService:
                     attachment_counter += 1
 
                     try:
-                        payload = part.get_payload(decode=True)
-                        size = len(payload) if payload else 0
+                        payload = part.get_payload(decode=True) or b""
                     except Exception:
-                        size = 0
+                        payload = b""
 
-                    attachments.append(
-                        AttachmentInfo(
-                            filename=fname,
-                            mime_type=content_type or "application/octet-stream",
-                            size=size
-                        )
-                    )
+                    attachments_raw.append({
+                        "filename": fname,
+                        "mime_type": content_type or "application/octet-stream",
+                        "bytes": payload
+                    })
                 else:
                     if content_type == "text/plain":
                         try:
@@ -262,12 +174,29 @@ class EmailParserService:
         plain_text_str = "\n".join(plain_text_parts) if plain_text_parts else None
         html_str = "\n".join(html_parts) if html_parts else None
 
-        # Extract indicators
-        full_search_text = f"{raw_email_str}\n{plain_text_str or ''}\n{html_str or ''}"
-        urls = cls._extract_urls(plain_text_str, html_str)
-        ips = cls._extract_ips(full_search_text)
-        emails_list = cls._extract_emails(full_search_text)
-        domains = cls._extract_domains(urls, emails_list, full_search_text)
+        # 2. Extract IOCs using IOCExtractorService
+        url_indicators = IOCExtractorService.extract_urls(plain_text_str, html_str, headers_dict)
+        email_indicators = IOCExtractorService.extract_email_addresses(headers_dict, plain_text_str, html_str)
+
+        text_sources = [
+            (raw_email_str, "raw_email_source"),
+            (plain_text_str or "", "plain_text_body"),
+            (html_str or "", "html_body"),
+        ]
+        for idx, r in enumerate(received_headers):
+            text_sources.append((r, f"received_header_{idx+1}"))
+
+        ip_indicators = IOCExtractorService.extract_ips(text_sources)
+        domain_indicators = IOCExtractorService.extract_domains(url_indicators, email_indicators, text_sources)
+        attachment_indicators = IOCExtractorService.extract_attachment_indicators(attachments_raw)
+
+        indicators_group = IndicatorsGroup(
+            ips=ip_indicators,
+            domains=domain_indicators,
+            urls=url_indicators,
+            email_addresses=email_indicators,
+            attachments=attachment_indicators
+        )
 
         headers_obj = HeaderInfo(
             from_header=from_header,
@@ -292,7 +221,20 @@ class EmailParserService:
             size_bytes=len(content_bytes)
         )
 
+        # Backwards compatible attachment info models
+        attachments_info = [
+            AttachmentInfo(
+                filename=att.filename,
+                mime_type=att.mime_type,
+                size=att.size,
+                sha256=att.sha256
+            )
+            for att in attachment_indicators
+        ]
+
         return EmailAnalysisResponse(
+            email_sha256=email_sha256,
+            indicators=indicators_group,
             subject=subject,
             from_header=from_header,
             to=to_header,
@@ -306,11 +248,11 @@ class EmailParserService:
             plain_text_body=plain_text_str,
             html_body=html_str,
             raw_email=raw_email_str,
-            urls=urls,
-            ips=ips,
-            domains=domains,
-            emails=emails_list,
-            attachments=attachments,
+            urls=[u.value for u in url_indicators],
+            ips=[i.value for i in ip_indicators],
+            domains=[d.value for d in domain_indicators],
+            emails=[e.value for e in email_indicators],
+            attachments=attachments_info,
             file_info=file_meta,
             headers=headers_obj,
             body=body_obj
