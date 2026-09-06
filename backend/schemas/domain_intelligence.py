@@ -1,6 +1,8 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
+from backend.schemas.lookalike import LookalikeDetectionResult
+
 
 class DNSRecords(BaseModel):
     """DNS records extracted for a domain."""
@@ -31,3 +33,5 @@ class DomainIntelligence(BaseModel):
     newly_registered_domain: Optional[bool] = Field(None, description="Neutral flag: True if domain age <= threshold (default 30 days)")
     is_resolvable: bool = Field(False, description="True if domain resolves at least one DNS record")
     status_message: Optional[str] = Field(None, description="Resolution status (e.g., Active, NXDOMAIN, Timeout)")
+    lookalike: Optional[LookalikeDetectionResult] = Field(None, description="Potential lookalike domain / brand impersonation findings if detected")
+

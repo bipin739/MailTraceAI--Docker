@@ -133,6 +133,16 @@ export interface DomainRegistration {
   registration_source: string;
 }
 
+export interface LookalikeDetectionResult {
+  domain: string;
+  suspected_brand: string;
+  brand_name: string;
+  similarity: number;
+  techniques: string[];
+  confidence_label: string;
+  details?: string;
+}
+
 export interface DomainIntelligence {
   domain: string;
   punycode?: string;
@@ -142,6 +152,7 @@ export interface DomainIntelligence {
   newly_registered_domain?: boolean;
   is_resolvable: boolean;
   status_message?: string;
+  lookalike?: LookalikeDetectionResult;
 }
 
 export interface EmailAnalysis {
@@ -151,6 +162,7 @@ export interface EmailAnalysis {
   relay_analysis?: RelayPathAnalysis;
   ip_intelligence?: Record<string, IPIntelligence>;
   domain_intelligence?: Record<string, DomainIntelligence>;
+  lookalike_domains?: LookalikeDetectionResult[];
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;

@@ -2,6 +2,7 @@ from typing import List, Optional, Union, Dict
 from pydantic import BaseModel, Field
 from backend.schemas.ip_intelligence import IPIntelligence
 from backend.schemas.domain_intelligence import DomainIntelligence
+from backend.schemas.lookalike import LookalikeDetectionResult
 
 
 class ProtocolResult(BaseModel):
@@ -137,6 +138,7 @@ class EmailAnalysisResponse(BaseModel):
     relay_analysis: Optional[RelayPathAnalysis] = Field(None, description="Parsed Received header chain and relay transmission path")
     ip_intelligence: Dict[str, IPIntelligence] = Field(default_factory=dict, description="Contextual IP intelligence and infrastructure metadata dictionary keyed by IP")
     domain_intelligence: Dict[str, DomainIntelligence] = Field(default_factory=dict, description="Contextual domain intelligence and DNS/RDAP registration metadata keyed by domain")
+    lookalike_domains: List[LookalikeDetectionResult] = Field(default_factory=list, description="Suspicious lookalike domains and potential brand impersonation findings")
     indicators: IndicatorsGroup = Field(default_factory=IndicatorsGroup, description="Structured indicators group")
 
     # Top-level flat fields for direct accessibility / backwards compatibility

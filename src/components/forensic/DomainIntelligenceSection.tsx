@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Server, Calendar, Shield, Clock, CheckCircle2, XCircle, Info } from 'lucide-react';
+import { Globe, Server, Calendar, Shield, Clock, CheckCircle2, XCircle, Info, AlertTriangle, ShieldAlert } from 'lucide-react';
 import type { EmailAnalysis, DomainIntelligence } from '../../types/forensic';
 import { resolveDomainIntelligence } from '../../utils/indicatorHelper';
 import { CopyButton } from './CopyButton';
@@ -10,7 +10,7 @@ interface DomainIntelligenceSectionProps {
 
 export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps> = ({ email }) => {
   const [activeDnsTab, setActiveDnsTab] = useState<Record<string, 'A' | 'MX' | 'NS' | 'TXT'>>({});
-  const [filter, setFilter] = useState<'all' | 'new' | 'resolvable'>('all');
+  const [filter, setFilter] = useState<'all' | 'lookalike' | 'new' | 'resolvable'>('all');
   const [liveDomainIntel, setLiveDomainIntel] = useState<Record<string, DomainIntelligence>>({});
 
   // Gather unique domains
@@ -61,7 +61,10 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
     return resolveDomainIntelligence(dom, domainIntelMap);
   });
 
+  const lookalikeCount = domainList.filter(d => d.lookalike).length;
+
   const filteredDomains = domainList.filter(d => {
+    if (filter === 'lookalike') return Boolean(d.lookalike);
     if (filter === 'new') return Boolean(d.newly_registered_domain);
     if (filter === 'resolvable') return d.is_resolvable;
     return true;
@@ -75,6 +78,20 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
     } catch {
       return isoStr;
     }
+  };
+
+  const formatTechniqueName = (tech: string): string => {
+    const map: Record<string, string> = {
+      character_substitution: 'Character Substitution',
+      brand_keyword: 'Brand Keyword',
+      suspicious_subdomain_abuse: 'Subdomain Abuse',
+      hyphenation: 'Hyphen Variation',
+      added_affix: 'Added Prefix / Suffix',
+      punycode: 'Punycode',
+      unicode_homoglyphs: 'Unicode Homoglyphs',
+      levenshtein_distance: 'Levenshtein Distance'
+    };
+    return map[tech] || tech.replace(/_/g, ' ');
   };
 
   const getActiveTab = (domain: string): 'A' | 'MX' | 'NS' | 'TXT' => {
@@ -96,6 +113,22 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
         </div>
       </div>
 
+      {/* Lookalike Findings Banner */}
+      {lookalikeCount > 0 && (
+        <div className="p-4 rounded-xl bg-red-950/40 border border-red-800/70 flex items-start gap-3 backdrop-blur-sm shadow-md">
+          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed text-slate-200 space-y-1">
+            <div>
+              <span className="font-bold text-red-300 uppercase tracking-wider">Potential Brand Impersonation Alert:</span>{' '}
+              Found <strong className="text-red-400 font-bold">{lookalikeCount}</strong> domain{lookalikeCount !== 1 ? 's' : ''} exhibiting deceptive similarity or brand keyword abuse (e.g. character substitution, extra hyphens, or suspicious subdomains).
+            </div>
+            <div className="text-[11px] text-slate-400 italic">
+              Confidence Notice: Similarity observations indicate potential lookalike indicators and do not establish malicious intent as fact.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Bar with Filters */}
       <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 backdrop-blur-xl shadow-lg space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -110,11 +143,11 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                   {domainList.length} Domain{domainList.length !== 1 ? 's' : ''}
                 </span>
               </h3>
-              <p className="text-xs font-mono text-slate-400">DNS record sets (A, AAAA, MX, NS, TXT) and authoritative RDAP registration metadata</p>
+              <p className="text-xs font-mono text-slate-400">DNS record sets, authoritative registration metadata, and brand lookalike detection</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-mono">
+          <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-mono flex-wrap">
             <button
               onClick={() => setFilter('all')}
               className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
@@ -123,6 +156,16 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
             >
               All ({domainList.length})
             </button>
+            {lookalikeCount > 0 && (
+              <button
+                onClick={() => setFilter('lookalike')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
+                  filter === 'lookalike' ? 'bg-red-600 text-white shadow-sm' : 'text-red-400 hover:text-red-300 bg-red-950/30 border border-red-900/60'
+                }`}
+              >
+                Impersonation ({lookalikeCount})
+              </button>
+            )}
             <button
               onClick={() => setFilter('new')}
               className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
@@ -213,11 +256,72 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                           <span>Newly Registered (&lt; 30d)</span>
                         </span>
                       )}
+
+                      {/* Potential Brand Impersonation Badge */}
+                      {item.lookalike && (
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-950/90 text-red-300 border border-red-800/90"
+                          title={`Potential ${item.lookalike.brand_name} brand impersonation`}
+                        >
+                          <ShieldAlert className="w-3 h-3 text-red-400" />
+                          <span>Potential {item.lookalike.brand_name} Impersonation</span>
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <CopyButton text={item.domain} label="Copy Domain" />
                 </div>
+
+                {/* Brand Impersonation Finding Card */}
+                {item.lookalike && (
+                  <div className="p-4 rounded-xl bg-red-950/30 border border-red-800/60 backdrop-blur-sm space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-red-800/40 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                        <span className="text-xs font-mono font-bold text-red-300 uppercase tracking-wider">
+                          Potential {item.lookalike.brand_name} Impersonation
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1.5 text-xs font-mono bg-red-950/80 px-2.5 py-1 rounded-lg border border-red-800/60">
+                        <span className="text-slate-400 text-[11px]">Similarity:</span>
+                        <span className="text-red-400 font-bold">{Math.round(item.lookalike.similarity * 100)}%</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+                      <div className="bg-slate-950/60 p-2.5 rounded-lg border border-red-950">
+                        <span className="text-[10px] uppercase text-slate-400 font-bold block mb-0.5">Observed domain</span>
+                        <span className="text-red-300 font-semibold break-all">{item.lookalike.domain}</span>
+                      </div>
+                      <div className="bg-slate-950/60 p-2.5 rounded-lg border border-red-950">
+                        <span className="text-[10px] uppercase text-slate-400 font-bold block mb-0.5">Reference domain</span>
+                        <span className="text-emerald-400 font-semibold break-all">{item.lookalike.suspected_brand}</span>
+                      </div>
+                      <div className="bg-slate-950/60 p-2.5 rounded-lg border border-red-950">
+                        <span className="text-[10px] uppercase text-slate-400 font-bold block mb-0.5">Similarity</span>
+                        <span className="text-amber-300 font-semibold">{Math.round(item.lookalike.similarity * 100)}%</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] uppercase text-slate-400 font-bold block mb-1.5">Detected techniques</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.lookalike.techniques.map((tech, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-red-900/40 text-red-200 border border-red-700/60">
+                            {formatTechniqueName(tech)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {item.lookalike.details && (
+                      <p className="text-[11px] font-mono text-slate-400 italic">
+                        {item.lookalike.details}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Registration Metadata Overview */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">

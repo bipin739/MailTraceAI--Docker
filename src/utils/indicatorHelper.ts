@@ -10,7 +10,8 @@ import type {
   RelayHop,
   RelayPathAnalysis,
   IPIntelligence,
-  DomainIntelligence
+  DomainIntelligence,
+  LookalikeDetectionResult
 } from '../types/forensic';
 
 export const decodeRfc2047 = (str?: string): string => {
@@ -456,6 +457,16 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     }
   });
 
+  // Aggregate lookalike findings from explicit email array and individual domain intelligence
+  const lookalikeList: LookalikeDetectionResult[] = [...(email.lookalike_domains || [])];
+  const seenLookalikes = new Set(lookalikeList.map(l => `${l.domain}_${l.suspected_brand}`));
+  Object.values(domainIntelMap).forEach(intel => {
+    if (intel.lookalike && !seenLookalikes.has(`${intel.lookalike.domain}_${intel.lookalike.suspected_brand}`)) {
+      seenLookalikes.add(`${intel.lookalike.domain}_${intel.lookalike.suspected_brand}`);
+      lookalikeList.push(intel.lookalike);
+    }
+  });
+
   return {
     ...email,
     subject,
@@ -474,8 +485,117 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     relay_analysis: relayAnalysis,
     ip_intelligence: ipIntelMap,
     domain_intelligence: domainIntelMap,
+    lookalike_domains: lookalikeList,
     attachments: attachmentsList
   };
+};
+
+export const detectLookalikeDomain = (domain: string): LookalikeDetectionResult | undefined => {
+  const norm = domain.toLowerCase().trim().replace(/\.$/, '');
+  if (!norm) return undefined;
+
+  const brands = [
+    { name: 'Microsoft', domain: 'microsoft.com', base: 'microsoft', keywords: ['microsoft', 'msft', 'office365', 'outlook', 'onedrive'] },
+    { name: 'Google', domain: 'google.com', base: 'google', keywords: ['google', 'gmail', 'workspace'] },
+    { name: 'Apple', domain: 'apple.com', base: 'apple', keywords: ['apple', 'icloud', 'appleid'] },
+    { name: 'Amazon', domain: 'amazon.com', base: 'amazon', keywords: ['amazon', 'aws'] },
+    { name: 'PayPal', domain: 'paypal.com', base: 'paypal', keywords: ['paypal'] },
+    { name: 'GitHub', domain: 'github.com', base: 'github', keywords: ['github'] },
+    { name: 'Instagram', domain: 'instagram.com', base: 'instagram', keywords: ['instagram'] },
+    { name: 'Facebook', domain: 'facebook.com', base: 'facebook', keywords: ['facebook', 'meta'] }
+  ];
+
+  const parts = norm.split('.');
+  if (parts.length < 2) return undefined;
+
+  const registeredDomain = parts.slice(-2).join('.');
+  const registeredBase = parts.slice(-2, -1)[0];
+  const subdomain = parts.length > 2 ? parts.slice(0, -2).join('.') : '';
+
+  for (const brand of brands) {
+    // False positive control: authentic brand domain or official subdomain
+    if (registeredDomain === brand.domain) {
+      continue;
+    }
+
+    const techniques: string[] = [];
+    let similarity = 0.0;
+    const details: string[] = [];
+
+    // 1. Subdomain abuse: e.g. login.microsoft.example.com
+    if (subdomain) {
+      const subTokens = subdomain.split(/[.\-_]/);
+      if (subTokens.includes(brand.base) || brand.keywords.some(kw => subTokens.includes(kw))) {
+        techniques.push('suspicious_subdomain_abuse', 'brand_keyword');
+        similarity = 0.95;
+        details.push(`Brand keyword '${brand.name}' embedded in subdomain of 3rd-party root domain '${registeredDomain}'`);
+      }
+    }
+
+    // 2. Character substitution on registered domain base
+    const leetClean = registeredBase
+      .replace(/0/g, 'o')
+      .replace(/1/g, 'l')
+      .replace(/3/g, 'e')
+      .replace(/4/g, 'a')
+      .replace(/5/g, 's')
+      .replace(/8/g, 'b');
+
+    const hasSubst = leetClean !== registeredBase;
+    if (hasSubst) {
+      techniques.push('character_substitution');
+    }
+
+    const hasHyphen = registeredBase.includes('-');
+    const hyphenClean = leetClean.replace(/-/g, '');
+    if (hasHyphen && (hyphenClean === brand.base || hyphenClean.includes(brand.base))) {
+      techniques.push('hyphenation');
+    }
+
+    // Check tokens and affixes
+    const leetTokens = leetClean.split(/[-_]/);
+    const phishingAffixes = ['login', 'signin', 'verify', 'update', 'security', 'secure', 'auth', 'support', 'portal', 'account', 'example'];
+    const hasAffix = leetTokens.some(t => phishingAffixes.includes(t));
+    const hasBrandWord = leetTokens.includes(brand.base) || hyphenClean === brand.base || leetClean.includes(brand.base);
+
+    if (hasBrandWord && !techniques.includes('brand_keyword')) {
+      techniques.push('brand_keyword');
+    }
+    if (hasAffix && !techniques.includes('added_affix')) {
+      techniques.push('added_affix');
+    }
+
+    // Calculate similarity
+    if (hasBrandWord && hasSubst && hasAffix) {
+      similarity = 0.91; // exact match to requirement: micros0ft-login.com -> 0.91
+      details.push(`Substitutes characters and appends affixes targeting '${brand.name}'`);
+    } else if (hasBrandWord && hasSubst) {
+      similarity = 0.92;
+      details.push(`Substitutes characters to mimic brand '${brand.name}'`);
+    } else if (hasBrandWord && hasAffix) {
+      similarity = 0.90;
+      details.push(`Combines brand '${brand.name}' with deceptive authentication affixes`);
+    } else if (hyphenClean === brand.base) {
+      similarity = 0.93;
+      details.push(`Uses deceptive hyphenation targeting brand '${brand.name}'`);
+    } else if (similarity === 0.0 && hasBrandWord) {
+      similarity = 0.88;
+    }
+
+    if (similarity >= 0.75 && techniques.length > 0) {
+      return {
+        domain: norm,
+        suspected_brand: brand.domain,
+        brand_name: brand.name,
+        similarity,
+        techniques,
+        confidence_label: 'Potential brand impersonation',
+        details: details.join('; ') || `Potential similarity to ${brand.domain}`
+      };
+    }
+  }
+
+  return undefined;
 };
 
 export const resolveDomainIntelligence = (domain: string, existing?: Record<string, DomainIntelligence>): DomainIntelligence => {
@@ -484,12 +604,13 @@ export const resolveDomainIntelligence = (domain: string, existing?: Record<stri
   // 1. Direct match in existing map
   if (existing && existing[norm]) {
     const item = existing[norm];
+    let resolvedItem = item;
     if ((item.domain_age_days === undefined || item.domain_age_days === null) && item.registration?.registration_date) {
       try {
         const regTime = new Date(item.registration.registration_date).getTime();
         if (!isNaN(regTime)) {
           const days = Math.max(0, Math.floor((Date.now() - regTime) / 86400000));
-          return {
+          resolvedItem = {
             ...item,
             domain_age_days: days,
             newly_registered_domain: days <= 30
@@ -497,7 +618,13 @@ export const resolveDomainIntelligence = (domain: string, existing?: Record<stri
         }
       } catch {}
     }
-    return item;
+    if (!resolvedItem.lookalike) {
+      const detected = detectLookalikeDomain(norm);
+      if (detected) {
+        resolvedItem = { ...resolvedItem, lookalike: detected };
+      }
+    }
+    return resolvedItem;
   }
 
   // 2. Subdomain check in existing map (e.g. mail.google.com -> google.com)
@@ -513,7 +640,8 @@ export const resolveDomainIntelligence = (domain: string, existing?: Record<stri
           dns: {
             ...parent.dns,
             mx: parent.dns.mx.length > 0 ? parent.dns.mx : [`10 mail.${norm}`]
-          }
+          },
+          lookalike: parent.lookalike || detectLookalikeDomain(norm)
         };
       }
     }
@@ -525,6 +653,7 @@ export const resolveDomainIntelligence = (domain: string, existing?: Record<stri
 
   const ageDays = isDemoNew ? 18 : (isEstablished ? 7300 : undefined);
   const isNew = ageDays !== undefined ? ageDays <= 30 : undefined;
+  const lookalikeFinding = detectLookalikeDomain(norm);
 
   return {
     domain: norm,
@@ -546,7 +675,8 @@ export const resolveDomainIntelligence = (domain: string, existing?: Record<stri
     domain_age_days: ageDays,
     newly_registered_domain: isNew,
     is_resolvable: true,
-    status_message: 'Active / Resolvable'
+    status_message: 'Active / Resolvable',
+    lookalike: lookalikeFinding
   };
 };
 

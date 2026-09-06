@@ -1,15 +1,19 @@
 import asyncio
+from typing import Optional
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from backend.schemas.email import EmailAnalysisResponse, ErrorResponse
 from backend.schemas.ip_intelligence import IPIntelligence
 from backend.schemas.domain_intelligence import DomainIntelligence
+from backend.schemas.lookalike import LookalikeDetectionResult
 from backend.services.email_parser import EmailParserService, EmailParseException
 from backend.services.ip_intelligence_service import global_ip_service
 from backend.services.domain_intelligence_service import DomainIntelligenceService
+from backend.services.lookalike_detector import LookalikeDetectorService
 
-global_domain_service = DomainIntelligenceService()
+global_lookalike_detector = LookalikeDetectorService()
+global_domain_service = DomainIntelligenceService(lookalike_detector=global_lookalike_detector)
 
 router = APIRouter(prefix="/api/emails", tags=["Email Analysis"])
 
@@ -40,6 +44,20 @@ async def lookup_domain_intelligence(domain: str):
     """
     clean_domain = domain.strip().lower().rstrip(".")
     return await global_domain_service.lookup_domain(clean_domain)
+
+
+@router.get(
+    "/detect-lookalike/{domain:path}",
+    response_model=Optional[LookalikeDetectionResult],
+    summary="Detect suspicious lookalike domain and brand impersonation",
+    description="Evaluates domain against known brands using Levenshtein distance, character substitutions, affixes, and subdomain abuse."
+)
+async def detect_lookalike_domain(domain: str):
+    """
+    Detects potential brand impersonation and lookalike techniques for a given domain name.
+    """
+    clean_domain = domain.strip().lower().rstrip(".")
+    return global_lookalike_detector.detect_lookalike(clean_domain)
 
 
 @router.post(
@@ -98,6 +116,7 @@ async def analyze_email(file: UploadFile = File(...)):
         )
         analysis_result.ip_intelligence = ip_intel_dict
         analysis_result.domain_intelligence = domain_intel_dict
+        analysis_result.lookalike_domains = global_lookalike_detector.detect_lookalikes_batch(domain_list)
 
         return analysis_result
     except EmailParseException as e:

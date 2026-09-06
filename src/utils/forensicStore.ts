@@ -140,7 +140,16 @@ Content-Disposition: attachment; filename="invoice.pdf"
       domain_age_days: 18,
       newly_registered_domain: true,
       is_resolvable: true,
-      status_message: 'Active / Resolvable'
+      status_message: 'Active / Resolvable',
+      lookalike: {
+        domain: 'micros0ft-example.com',
+        suspected_brand: 'microsoft.com',
+        brand_name: 'Microsoft',
+        similarity: 0.91,
+        techniques: ['character_substitution', 'brand_keyword'],
+        confidence_label: 'Potential brand impersonation',
+        details: "Substitutes '0' for 'o' targeting Microsoft brand keyword"
+      }
     },
     'company.com': {
       domain: 'company.com',

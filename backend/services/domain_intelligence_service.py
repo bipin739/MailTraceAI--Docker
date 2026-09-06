@@ -6,21 +6,24 @@ from backend.schemas.domain_intelligence import DomainIntelligence, DomainRegist
 from backend.services.dns_service import DNSService
 from backend.services.rdap_service import RDAPService
 from backend.services.domain_cache import DomainIntelligenceCache
+from backend.services.lookalike_detector import LookalikeDetectorService
 
 
 class DomainIntelligenceService:
-    """Coordinates DNS resolution and RDAP registration lookups with thread-safe TTL caching."""
+    """Coordinates DNS resolution, RDAP registration lookups, and lookalike detection with thread-safe TTL caching."""
 
     def __init__(
         self,
         dns_service: Optional[DNSService] = None,
         rdap_service: Optional[RDAPService] = None,
         cache: Optional[DomainIntelligenceCache] = None,
+        lookalike_detector: Optional[LookalikeDetectorService] = None,
         new_domain_threshold_days: int = 30
     ):
         self.dns_service = dns_service or DNSService()
         self.rdap_service = rdap_service or RDAPService()
         self.cache = cache if cache is not None else DomainIntelligenceCache()
+        self.lookalike_detector = lookalike_detector or LookalikeDetectorService()
         self.new_domain_threshold_days = new_domain_threshold_days
 
     def _calculate_domain_age(self, reg_date_str: Optional[str]) -> tuple[Optional[int], Optional[bool]]:
@@ -134,6 +137,9 @@ class DomainIntelligenceService:
         # Calculate Domain Age and Neutral Flag
         age_days, is_new = self._calculate_domain_age(registration.registration_date)
 
+        # Detect Lookalike / Brand Impersonation
+        lookalike_findings = self.lookalike_detector.detect_lookalike(clean_domain)
+
         intelligence = DomainIntelligence(
             domain=clean_domain,
             punycode=punycode,
@@ -142,7 +148,8 @@ class DomainIntelligenceService:
             domain_age_days=age_days,
             newly_registered_domain=is_new,
             is_resolvable=is_resolvable,
-            status_message=status_message
+            status_message=status_message,
+            lookalike=lookalike_findings
         )
 
         # Update cache
