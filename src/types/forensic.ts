@@ -1,3 +1,26 @@
+export interface ProtocolResult {
+  result?: 'pass' | 'fail' | 'softfail' | 'neutral' | 'none' | 'temperror' | 'permerror' | 'unknown' | string;
+  details?: string;
+}
+
+export interface SenderAlignment {
+  from_domain?: string;
+  reply_to_domain?: string;
+  return_path_domain?: string;
+  reply_to_mismatch?: boolean;
+  return_path_mismatch?: boolean;
+}
+
+export interface AuthenticationAnalysis {
+  verification_type?: 'observed_header' | 'independent_validation' | string;
+  verification_notice?: string;
+  observed_header?: string;
+  spf?: ProtocolResult;
+  dkim?: ProtocolResult;
+  dmarc?: ProtocolResult;
+  alignment?: SenderAlignment;
+}
+
 export interface IPIndicator {
   value: string;
   version?: number;
@@ -47,6 +70,7 @@ export interface EmailAttachment {
 export interface EmailAnalysis {
   id?: string;
   email_sha256?: string;
+  authentication?: AuthenticationAnalysis;
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;

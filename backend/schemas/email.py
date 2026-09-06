@@ -2,6 +2,29 @@ from typing import List, Optional, Union
 from pydantic import BaseModel, Field
 
 
+class ProtocolResult(BaseModel):
+    result: str = Field("unknown", description="Result: pass, fail, softfail, neutral, none, temperror, permerror, unknown")
+    details: Optional[str] = Field(None, description="Detailed header snippet or explanation")
+
+
+class SenderAlignment(BaseModel):
+    from_domain: Optional[str] = Field(None, description="Domain extracted from From header")
+    reply_to_domain: Optional[str] = Field(None, description="Domain extracted from Reply-To header")
+    return_path_domain: Optional[str] = Field(None, description="Domain extracted from Return-Path header")
+    reply_to_mismatch: bool = Field(False, description="True if Reply-To domain differs from From domain")
+    return_path_mismatch: bool = Field(False, description="True if Return-Path domain differs from From domain")
+
+
+class AuthenticationAnalysis(BaseModel):
+    verification_type: str = Field("observed_header", description="Verification type: 'observed_header' or 'independent_validation'")
+    verification_notice: str = Field("Observed authentication result from supplied headers (unverified by local server)", description="Security notice regarding header authenticity")
+    observed_header: Optional[str] = Field(None, description="Raw Authentication-Results or Received-SPF header content")
+    spf: ProtocolResult = Field(default_factory=ProtocolResult)
+    dkim: ProtocolResult = Field(default_factory=ProtocolResult)
+    dmarc: ProtocolResult = Field(default_factory=ProtocolResult)
+    alignment: SenderAlignment = Field(default_factory=SenderAlignment)
+
+
 class IPIndicator(BaseModel):
     value: str = Field(..., description="IP address string")
     version: int = Field(4, description="IP version (4 or 6)")
@@ -77,6 +100,7 @@ class FileMeta(BaseModel):
 
 class EmailAnalysisResponse(BaseModel):
     email_sha256: Optional[str] = Field(None, description="SHA-256 hash of raw uploaded email bytes")
+    authentication: Optional[AuthenticationAnalysis] = Field(None, description="Structured authentication analysis and sender alignment")
     indicators: IndicatorsGroup = Field(default_factory=IndicatorsGroup, description="Structured indicators group")
 
     # Top-level flat fields for direct accessibility / backwards compatibility

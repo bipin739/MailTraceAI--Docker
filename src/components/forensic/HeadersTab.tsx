@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { EmailAnalysis } from '../../types/forensic';
 import { MetadataRow } from './MetadataRow';
 import { CopyButton } from './CopyButton';
+import { AuthenticationSection } from './AuthenticationSection';
 import { ChevronDown, ChevronRight, FileCode, Route, Key } from 'lucide-react';
 
 interface HeadersTabProps {
@@ -15,6 +16,8 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
 
   return (
     <div className="space-y-6">
+      {/* Authentication Analysis Section */}
+      <AuthenticationSection authentication={email.authentication} />
       {/* Important Individual Headers */}
       <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4 backdrop-blur-xl shadow-lg">
         <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">

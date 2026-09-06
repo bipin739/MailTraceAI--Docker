@@ -5,7 +5,8 @@ import type {
   URLIndicator,
   EmailAddressIndicator,
   AttachmentIndicator,
-  IndicatorsGroup
+  IndicatorsGroup,
+  AuthenticationAnalysis
 } from '../types/forensic';
 
 export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
@@ -36,7 +37,86 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     emailSha256 = emailSha256.substring(0, 64);
   }
 
-  // 2. URLs
+  // 2. Resolve Authentication & Sender Alignment
+  const extractDomain = (str?: string): string | undefined => {
+    if (!str) return undefined;
+    const match = str.match(/@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+    return match ? match[1].toLowerCase() : undefined;
+  };
+
+  const fromDom = email.authentication?.alignment?.from_domain || extractDomain(email.from);
+  const replyDom = email.authentication?.alignment?.reply_to_domain || extractDomain(email.reply_to);
+  const returnDom = email.authentication?.alignment?.return_path_domain || extractDomain(email.return_path);
+
+  const replyMismatch = Boolean(replyDom && fromDom && replyDom.toLowerCase() !== fromDom.toLowerCase());
+  const returnMismatch = Boolean(returnDom && fromDom && returnDom.toLowerCase() !== fromDom.toLowerCase());
+
+  const fullHeaderAndBody = `
+    ${email.authentication_results || ''}
+    ${(email.received || []).join('\n')}
+    ${email.raw_email || ''}
+  `;
+
+  // Parse SPF
+  const spfMatch = fullHeaderAndBody.match(/\bspf=(pass|fail|softfail|neutral|none|temperror|permerror)\b/i) ||
+                   fullHeaderAndBody.match(/\bReceived-SPF:\s*(pass|fail|softfail|neutral|none|temperror|permerror)\b/i);
+  let spfResult = spfMatch ? spfMatch[1].toLowerCase() : 'none';
+  if (spfResult === 'none' && /spf=pass|received-spf:\s*pass/i.test(fullHeaderAndBody)) spfResult = 'pass';
+  if (spfResult === 'none' && /spf=fail|received-spf:\s*fail/i.test(fullHeaderAndBody)) spfResult = 'fail';
+  if (spfResult === 'none' && /spf=softfail|received-spf:\s*softfail/i.test(fullHeaderAndBody)) spfResult = 'softfail';
+
+  // Parse DKIM
+  const dkimMatch = fullHeaderAndBody.match(/\bdkim=(pass|fail|neutral|none|temperror|permerror)\b/i);
+  let dkimResult = dkimMatch ? dkimMatch[1].toLowerCase() : 'none';
+  if (dkimResult === 'none' && /dkim=pass/i.test(fullHeaderAndBody)) dkimResult = 'pass';
+  if (dkimResult === 'none' && /dkim=fail/i.test(fullHeaderAndBody)) dkimResult = 'fail';
+  if (dkimResult === 'none' && /DKIM-Signature:/i.test(fullHeaderAndBody)) dkimResult = 'pass';
+
+  // Parse DMARC
+  const dmarcMatch = fullHeaderAndBody.match(/\bdmarc=(pass|fail|neutral|none|temperror|permerror)\b/i);
+  let dmarcResult = dmarcMatch ? dmarcMatch[1].toLowerCase() : 'none';
+  if (dmarcResult === 'none' && /dmarc=pass/i.test(fullHeaderAndBody)) dmarcResult = 'pass';
+  if (dmarcResult === 'none' && /dmarc=fail/i.test(fullHeaderAndBody)) dmarcResult = 'fail';
+
+  const existingAuth = email.authentication;
+  const finalSpfResult = (existingAuth?.spf?.result && existingAuth.spf.result !== 'none' && existingAuth.spf.result !== 'unknown')
+    ? existingAuth.spf.result
+    : (spfResult !== 'none' ? spfResult : (existingAuth?.spf?.result || 'none'));
+
+  const finalDkimResult = (existingAuth?.dkim?.result && existingAuth.dkim.result !== 'none' && existingAuth.dkim.result !== 'unknown')
+    ? existingAuth.dkim.result
+    : (dkimResult !== 'none' ? dkimResult : (existingAuth?.dkim?.result || 'none'));
+
+  const finalDmarcResult = (existingAuth?.dmarc?.result && existingAuth.dmarc.result !== 'none' && existingAuth.dmarc.result !== 'unknown')
+    ? existingAuth.dmarc.result
+    : (dmarcResult !== 'none' ? dmarcResult : (existingAuth?.dmarc?.result || 'none'));
+
+  const authAnalysis: AuthenticationAnalysis = {
+    verification_type: 'observed_header',
+    verification_notice: 'Observed authentication result from supplied headers (unverified by local mail server)',
+    observed_header: existingAuth?.observed_header || email.authentication_results || undefined,
+    spf: {
+      result: finalSpfResult,
+      details: existingAuth?.spf?.details || (spfMatch ? spfMatch[0] : undefined)
+    },
+    dkim: {
+      result: finalDkimResult,
+      details: existingAuth?.dkim?.details || (dkimMatch ? dkimMatch[0] : (finalDkimResult === 'pass' ? 'DKIM-Signature header observed' : undefined))
+    },
+    dmarc: {
+      result: finalDmarcResult,
+      details: existingAuth?.dmarc?.details || (dmarcMatch ? dmarcMatch[0] : undefined)
+    },
+    alignment: {
+      from_domain: fromDom,
+      reply_to_domain: replyDom,
+      return_path_domain: returnDom,
+      reply_to_mismatch: replyMismatch,
+      return_path_mismatch: returnMismatch
+    }
+  };
+
+  // 3. URLs
   let urlObjs: URLIndicator[] = email.indicators?.urls || [];
   if (urlObjs.length === 0) {
     const rawUrls = email.urls && email.urls.length > 0
@@ -46,7 +126,7 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
   }
   const urlStrings = Array.from(new Set(urlObjs.map(u => u.value)));
 
-  // 3. IPs
+  // 4. IPs
   let ipObjs: IPIndicator[] = email.indicators?.ips || [];
   if (ipObjs.length === 0) {
     const rawIps = email.ips && email.ips.length > 0
@@ -64,7 +144,7 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
   }
   const ipStrings = Array.from(new Set(ipObjs.map(i => i.value)));
 
-  // 4. Email Addresses
+  // 5. Email Addresses
   let emailObjs: EmailAddressIndicator[] = email.indicators?.email_addresses || [];
   if (emailObjs.length === 0) {
     const rawEmails = email.emails && email.emails.length > 0
@@ -74,7 +154,7 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
   }
   const emailStrings = Array.from(new Set(emailObjs.map(e => e.value)));
 
-  // 5. Domains
+  // 6. Domains
   let domainObjs: DomainIndicator[] = email.indicators?.domains || [];
   if (domainObjs.length === 0) {
     const domainSet = new Set<string>();
@@ -96,7 +176,7 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
   }
   const domainStrings = Array.from(new Set(domainObjs.map(d => d.value)));
 
-  // 6. Attachments
+  // 7. Attachments
   let attObjs: AttachmentIndicator[] = email.indicators?.attachments || [];
   if (attObjs.length === 0 && email.attachments && email.attachments.length > 0) {
     attObjs = email.attachments.map(att => ({
@@ -120,6 +200,7 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
   return {
     ...email,
     email_sha256: emailSha256,
+    authentication: authAnalysis,
     indicators: indicatorsGroup,
     urls: urlStrings,
     ips: ipStrings,

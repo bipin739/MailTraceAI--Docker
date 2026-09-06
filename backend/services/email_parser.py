@@ -12,6 +12,7 @@ from backend.schemas.email import (
     IndicatorsGroup
 )
 from backend.services.ioc_extractor import IOCExtractorService
+from backend.services.auth_analyzer import AuthAnalyzerService
 
 
 class EmailParseException(Exception):
@@ -82,20 +83,41 @@ class EmailParserService:
             return_path = cls._decode_header_value(msg.get("Return-Path"))
             message_id = cls._decode_header_value(msg.get("Message-ID"))
 
-            raw_received = msg.get_all("Received", [])
+            raw_received = msg.get_all("Received", []) or []
             received_headers = [
                 cls._decode_header_value(r) for r in raw_received if r is not None
             ]
             received_headers = [r for r in received_headers if r]
 
-            raw_auth_results = msg.get_all("Authentication-Results", [])
+            raw_auth_results = msg.get_all("Authentication-Results", []) or []
+            raw_arc_auth = msg.get_all("ARC-Authentication-Results", []) or []
+            raw_x_auth = msg.get_all("X-Authentication-Results", []) or []
+
+            all_auth = raw_auth_results + raw_arc_auth + raw_x_auth
             auth_results_list = [
-                cls._decode_header_value(a) for a in raw_auth_results if a is not None
+                cls._decode_header_value(a) for a in all_auth if a is not None
             ]
-            auth_results_str = "; ".join([a for a in auth_results_list if a]) or None
+            auth_results_list = [a for a in auth_results_list if a]
+            auth_results_str = "; ".join(auth_results_list) if auth_results_list else None
+
+            raw_rec_spf = msg.get_all("Received-SPF", []) or []
+            received_spf_headers = [
+                cls._decode_header_value(s) for s in raw_rec_spf if s is not None
+            ]
+            received_spf_headers = [s for s in received_spf_headers if s]
 
         except Exception as e:
             raise EmailParseException(f"Malformed headers in email: {str(e)}")
+
+        # 2. Analyze Email Authentication & Sender Alignment
+        auth_analysis = AuthAnalyzerService.analyze_authentication(
+            from_header=from_header,
+            reply_to=reply_to,
+            return_path=return_path,
+            auth_headers=auth_results_list,
+            received_spf_headers=received_spf_headers,
+            raw_headers_text=raw_email_str
+        )
 
         headers_dict = {
             "from": from_header,
@@ -174,7 +196,7 @@ class EmailParserService:
         plain_text_str = "\n".join(plain_text_parts) if plain_text_parts else None
         html_str = "\n".join(html_parts) if html_parts else None
 
-        # 2. Extract IOCs using IOCExtractorService
+        # 3. Extract IOCs using IOCExtractorService
         url_indicators = IOCExtractorService.extract_urls(plain_text_str, html_str, headers_dict)
         email_indicators = IOCExtractorService.extract_email_addresses(headers_dict, plain_text_str, html_str)
 
@@ -221,7 +243,6 @@ class EmailParserService:
             size_bytes=len(content_bytes)
         )
 
-        # Backwards compatible attachment info models
         attachments_info = [
             AttachmentInfo(
                 filename=att.filename,
@@ -234,6 +255,7 @@ class EmailParserService:
 
         return EmailAnalysisResponse(
             email_sha256=email_sha256,
+            authentication=auth_analysis,
             indicators=indicators_group,
             subject=subject,
             from_header=from_header,

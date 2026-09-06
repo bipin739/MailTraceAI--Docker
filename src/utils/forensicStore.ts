@@ -15,7 +15,22 @@ export const MOCK_SAMPLE_ANALYSIS: EmailAnalysis = resolveEmailIndicators({
   reply_to: 'support@example.net',
   return_path: 'bounce@example.net',
   message_id: '<abc123@example.com>',
-  authentication_results: 'spf=fail; dkim=none; dmarc=fail',
+  authentication_results: 'mx.company.com; dkim=fail header.i=@company.com; spf=fail (domain of bounce@example.net does not designate 203.0.113.25); dmarc=fail (p=reject)',
+  authentication: {
+    verification_type: 'observed_header',
+    verification_notice: 'Observed authentication result from supplied headers (unverified by local mail server)',
+    observed_header: 'mx.company.com; dkim=fail header.i=@company.com; spf=fail (domain of bounce@example.net does not designate 203.0.113.25); dmarc=fail (p=reject)',
+    spf: { result: 'fail', details: 'spf=fail (domain of bounce@example.net does not designate 203.0.113.25)' },
+    dkim: { result: 'fail', details: 'dkim=fail header.i=@company.com' },
+    dmarc: { result: 'fail', details: 'dmarc=fail (p=reject dis=none)' },
+    alignment: {
+      from_domain: 'micros0ft-example.com',
+      reply_to_domain: 'example.net',
+      return_path_domain: 'example.net',
+      reply_to_mismatch: true,
+      return_path_mismatch: true
+    }
+  },
   received: [
     'from mail.example.net (203.0.113.25) by mx.company.com; Sun, 7 Sep 2026 10:42:01 +0530',
     'from smtp.example.org (198.51.100.12) by mail.example.net; Sun, 7 Sep 2026 10:41:59 +0530'
