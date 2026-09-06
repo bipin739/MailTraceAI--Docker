@@ -1,0 +1,41 @@
+from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from backend.api.routes.email import router as email_router
+
+app = FastAPI(
+    title="Cybersecurity Email Forensic Parser API",
+    description="FastAPI service to ingest, parse, and analyze RFC-822 / .eml email files for cybersecurity threat investigation.",
+    version="1.0.0"
+)
+
+# Enable CORS for frontend integration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include API Routers
+app.include_router(email_router)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": f"Internal Server Error: {str(exc)}", "error_code": "INTERNAL_SERVER_ERROR"}
+    )
+
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return {"status": "ok", "service": "cybersecurity-email-parser"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)

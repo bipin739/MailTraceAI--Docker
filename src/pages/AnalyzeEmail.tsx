@@ -54,16 +54,58 @@ export const AnalyzeEmail: React.FC = () => {
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        setRawInput(text);
-        handleRunAnalysis();
-      };
-      reader.readAsText(file);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setRawInput((event.target?.result as string) || '');
+    };
+    reader.readAsText(file);
+
+    setIsAnalyzing(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('http://localhost:8000/api/emails/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentEmail(prev => ({
+          ...prev,
+          subject: data.headers.subject || file.name,
+          senderEmail: data.headers.from || prev.senderEmail,
+          recipientEmail: Array.isArray(data.headers.to) ? data.headers.to.join(', ') : (data.headers.to || prev.recipientEmail),
+          returnPath: data.headers.return_path || prev.returnPath,
+          replyTo: data.headers.reply_to || prev.replyTo,
+          rawHeaders: JSON.stringify(data.headers, null, 2),
+          bodyText: data.body.plain_text || data.body.html || prev.bodyText,
+          iocs: {
+            ...prev.iocs,
+            urls: data.urls.map((u: string) => ({
+              url: u,
+              domain: u.split('/')[2] || u,
+              isObfuscated: false,
+              riskScore: 75
+            })),
+            hashes: data.attachments.map((att: { filename: string; mime_type: string; size: number }) => ({
+              filename: att.filename,
+              md5: `${att.mime_type} (${att.size} bytes)`,
+              sha256: 'N/A',
+              isMalicious: false
+            }))
+          }
+        }));
+      }
+    } catch (err) {
+      console.warn('Backend API offline, previewing raw content locally', err);
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
