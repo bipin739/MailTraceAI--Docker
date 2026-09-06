@@ -118,7 +118,97 @@ Content-Disposition: attachment; filename="invoice.pdf"
       size: 241000,
       sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
     }
-  ]
+  ],
+  domain_intelligence: {
+    'micros0ft-example.com': {
+      domain: 'micros0ft-example.com',
+      dns: {
+        a: ['203.0.113.88'],
+        aaaa: [],
+        mx: ['10 mail.micros0ft-example.com'],
+        ns: ['ns1.shadow-dns.com', 'ns2.shadow-dns.com'],
+        txt: ['v=spf1 include:spf.protection.outlook.com -all']
+      },
+      registration: {
+        registrar: 'NameCheap, Inc.',
+        registration_date: new Date(Date.now() - 18 * 86400000).toISOString(),
+        expiration_date: new Date(Date.now() + 347 * 86400000).toISOString(),
+        nameservers: ['ns1.shadow-dns.com', 'ns2.shadow-dns.com'],
+        status: ['clientTransferProhibited'],
+        registration_source: 'RDAP'
+      },
+      domain_age_days: 18,
+      newly_registered_domain: true,
+      is_resolvable: true,
+      status_message: 'Active / Resolvable'
+    },
+    'company.com': {
+      domain: 'company.com',
+      dns: {
+        a: ['198.51.100.10'],
+        aaaa: [],
+        mx: ['10 mx.company.com'],
+        ns: ['ns1.company.com', 'ns2.company.com'],
+        txt: ['v=spf1 ip4:198.51.100.10 -all']
+      },
+      registration: {
+        registrar: 'MarkMonitor Inc.',
+        registration_date: '1997-04-15T04:00:00Z',
+        expiration_date: '2028-04-15T04:00:00Z',
+        nameservers: ['ns1.company.com', 'ns2.company.com'],
+        status: ['clientDeleteProhibited', 'clientTransferProhibited'],
+        registration_source: 'RDAP'
+      },
+      domain_age_days: Math.floor((Date.now() - new Date('1997-04-15T04:00:00Z').getTime()) / 86400000),
+      newly_registered_domain: false,
+      is_resolvable: true,
+      status_message: 'Active / Resolvable'
+    },
+    'example.net': {
+      domain: 'example.net',
+      dns: {
+        a: ['93.184.216.34'],
+        aaaa: ['2606:2800:220:1:248:1893:25c8:1946'],
+        mx: ['0 .'],
+        ns: ['a.iana-servers.net', 'b.iana-servers.net'],
+        txt: ['v=spf1 -all']
+      },
+      registration: {
+        registrar: 'Internet Assigned Numbers Authority',
+        registration_date: '1995-07-10T04:00:00Z',
+        expiration_date: '2027-07-09T04:00:00Z',
+        nameservers: ['a.iana-servers.net', 'b.iana-servers.net'],
+        status: ['serverDeleteProhibited', 'serverTransferProhibited'],
+        registration_source: 'RDAP'
+      },
+      domain_age_days: Math.floor((Date.now() - new Date('1995-07-10T04:00:00Z').getTime()) / 86400000),
+      newly_registered_domain: false,
+      is_resolvable: true,
+      status_message: 'Active / Resolvable'
+    },
+    'example.org': {
+      domain: 'example.org',
+      dns: {
+        a: ['93.184.216.34'],
+        aaaa: ['2606:2800:220:1:248:1893:25c8:1946'],
+        mx: ['0 .'],
+        ns: ['a.iana-servers.net', 'b.iana-servers.net'],
+        txt: ['v=spf1 -all']
+      },
+      registration: {
+        registrar: 'Internet Assigned Numbers Authority',
+        registration_date: '1995-07-10T04:00:00Z',
+        expiration_date: '2027-07-09T04:00:00Z',
+        nameservers: ['a.iana-servers.net', 'b.iana-servers.net'],
+        status: ['serverDeleteProhibited', 'serverTransferProhibited'],
+        registration_source: 'RDAP'
+      },
+      domain_age_days: Math.floor((Date.now() - new Date('1995-07-10T04:00:00Z').getTime()) / 86400000),
+      newly_registered_domain: false,
+      is_resolvable: true,
+      status_message: 'Active / Resolvable'
+    }
+  }
 });
 
 export const saveAnalysisResult = (id: string, data: EmailAnalysis): void => {

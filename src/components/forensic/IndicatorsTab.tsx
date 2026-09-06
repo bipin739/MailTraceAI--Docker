@@ -1,14 +1,14 @@
 import React from 'react';
 import type {
   EmailAnalysis,
-  DomainIndicator,
   URLIndicator,
   EmailAddressIndicator,
   AttachmentIndicator
 } from '../../types/forensic';
 import { CopyButton } from './CopyButton';
 import { IPIntelligenceSection } from './IPIntelligenceSection';
-import { Link, Globe, Mail, Hash, Paperclip, Shield } from 'lucide-react';
+import { DomainIntelligenceSection } from './DomainIntelligenceSection';
+import { Link, Mail, Hash, Paperclip, Shield } from 'lucide-react';
 
 interface IndicatorsTabProps {
   email: EmailAnalysis;
@@ -16,11 +16,6 @@ interface IndicatorsTabProps {
 
 export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
   const indicators = email.indicators || {};
-
-  // Resolve Domain indicators
-  const domainList: DomainIndicator[] = indicators.domains && indicators.domains.length > 0
-    ? indicators.domains
-    : (email.domains || []).map(d => ({ value: d, source: 'extracted' }));
 
   // Resolve URL indicators
   const urlList: URLIndicator[] = indicators.urls && indicators.urls.length > 0
@@ -81,45 +76,8 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
       {/* IP Addresses Intelligence & Infrastructure */}
       <IPIntelligenceSection email={email} />
 
-      {/* Domains */}
-      <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3 backdrop-blur-xl shadow-lg">
-        <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-          <Globe className="w-4 h-4 text-blue-400" />
-          <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
-            Domains ({domainList.length})
-          </h3>
-        </div>
-
-        {domainList.length === 0 ? (
-          <p className="text-xs font-mono text-slate-500 italic p-2">
-            No domains detected.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {domainList.map((domain, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-2.5 rounded-lg border border-slate-800/80 bg-slate-900/50 hover:bg-slate-900 transition-colors gap-3"
-              >
-                <div className="flex items-center space-x-2.5 min-w-0 flex-1">
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 border border-slate-700 shrink-0">
-                    Extracted Indicator
-                  </span>
-                  <span className="text-xs font-mono text-slate-200 break-all select-all font-semibold">
-                    {domain.value}
-                  </span>
-                  {domain.source && (
-                    <span className="text-[10px] font-mono text-slate-400 hidden sm:inline-block truncate">
-                      ({domain.source})
-                    </span>
-                  )}
-                </div>
-                <CopyButton text={domain.value} iconOnly className="shrink-0" />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Domain Infrastructure & Registration Intelligence */}
+      <DomainIntelligenceSection email={email} />
 
       {/* URLs */}
       <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3 backdrop-blur-xl shadow-lg">

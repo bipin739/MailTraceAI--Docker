@@ -116,12 +116,41 @@ export interface IPIntelligence {
   error?: string;
 }
 
+export interface DNSRecords {
+  a: string[];
+  aaaa: string[];
+  mx: string[];
+  ns: string[];
+  txt: string[];
+}
+
+export interface DomainRegistration {
+  registrar?: string;
+  registration_date?: string;
+  expiration_date?: string;
+  nameservers: string[];
+  status: string[];
+  registration_source: string;
+}
+
+export interface DomainIntelligence {
+  domain: string;
+  punycode?: string;
+  dns: DNSRecords;
+  registration: DomainRegistration;
+  domain_age_days?: number;
+  newly_registered_domain?: boolean;
+  is_resolvable: boolean;
+  status_message?: string;
+}
+
 export interface EmailAnalysis {
   id?: string;
   email_sha256?: string;
   authentication?: AuthenticationAnalysis;
   relay_analysis?: RelayPathAnalysis;
   ip_intelligence?: Record<string, IPIntelligence>;
+  domain_intelligence?: Record<string, DomainIntelligence>;
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;

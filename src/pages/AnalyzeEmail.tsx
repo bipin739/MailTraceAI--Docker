@@ -106,7 +106,9 @@ export const AnalyzeEmail: React.FC = () => {
           ips: data.ips || [],
           domains: data.domains || [],
           emails: data.emails || [],
-          attachments: data.attachments || []
+          attachments: data.attachments || [],
+          ip_intelligence: data.ip_intelligence || {},
+          domain_intelligence: data.domain_intelligence || {}
         };
 
         saveAnalysisResult(analysisId, parsedAnalysis);
