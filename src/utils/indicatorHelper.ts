@@ -11,6 +11,38 @@ import type {
   RelayPathAnalysis
 } from '../types/forensic';
 
+export const decodeRfc2047 = (str?: string): string => {
+  if (!str) return str || '';
+  return str.replace(/=\?([^?]+)\?([BQbq])\?([^?]*)\?=/g, (_, charset, encoding, text) => {
+    try {
+      const enc = encoding.toUpperCase();
+      if (enc === 'B') {
+        const binStr = atob(text);
+        const bytes = Uint8Array.from(binStr, c => c.charCodeAt(0));
+        return new TextDecoder(charset).decode(bytes);
+      } else if (enc === 'Q') {
+        const qText = text.replace(/_/g, ' ');
+        const bytes: number[] = [];
+        for (let i = 0; i < qText.length; i++) {
+          if (qText[i] === '=' && i + 2 < qText.length) {
+            const hex = qText.substring(i + 1, i + 3);
+            if (/^[0-9a-fA-F]{2}$/.test(hex)) {
+              bytes.push(parseInt(hex, 16));
+              i += 2;
+              continue;
+            }
+          }
+          bytes.push(qText.charCodeAt(i));
+        }
+        return new TextDecoder(charset).decode(new Uint8Array(bytes));
+      }
+    } catch (e) {
+      return text;
+    }
+    return text;
+  });
+};
+
 export const resolveRelayAnalysis = (email: EmailAnalysis): RelayPathAnalysis => {
   if (email.relay_analysis && email.relay_analysis.header_order_hops && email.relay_analysis.header_order_hops.length > 0) {
     return email.relay_analysis;
@@ -173,13 +205,20 @@ export const resolveRelayAnalysis = (email: EmailAnalysis): RelayPathAnalysis =>
 };
 
 export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
+  const subject = decodeRfc2047(email.subject);
+  const fromVal = decodeRfc2047(email.from || (email as any).from_header);
+  const toVal = decodeRfc2047(Array.isArray(email.to) ? email.to.join(', ') : email.to);
+  const ccVal = decodeRfc2047(Array.isArray(email.cc) ? email.cc.join(', ') : email.cc);
+  const replyToVal = decodeRfc2047(email.reply_to);
+  const returnPathVal = decodeRfc2047(email.return_path);
+
   const fullText = `
-    ${email.subject || ''}
-    ${email.from || (email as any).from_header || ''}
-    ${email.to || ''}
-    ${email.cc || ''}
-    ${email.reply_to || ''}
-    ${email.return_path || ''}
+    ${subject}
+    ${fromVal}
+    ${toVal}
+    ${ccVal}
+    ${replyToVal}
+    ${returnPathVal}
     ${(email.received || []).join('\n')}
     ${email.plain_text_body || ''}
     ${email.html_body || ''}
@@ -207,10 +246,9 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     return match ? match[1].toLowerCase() : undefined;
   };
 
-  const fromVal = email.from || (email as any).from_header;
   const fromDom = email.authentication?.alignment?.from_domain || extractDomain(fromVal);
-  const replyDom = email.authentication?.alignment?.reply_to_domain || extractDomain(email.reply_to);
-  const returnDom = email.authentication?.alignment?.return_path_domain || extractDomain(email.return_path);
+  const replyDom = email.authentication?.alignment?.reply_to_domain || extractDomain(replyToVal);
+  const returnDom = email.authentication?.alignment?.return_path_domain || extractDomain(returnPathVal);
 
   const replyMismatch = Boolean(replyDom && fromDom && replyDom.toLowerCase() !== fromDom.toLowerCase());
   const returnMismatch = Boolean(returnDom && fromDom && returnDom.toLowerCase() !== fromDom.toLowerCase());
@@ -365,6 +403,12 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
 
   return {
     ...email,
+    subject: subject || email.subject,
+    from: fromVal || email.from,
+    to: toVal || email.to,
+    cc: ccVal || email.cc,
+    reply_to: replyToVal || email.reply_to,
+    return_path: returnPathVal || email.return_path,
     email_sha256: emailSha256,
     authentication: authAnalysis,
     relay_analysis: relayAnalysis,

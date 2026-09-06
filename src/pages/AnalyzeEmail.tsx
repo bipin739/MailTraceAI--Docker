@@ -15,6 +15,7 @@ import { SAMPLE_EMAILS } from '../data/mockData';
 import type { EmailAnalysisData } from '../types';
 import type { EmailAnalysis } from '../types/forensic';
 import { saveAnalysisResult } from '../utils/forensicStore';
+import { decodeRfc2047 } from '../utils/indicatorHelper';
 import { RiskBadge } from '../components/common/RiskBadge';
 import { HeaderProtocolStatus } from '../components/common/HeaderProtocolStatus';
 import { GeoTraceMap } from '../components/common/GeoTraceMap';
@@ -88,14 +89,14 @@ export const AnalyzeEmail: React.FC = () => {
           authentication: data.authentication,
           relay_analysis: data.relay_analysis,
           indicators: data.indicators,
-          subject: data.subject || data.headers?.subject || file.name,
-          from: data.from || data.from_header || data.headers?.from || '',
-          to: data.to || data.headers?.to || '',
-          cc: data.cc || data.headers?.cc || '',
-          date: data.date || data.headers?.date || '',
-          reply_to: data.reply_to || data.headers?.reply_to || '',
-          return_path: data.return_path || data.headers?.return_path || '',
-          message_id: data.message_id || data.headers?.message_id || '',
+          subject: decodeRfc2047(data.subject || data.headers?.subject || file.name),
+          from: decodeRfc2047(data.from || data.from_header || data.headers?.from || ''),
+          to: decodeRfc2047(Array.isArray(data.to) ? data.to.join(', ') : (data.to || data.headers?.to || '')),
+          cc: decodeRfc2047(Array.isArray(data.cc) ? data.cc.join(', ') : (data.cc || data.headers?.cc || '')),
+          date: decodeRfc2047(data.date || data.headers?.date || ''),
+          reply_to: decodeRfc2047(data.reply_to || data.headers?.reply_to || ''),
+          return_path: decodeRfc2047(data.return_path || data.headers?.return_path || ''),
+          message_id: decodeRfc2047(data.message_id || data.headers?.message_id || ''),
           received: data.received || data.headers?.received || [],
           authentication_results: data.authentication_results || data.headers?.authentication_results || '',
           plain_text_body: data.plain_text_body || data.body?.plain_text || '',
@@ -121,7 +122,7 @@ export const AnalyzeEmail: React.FC = () => {
     // Dynamic header extraction fallback if backend is offline
     const getHeaderVal = (name: string): string => {
       const match = textContent.match(new RegExp(`^${name}:[ \\t]*(.+)`, 'im'));
-      return match ? match[1].trim() : '';
+      return match ? decodeRfc2047(match[1].trim()) : '';
     };
 
     const extractReceivedHeaders = (text: string): string[] => {

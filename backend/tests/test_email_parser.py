@@ -98,3 +98,18 @@ def test_api_analyze_endpoint_authentication():
     assert "unverified" in data["authentication"]["verification_notice"].lower()
     assert data["authentication"]["spf"]["result"] == "softfail"
     assert data["authentication"]["alignment"]["reply_to_mismatch"] is True
+
+
+def test_encoded_word_rfc2047_decoding():
+    """Test EmailParserService decodes RFC-2047 Q-encoded subject headers into human-readable text."""
+    eml = (
+        b"From: Exclusive Offer <offer@example.com>\r\n"
+        b"To: User <user@example.com>\r\n"
+        b"Subject: =?UTF-8?Q?=E2=9C=85Select_your_Loan_Plan_|_Exclusive_Offer_is_Waiting!?=\r\n"
+        b"Date: Mon, 07 Sep 2026 10:00:00 +0000\r\n"
+        b"\r\n"
+        b"Sample body text\r\n"
+    )
+    res = EmailParserService.parse_eml_bytes(eml, filename="encoded.eml")
+    assert res.subject == "✅Select your Loan Plan | Exclusive Offer is Waiting!"
+

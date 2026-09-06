@@ -30,25 +30,16 @@ class EmailParserService:
         if header_val is None:
             return None
 
-        header_str = str(header_val)
+        header_str = str(header_val).strip()
         if not header_str:
             return None
 
         try:
-            decoded_parts = decode_header(header_str)
-            result = []
-            for part, encoding in decoded_parts:
-                if isinstance(part, bytes):
-                    enc = encoding or 'utf-8'
-                    try:
-                        result.append(part.decode(enc, errors='replace'))
-                    except (LookupError, UnicodeDecodeError):
-                        result.append(part.decode('utf-8', errors='replace'))
-                else:
-                    result.append(str(part))
-            return "".join(result).strip()
+            from email.header import decode_header, make_header
+            decoded = str(make_header(decode_header(header_str)))
+            return decoded.strip()
         except Exception:
-            return header_str.strip()
+            return header_str
 
     @classmethod
     def parse_eml_bytes(cls, content_bytes: bytes, filename: str = "uploaded.eml") -> EmailAnalysisResponse:
