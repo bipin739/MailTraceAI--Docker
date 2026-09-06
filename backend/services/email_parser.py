@@ -13,6 +13,7 @@ from backend.schemas.email import (
 )
 from backend.services.ioc_extractor import IOCExtractorService
 from backend.services.auth_analyzer import AuthAnalyzerService
+from backend.services.relay_reconstructor import RelayReconstructorService
 
 
 class EmailParseException(Exception):
@@ -119,6 +120,9 @@ class EmailParserService:
             raw_headers_text=raw_email_str
         )
 
+        # 3. Reconstruct Relay Path from Received headers
+        relay_analysis = RelayReconstructorService.reconstruct_relay_path(received_headers)
+
         headers_dict = {
             "from": from_header,
             "to": to_header,
@@ -196,7 +200,7 @@ class EmailParserService:
         plain_text_str = "\n".join(plain_text_parts) if plain_text_parts else None
         html_str = "\n".join(html_parts) if html_parts else None
 
-        # 3. Extract IOCs using IOCExtractorService
+        # 4. Extract IOCs using IOCExtractorService
         url_indicators = IOCExtractorService.extract_urls(plain_text_str, html_str, headers_dict)
         email_indicators = IOCExtractorService.extract_email_addresses(headers_dict, plain_text_str, html_str)
 
@@ -256,6 +260,7 @@ class EmailParserService:
         return EmailAnalysisResponse(
             email_sha256=email_sha256,
             authentication=auth_analysis,
+            relay_analysis=relay_analysis,
             indicators=indicators_group,
             subject=subject,
             from_header=from_header,

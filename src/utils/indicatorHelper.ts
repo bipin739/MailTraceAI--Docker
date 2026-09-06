@@ -6,13 +6,176 @@ import type {
   EmailAddressIndicator,
   AttachmentIndicator,
   IndicatorsGroup,
-  AuthenticationAnalysis
+  AuthenticationAnalysis,
+  RelayHop,
+  RelayPathAnalysis
 } from '../types/forensic';
+
+export const resolveRelayAnalysis = (email: EmailAnalysis): RelayPathAnalysis => {
+  if (email.relay_analysis && email.relay_analysis.header_order_hops && email.relay_analysis.header_order_hops.length > 0) {
+    return email.relay_analysis;
+  }
+
+  const rawReceived = email.received || [];
+  if (rawReceived.length === 0) {
+    return {
+      header_order_hops: [],
+      transmission_order_hops: [],
+      earliest_observable_node: {
+        earliest_observable_ip: undefined,
+        from_host: undefined,
+        confidence: 'none',
+        reason: 'No Received headers present in email'
+      },
+      trust_notice: 'Headers nearest the recipient\'s mail infrastructure provide stronger evidence than upstream headers, which may be forged by prior nodes.'
+    };
+  }
+
+  const isPublicIp = (ipStr: string): boolean => {
+    if (!ipStr) return false;
+    const clean = ipStr.replace(/^IPv6:/i, '').trim();
+    if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|127\.|169\.254\.|100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\.|fc|fe80)/i.test(clean)) {
+      return false;
+    }
+    return true;
+  };
+
+  const extractIpFromText = (text?: string): string | undefined => {
+    if (!text) return undefined;
+    const ipv6M = text.match(/\[(?:IPv6:)?([0-9a-fA-F:]+)\]/i);
+    if (ipv6M && ipv6M[1].includes(':')) return ipv6M[1].trim();
+
+    const ipv4B = text.match(/\[((?:\d{1,3}\.){3}\d{1,3})\]/);
+    if (ipv4B) return ipv4B[1].trim();
+
+    const ipv4S = text.match(/\b((?:\d{1,3}\.){3}\d{1,3})\b/);
+    if (ipv4S) return ipv4S[1].trim();
+
+    const ipv6S = text.match(/\b(?:[0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}\b/);
+    if (ipv6S) return ipv6S[0].trim();
+
+    return undefined;
+  };
+
+  const parseHeader = (raw: string, idx: number): RelayHop => {
+    const clean = raw.replace(/\s+/g, ' ').trim();
+    let fromHost: string | undefined;
+    let fromIp: string | undefined;
+    let byHost: string | undefined;
+    let byIp: string | undefined;
+    let protocol: string | undefined;
+    let idStr: string | undefined;
+    let recipient: string | undefined;
+    let timestamp: string | undefined;
+
+    let bodyText = clean;
+    if (clean.includes(';')) {
+      const parts = clean.split(';');
+      timestamp = parts.pop()?.trim();
+      bodyText = parts.join(';').trim();
+    }
+
+    const fromMatch = bodyText.match(/\bfrom\s+(.*?)(?=\bby\b|\bwith\b|\bid\b|\bfor\b|$)/i);
+    if (fromMatch) {
+      const fromClause = fromMatch[1].trim();
+      fromIp = extractIpFromText(fromClause);
+      const tokenM = fromClause.match(/^([^\s;()\[\]]+)/);
+      if (tokenM && !extractIpFromText(tokenM[1])) {
+        fromHost = tokenM[1].trim();
+      }
+      if (!fromHost) {
+        const hostInParen = fromClause.match(/\b([a-zA-Z0-9\.\-]+\.[a-zA-Z]{2,})\b/);
+        if (hostInParen && !extractIpFromText(hostInParen[1])) {
+          fromHost = hostInParen[1];
+        }
+      }
+    }
+
+    const byMatch = bodyText.match(/\bby\s+(.*?)(?=\bwith\b|\bid\b|\bfor\b|\bfrom\b|$)/i);
+    if (byMatch) {
+      const byClause = byMatch[1].trim();
+      byIp = extractIpFromText(byClause);
+      const tokenM = byClause.match(/^([^\s;()\[\]]+)/);
+      if (tokenM && !extractIpFromText(tokenM[1])) {
+        byHost = tokenM[1].trim();
+      }
+      if (!byHost) {
+        const hostInParen = byClause.match(/\b([a-zA-Z0-9\.\-]+\.[a-zA-Z]{2,})\b/);
+        if (hostInParen && !extractIpFromText(hostInParen[1])) {
+          byHost = hostInParen[1];
+        }
+      }
+    }
+
+    const withMatch = bodyText.match(/\bwith\s+([A-Za-z0-9\-\_]+)/i);
+    if (withMatch) protocol = withMatch[1].trim();
+
+    const idMatch = bodyText.match(/\bid\s+([^\s;]+)/i);
+    if (idMatch) idStr = idMatch[1].trim();
+
+    const forMatch = bodyText.match(/\bfor\s+<?([^\s;>]+)>?/i);
+    if (forMatch) recipient = forMatch[1].trim();
+
+    const fieldCount = [fromHost, fromIp, byHost, byIp, protocol, idStr, recipient, timestamp].filter(Boolean).length;
+    const confidence = fieldCount >= 3 ? 'high' : (fieldCount >= 1 ? 'medium' : 'low');
+
+    return {
+      hop_number: idx,
+      from_host: fromHost,
+      from_ip: fromIp,
+      by_host: byHost,
+      by_ip: byIp,
+      protocol,
+      id: idStr,
+      recipient,
+      timestamp,
+      parser_confidence: confidence,
+      raw
+    };
+  };
+
+  const headerHops = rawReceived.map((r, i) => parseHeader(r, i + 1));
+  const transmissionHops = [...rawReceived].reverse().map((r, i) => parseHeader(r, i + 1));
+
+  let earliestIp: string | undefined;
+  let earliestHost: string | undefined;
+  let confidence: 'high' | 'medium' | 'low' | 'none' = 'none';
+  let reason = 'No public IP address found in Received header chain';
+
+  for (const hop of transmissionHops) {
+    if (hop.from_ip && isPublicIp(hop.from_ip)) {
+      earliestIp = hop.from_ip;
+      earliestHost = hop.from_host;
+      confidence = 'high';
+      reason = `Earliest public IP found in Received chain at Hop #${hop.hop_number} (from ${hop.from_host || 'unknown'})`;
+      break;
+    }
+    if (hop.by_ip && isPublicIp(hop.by_ip)) {
+      earliestIp = hop.by_ip;
+      earliestHost = hop.by_host;
+      confidence = 'medium';
+      reason = `Earliest public receiving server IP found at Hop #${hop.hop_number}`;
+      break;
+    }
+  }
+
+  return {
+    header_order_hops: headerHops,
+    transmission_order_hops: transmissionHops,
+    earliest_observable_node: {
+      earliest_observable_ip: earliestIp,
+      from_host: earliestHost,
+      confidence,
+      reason
+    },
+    trust_notice: 'Headers nearest the recipient\'s mail infrastructure provide stronger evidence than upstream headers, which may be forged by prior nodes.'
+  };
+};
 
 export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
   const fullText = `
     ${email.subject || ''}
-    ${email.from || ''}
+    ${email.from || (email as any).from_header || ''}
     ${email.to || ''}
     ${email.cc || ''}
     ${email.reply_to || ''}
@@ -44,7 +207,8 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     return match ? match[1].toLowerCase() : undefined;
   };
 
-  const fromDom = email.authentication?.alignment?.from_domain || extractDomain(email.from);
+  const fromVal = email.from || (email as any).from_header;
+  const fromDom = email.authentication?.alignment?.from_domain || extractDomain(fromVal);
   const replyDom = email.authentication?.alignment?.reply_to_domain || extractDomain(email.reply_to);
   const returnDom = email.authentication?.alignment?.return_path_domain || extractDomain(email.return_path);
 
@@ -115,6 +279,8 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
       return_path_mismatch: returnMismatch
     }
   };
+
+  const relayAnalysis = resolveRelayAnalysis(email);
 
   // 3. URLs
   let urlObjs: URLIndicator[] = email.indicators?.urls || [];
@@ -201,6 +367,7 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     ...email,
     email_sha256: emailSha256,
     authentication: authAnalysis,
+    relay_analysis: relayAnalysis,
     indicators: indicatorsGroup,
     urls: urlStrings,
     ips: ipStrings,

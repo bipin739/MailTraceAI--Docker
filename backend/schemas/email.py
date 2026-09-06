@@ -98,9 +98,41 @@ class FileMeta(BaseModel):
     size_bytes: int = Field(..., description="Size of the uploaded file in bytes")
 
 
+class RelayHop(BaseModel):
+    hop_number: int = Field(..., description="Hop number")
+    from_host: Optional[str] = Field(None, description="Sender hostname extracted from 'from'")
+    from_ip: Optional[str] = Field(None, description="Sender IP address extracted from 'from'")
+    by_host: Optional[str] = Field(None, description="Receiving mail server hostname extracted from 'by'")
+    by_ip: Optional[str] = Field(None, description="Receiving mail server IP address extracted from 'by'")
+    protocol: Optional[str] = Field(None, description="Transfer protocol e.g. ESMTP, ESMTPS, HTTP, etc.")
+    id: Optional[str] = Field(None, description="Message identifier assigned by hop server")
+    recipient: Optional[str] = Field(None, description="Intended recipient for this hop ('for')")
+    timestamp: Optional[str] = Field(None, description="Timestamp string from Received header")
+    parser_confidence: str = Field("high", description="Parser confidence: high, medium, or low")
+    raw: str = Field(..., description="Original unparsed Received header text")
+
+
+class EarliestObservableNode(BaseModel):
+    earliest_observable_ip: Optional[str] = Field(None, description="Earliest usable public IP address in transmission path")
+    from_host: Optional[str] = Field(None, description="Associated sender host name if present")
+    confidence: str = Field("medium", description="Confidence level: high, medium, low, or none")
+    reason: str = Field("Earliest public IP found in Received chain", description="Explanatory text for identified IP")
+
+
+class RelayPathAnalysis(BaseModel):
+    header_order_hops: List[RelayHop] = Field(default_factory=list, description="Hops in original header order (top = recipient MX)")
+    transmission_order_hops: List[RelayHop] = Field(default_factory=list, description="Hops in derived chronological order (1 = sender origin)")
+    earliest_observable_node: EarliestObservableNode = Field(default_factory=EarliestObservableNode)
+    trust_notice: str = Field(
+        "Headers nearest the recipient's mail infrastructure provide stronger evidence than upstream headers, which may be forged by prior nodes.",
+        description="Forensic explanation of Received header trust hierarchy"
+    )
+
+
 class EmailAnalysisResponse(BaseModel):
     email_sha256: Optional[str] = Field(None, description="SHA-256 hash of raw uploaded email bytes")
     authentication: Optional[AuthenticationAnalysis] = Field(None, description="Structured authentication analysis and sender alignment")
+    relay_analysis: Optional[RelayPathAnalysis] = Field(None, description="Parsed Received header chain and relay transmission path")
     indicators: IndicatorsGroup = Field(default_factory=IndicatorsGroup, description="Structured indicators group")
 
     # Top-level flat fields for direct accessibility / backwards compatibility

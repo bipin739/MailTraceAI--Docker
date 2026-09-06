@@ -85,6 +85,8 @@ export const AnalyzeEmail: React.FC = () => {
         const parsedAnalysis: EmailAnalysis = {
           id: analysisId,
           email_sha256: data.email_sha256,
+          authentication: data.authentication,
+          relay_analysis: data.relay_analysis,
           indicators: data.indicators,
           subject: data.subject || data.headers?.subject || file.name,
           from: data.from || data.from_header || data.headers?.from || '',
@@ -116,13 +118,29 @@ export const AnalyzeEmail: React.FC = () => {
       setIsAnalyzing(false);
     }
 
-    // Fallback if backend is offline or fallback requested
+    // Dynamic header extraction fallback if backend is offline
+    const getHeaderVal = (name: string): string => {
+      const match = textContent.match(new RegExp(`^${name}:[ \\t]*(.+)`, 'im'));
+      return match ? match[1].trim() : '';
+    };
+
+    const extractReceivedHeaders = (text: string): string[] => {
+      const matches = Array.from(text.matchAll(/^Received:[ \t]*(.+?)(?=\r?\n\S|\r?\n\r?\n|$)/gms));
+      return matches.map(m => m[1].replace(/\s+/g, ' ').trim()).filter(Boolean);
+    };
+
     const fallbackAnalysis: EmailAnalysis = {
       id: analysisId,
-      subject: file.name,
-      from: 'sender@example.com',
-      to: 'recipient@company.com',
-      date: new Date().toUTCString(),
+      subject: getHeaderVal('Subject') || file.name,
+      from: getHeaderVal('From') || '',
+      to: getHeaderVal('To') || '',
+      cc: getHeaderVal('Cc') || '',
+      date: getHeaderVal('Date') || new Date().toUTCString(),
+      reply_to: getHeaderVal('Reply-To') || '',
+      return_path: getHeaderVal('Return-Path') || '',
+      message_id: getHeaderVal('Message-ID') || '',
+      received: extractReceivedHeaders(textContent || rawInput),
+      authentication_results: getHeaderVal('Authentication-Results') || '',
       raw_email: textContent || rawInput,
       plain_text_body: textContent || rawInput,
       urls: [],

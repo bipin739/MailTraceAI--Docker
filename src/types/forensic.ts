@@ -67,10 +67,39 @@ export interface EmailAttachment {
   sha256?: string;
 }
 
+export interface RelayHop {
+  hop_number: number;
+  from_host?: string;
+  from_ip?: string;
+  by_host?: string;
+  by_ip?: string;
+  protocol?: string;
+  id?: string;
+  recipient?: string;
+  timestamp?: string;
+  parser_confidence?: 'high' | 'medium' | 'low' | string;
+  raw: string;
+}
+
+export interface EarliestObservableNode {
+  earliest_observable_ip?: string;
+  from_host?: string;
+  confidence?: 'high' | 'medium' | 'low' | 'none' | string;
+  reason?: string;
+}
+
+export interface RelayPathAnalysis {
+  header_order_hops?: RelayHop[];
+  transmission_order_hops?: RelayHop[];
+  earliest_observable_node?: EarliestObservableNode;
+  trust_notice?: string;
+}
+
 export interface EmailAnalysis {
   id?: string;
   email_sha256?: string;
   authentication?: AuthenticationAnalysis;
+  relay_analysis?: RelayPathAnalysis;
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;
@@ -93,3 +122,4 @@ export interface EmailAnalysis {
 }
 
 export type ForensicTabType = 'overview' | 'headers' | 'content' | 'indicators' | 'attachments' | 'raw';
+
