@@ -113,3 +113,78 @@ def test_encoded_word_rfc2047_decoding():
     res = EmailParserService.parse_eml_bytes(eml, filename="encoded.eml")
     assert res.subject == "✅Select your Loan Plan | Exclusive Offer is Waiting!"
 
+
+def test_attachment_extraction_varieties():
+    """Test EmailParserService extracts attachments from inline disposition, Content-Type name, and unnamed binaries."""
+    eml = (
+        b"From: Bank <bank@example.com>\r\n"
+        b"To: User <user@example.com>\r\n"
+        b"Subject: Your Documents\r\n"
+        b"Content-Type: multipart/mixed; boundary=\"BOUNDARY\"\r\n"
+        b"\r\n"
+        b"--BOUNDARY\r\n"
+        b"Content-Type: text/plain\r\n"
+        b"\r\n"
+        b"Here are your documents.\r\n"
+        b"--BOUNDARY\r\n"
+        b"Content-Type: application/pdf\r\n"
+        b"Content-Disposition: inline; filename=\"Statement.pdf\"\r\n"
+        b"Content-Transfer-Encoding: base64\r\n"
+        b"\r\n"
+        b"JVBERi0xLjQK\r\n"
+        b"--BOUNDARY\r\n"
+        b"Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; name=\"Plan.xlsx\"\r\n"
+        b"Content-Transfer-Encoding: base64\r\n"
+        b"\r\n"
+        b"UEsDBBQAAAA=\r\n"
+        b"--BOUNDARY\r\n"
+        b"Content-Type: application/octet-stream\r\n"
+        b"Content-Disposition: attachment\r\n"
+        b"Content-Transfer-Encoding: base64\r\n"
+        b"\r\n"
+        b"YWJjZGVm\r\n"
+        b"--BOUNDARY--\r\n"
+    )
+    res = EmailParserService.parse_eml_bytes(eml, filename="docs.eml")
+    assert len(res.attachments) == 3
+    filenames = [a.filename for a in res.attachments]
+    assert "Statement.pdf" in filenames
+    assert "Plan.xlsx" in filenames
+    assert any("attachment_" in fn for fn in filenames)
+    assert all(len(a.sha256) == 64 for a in res.attachments)
+    assert len(res.indicators.attachments) == 3
+
+
+def test_folded_multiline_reply_to_extraction():
+    """Test EmailParserService extracts folded multiline Reply-To headers and parses domain alignment."""
+    eml = (
+        b"From: Customer Service <service@legit-bank.com>\r\n"
+        b"To: User <user@example.com>\r\n"
+        b"Reply-To: VIP Support\r\n"
+        b" <vip-desk@phishing-attack.com>\r\n"
+        b"Subject: Account Action Required\r\n"
+        b"\r\n"
+        b"Please reply to this email.\r\n"
+    )
+    res = EmailParserService.parse_eml_bytes(eml, filename="folded_reply_to.eml")
+    assert res.reply_to is not None
+    assert "vip-desk@phishing-attack.com" in res.reply_to
+    assert res.authentication.alignment.reply_to_domain == "phishing-attack.com"
+    assert res.authentication.alignment.reply_to_mismatch is True
+
+
+def test_missing_reply_to_defaults_safely():
+    """Test EmailParserService handles emails without Reply-To header gracefully."""
+    eml = (
+        b"From: Customer Service <service@legit-bank.com>\r\n"
+        b"To: User <user@example.com>\r\n"
+        b"Subject: Notification\r\n"
+        b"\r\n"
+        b"No reply-to header in this message.\r\n"
+    )
+    res = EmailParserService.parse_eml_bytes(eml, filename="no_reply_to.eml")
+    assert res.reply_to is None
+    assert res.authentication.alignment.reply_to_domain is None
+    assert res.authentication.alignment.reply_to_mismatch is False
+
+

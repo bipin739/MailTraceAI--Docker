@@ -100,7 +100,7 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
               <span>Reply-To:</span>
             </span>
             <span className="text-slate-300 break-all mt-0.5 font-medium">
-              {email.reply_to || 'Not available'}
+              {email.reply_to || (email.from ? `None (defaults to From)` : 'Not available')}
             </span>
           </div>
 

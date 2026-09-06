@@ -13,7 +13,7 @@ interface OverviewTabProps {
 export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
   const receivedHopsCount = email.received?.length || 0;
   const urlsCount = email.urls?.length || 0;
-  const attachmentsCount = email.attachments?.length || 0;
+  const attachmentsCount = email.attachments?.length || email.indicators?.attachments?.length || 0;
 
   const ipsCount = email.ips?.length || 0;
   const domainsCount = email.domains?.length || 0;
@@ -40,7 +40,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
           </div>
           <div className="space-y-2">
             <MetadataRow label="From" value={email.from} allowCopy />
-            <MetadataRow label="Reply-To" value={email.reply_to} allowCopy />
+            <MetadataRow
+              label="Reply-To"
+              value={email.reply_to || (email.from ? `Not specified in headers (defaults to sender)` : undefined)}
+              allowCopy={Boolean(email.reply_to)}
+            />
             <MetadataRow label="Return-Path" value={email.return_path} allowCopy />
           </div>
         </div>

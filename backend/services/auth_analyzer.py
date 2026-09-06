@@ -18,14 +18,18 @@ class AuthAnalyzerService:
         if not header_val:
             return None
 
-        match = re.search(r'<([^>]+)>', header_val)
-        addr = match.group(1) if match else header_val
+        import email.utils
+        _, addr = email.utils.parseaddr(header_val)
+        if not addr or '@' not in addr:
+            match = re.search(r'[\w\.-]+@([\w\.-]+\.[a-zA-Z]{2,})', header_val)
+            if match:
+                return match.group(1).lower().strip('.')
+            return None
 
-        if '@' in addr:
-            domain_part = addr.split('@')[-1].strip(' >\r\n\t;"\'').lower()
-            domain_part = domain_part.strip('.')
-            if domain_part and '.' in domain_part:
-                return domain_part
+        domain_part = addr.split('@')[-1].strip().lower()
+        domain_part = re.sub(r'[^a-z0-9\.-]', '', domain_part).strip('.')
+        if domain_part and '.' in domain_part:
+            return domain_part
 
         return None
 

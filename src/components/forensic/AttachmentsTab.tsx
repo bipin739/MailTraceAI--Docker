@@ -8,7 +8,9 @@ interface AttachmentsTabProps {
 }
 
 export const AttachmentsTab: React.FC<AttachmentsTabProps> = ({ email }) => {
-  const attachments = email.attachments || [];
+  const attachments = (email.attachments && email.attachments.length > 0)
+    ? email.attachments
+    : (email.indicators?.attachments || []);
 
   const formatFileSize = (bytes?: number): string => {
     if (!bytes || bytes === 0) return '0 Bytes';
@@ -74,6 +76,13 @@ export const AttachmentsTab: React.FC<AttachmentsTabProps> = ({ email }) => {
                 <span className="text-slate-400">File Size:</span>
                 <span className="text-cyan-300 font-bold">{formatFileSize(att.size)}</span>
               </div>
+
+              {att.sha256 && (
+                <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-2 text-[11px] font-mono">
+                  <span className="text-slate-400 truncate">SHA-256: {att.sha256.substring(0, 16)}...</span>
+                  <CopyButton text={att.sha256} label="Copy Hash" />
+                </div>
+              )}
             </div>
           ))}
         </div>

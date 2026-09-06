@@ -121,14 +121,35 @@ export const AnalyzeEmail: React.FC = () => {
 
     // Dynamic header extraction fallback if backend is offline
     const getHeaderVal = (name: string): string => {
-      const match = textContent.match(new RegExp(`^${name}:[ \\t]*(.+)`, 'im'));
-      return match ? decodeRfc2047(match[1].trim()) : '';
+      const match = textContent.match(new RegExp(`^${name}:[ \\t]*([^\\r\\n]+(?:\\r?\\n[ \\t]+[^\\r\\n]+)*)`, 'im'));
+      return match ? decodeRfc2047(match[1].replace(/\s+/g, ' ').trim()) : '';
     };
 
     const extractReceivedHeaders = (text: string): string[] => {
       const matches = Array.from(text.matchAll(/^Received:[ \t]*(.+?)(?=\r?\n\S|\r?\n\r?\n|$)/gms));
       return matches.map(m => m[1].replace(/\s+/g, ' ').trim()).filter(Boolean);
     };
+
+    const fallbackAttachments: { filename: string; mime_type: string; size: number; sha256: string }[] = [];
+    const attRegex = /(?:Content-Disposition:\s*(?:attachment|inline)[^;\r\n]*;\s*filename=["']?([^"'\r\n;]+)["']?|Content-Type:\s*([^;\r\n]+)[^;\r\n]*;\s*name=["']?([^"'\r\n;]+)["']?)/gi;
+    let am;
+    const seenNames = new Set<string>();
+    while ((am = attRegex.exec(textContent || rawInput)) !== null) {
+      const rawName = am[1] || am[3];
+      const rawMime = am[2] || 'application/octet-stream';
+      if (rawName) {
+        const cleanName = decodeRfc2047(rawName.trim().replace(/^["']|["']$/g, ''));
+        if (cleanName && !seenNames.has(cleanName.toLowerCase())) {
+          seenNames.add(cleanName.toLowerCase());
+          fallbackAttachments.push({
+            filename: cleanName,
+            mime_type: rawMime.trim(),
+            size: 0,
+            sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+          });
+        }
+      }
+    }
 
     const fallbackAnalysis: EmailAnalysis = {
       id: analysisId,
@@ -145,7 +166,7 @@ export const AnalyzeEmail: React.FC = () => {
       raw_email: textContent || rawInput,
       plain_text_body: textContent || rawInput,
       urls: [],
-      attachments: []
+      attachments: fallbackAttachments
     };
     saveAnalysisResult(analysisId, fallbackAnalysis);
     navigate(`/analysis/${analysisId}`);

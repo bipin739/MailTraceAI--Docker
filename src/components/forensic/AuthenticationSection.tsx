@@ -142,7 +142,9 @@ export const AuthenticationSection: React.FC<AuthenticationSectionProps> = ({ au
               <ArrowRight className="w-3 h-3 text-slate-500" />
             </div>
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-slate-200">{alignment.reply_to_domain || 'Not available'}</span>
+              <span className="font-bold text-slate-200">
+                {alignment.reply_to_domain || (alignment.from_domain ? `${alignment.from_domain} (defaults to From)` : 'Not specified')}
+              </span>
               {alignment.reply_to_mismatch && (
                 <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] bg-amber-950/90 text-amber-300 border border-amber-800/90 font-extrabold">
                   <AlertTriangle className="w-3 h-3" />

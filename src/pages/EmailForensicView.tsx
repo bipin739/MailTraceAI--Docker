@@ -77,7 +77,7 @@ export const EmailForensicView: React.FC = () => {
   const counts = {
     receivedHops: analysis.received?.length || 0,
     urls: analysis.urls?.length || 0,
-    attachments: analysis.attachments?.length || 0,
+    attachments: analysis.attachments?.length || analysis.indicators?.attachments?.length || 0,
   };
 
   return (

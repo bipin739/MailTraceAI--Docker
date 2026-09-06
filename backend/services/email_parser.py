@@ -1,4 +1,6 @@
 import email
+import re
+import mimetypes
 from email import policy
 from email.header import decode_header
 from typing import List, Dict, Any, Optional
@@ -72,6 +74,13 @@ class EmailParserService:
             subject = cls._decode_header_value(msg.get("Subject"))
             date = cls._decode_header_value(msg.get("Date"))
             reply_to = cls._decode_header_value(msg.get("Reply-To"))
+            if not reply_to:
+                # Fallback to search raw email for folded or non-standard Reply-To header
+                rt_match = re.search(r'(?im)^Reply-To:\s*([^\r\n]+(?:\r?\n[ \t]+[^\r\n]+)*)', raw_email_str)
+                if rt_match:
+                    unfolded_rt = re.sub(r'\s+', ' ', rt_match.group(1)).strip()
+                    reply_to = cls._decode_header_value(unfolded_rt)
+
             return_path = cls._decode_header_value(msg.get("Return-Path"))
             message_id = cls._decode_header_value(msg.get("Message-ID"))
 
@@ -134,24 +143,57 @@ class EmailParserService:
         # Iterate over parts
         try:
             if msg.is_multipart():
-                parts = msg.walk()
+                parts = list(msg.walk())
             else:
                 parts = [msg]
 
             attachment_counter = 1
             for part in parts:
-                content_type = part.get_content_type()
-                content_disposition = part.get_content_disposition()
-                part_filename = part.get_filename()
+                content_type = part.get_content_type() or "application/octet-stream"
+                content_maintype = part.get_content_maintype()
+                content_disposition = (part.get_content_disposition() or "").lower()
 
-                is_attachment = (
+                # Skip multipart container parts (they are envelopes, not payloads)
+                if content_maintype == "multipart":
+                    continue
+
+                # 1. Obtain filename across all standard and non-standard email headers
+                part_filename = part.get_filename()
+                if not part_filename:
+                    part_filename = part.get_param("name", header="content-type")
+                if not part_filename:
+                    part_filename = part.get_param("filename", header="content-disposition")
+
+                if not part_filename:
+                    disp_header = str(part.get("Content-Disposition", ""))
+                    fn_match = re.search(r'filename\*?=(?:["\']([^"\']+)["\']|([^\s;]+))', disp_header, re.I)
+                    if fn_match:
+                        part_filename = fn_match.group(1) or fn_match.group(2)
+
+                if not part_filename:
+                    type_header = str(part.get("Content-Type", ""))
+                    name_match = re.search(r'name\*?=(?:["\']([^"\']+)["\']|([^\s;]+))', type_header, re.I)
+                    if name_match:
+                        part_filename = name_match.group(1) or name_match.group(2)
+
+                # 2. Forensic attachment evaluation:
+                # - Any part explicitly declared with Content-Disposition: attachment
+                # - Any part with a filename or name parameter (including inline attachments/documents)
+                # - Any non-text payload (application/*, image/*, audio/*, video/*) that is not pure text body
+                is_explicit_attachment = (
                     content_disposition == "attachment"
-                    or (part_filename is not None and content_disposition != "inline")
-                    or (content_type not in ("multipart/mixed", "multipart/alternative", "multipart/related", "text/plain", "text/html") and part_filename is not None)
+                    or part_filename is not None
+                )
+                is_non_text_payload = (
+                    content_type.lower() not in ("text/plain", "text/html")
+                    and content_maintype != "multipart"
                 )
 
-                if is_attachment:
-                    fname = cls._decode_header_value(part_filename) or f"attachment_{attachment_counter}"
+                if is_explicit_attachment or is_non_text_payload:
+                    fname = cls._decode_header_value(part_filename) if part_filename else None
+                    if not fname:
+                        ext = mimetypes.guess_extension(content_type) or ".bin"
+                        fname = f"attachment_{attachment_counter}{ext}"
                     attachment_counter += 1
 
                     try:
@@ -161,7 +203,7 @@ class EmailParserService:
 
                     attachments_raw.append({
                         "filename": fname,
-                        "mime_type": content_type or "application/octet-stream",
+                        "mime_type": content_type,
                         "bytes": payload
                     })
                 else:
@@ -184,6 +226,24 @@ class EmailParserService:
                             payload = part.get_payload(decode=True)
                             if payload:
                                 html_parts.append(payload.decode("utf-8", errors="replace"))
+
+            # Safety fallback: If msg.walk() found no attachments, scan raw MIME text for boundary attachments
+            if len(attachments_raw) == 0 and ("filename=" in raw_email_str.lower() or "attachment" in raw_email_str.lower()):
+                raw_matches = re.finditer(
+                    r'(?:Content-Disposition:\s*(?:attachment|inline)[^;\r\n]*;\s*filename=["\']?([^"\'\r\n;]+)["\']?|Content-Type:\s*([^;\r\n]+)[^;\r\n]*;\s*name=["\']?([^"\'\r\n;]+)["\']?)',
+                    raw_email_str,
+                    re.IGNORECASE
+                )
+                for rm in raw_matches:
+                    raw_fn = rm.group(1) or rm.group(3)
+                    raw_mime = rm.group(2) or "application/octet-stream"
+                    if raw_fn:
+                        attachments_raw.append({
+                            "filename": cls._decode_header_value(raw_fn) or f"attachment_{attachment_counter}.bin",
+                            "mime_type": raw_mime.strip(),
+                            "bytes": b""
+                        })
+                        attachment_counter += 1
 
         except Exception as e:
             raise EmailParseException(f"Error parsing email body/attachments: {str(e)}")

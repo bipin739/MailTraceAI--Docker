@@ -210,7 +210,13 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
   const fromVal = decodeRfc2047(email.from || (email as any).from_header);
   const toVal = decodeRfc2047(Array.isArray(email.to) ? email.to.join(', ') : email.to);
   const ccVal = decodeRfc2047(Array.isArray(email.cc) ? email.cc.join(', ') : email.cc);
-  const replyToVal = decodeRfc2047(email.reply_to);
+  let replyToVal = decodeRfc2047(email.reply_to);
+  if (!replyToVal && email.raw_email) {
+    const rtMatch = email.raw_email.match(/(?:^|\r?\n)reply-to:\s*([^\r\n]+(?:\r?\n[ \t]+[^\r\n]+)*)/i);
+    if (rtMatch) {
+      replyToVal = decodeRfc2047(rtMatch[1].replace(/\s+/g, ' ').trim());
+    }
+  }
   const returnPathVal = decodeRfc2047(email.return_path);
 
   const fullText = `
@@ -243,7 +249,7 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
   // 2. Resolve Authentication & Sender Alignment
   const extractDomain = (str?: string): string | undefined => {
     if (!str) return undefined;
-    const match = str.match(/@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+    const match = str.match(/[\w\.-]+@([\w\.-]+\.[a-zA-Z]{2,})/);
     return match ? match[1].toLowerCase() : undefined;
   };
 
@@ -382,10 +388,10 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
   const domainStrings = Array.from(new Set(domainObjs.map(d => d.value)));
 
   // 7. Attachments
-  let attObjs: AttachmentIndicator[] = email.indicators?.attachments || [];
+  let attObjs: AttachmentIndicator[] = email.indicators?.attachments ? [...email.indicators.attachments] : [];
   if (attObjs.length === 0 && email.attachments && email.attachments.length > 0) {
     attObjs = email.attachments.map(att => ({
-      filename: att.filename || 'attachment.bin',
+      filename: decodeRfc2047(att.filename) || 'attachment.bin',
       mime_type: att.mime_type || 'application/octet-stream',
       size: att.size || 0,
       sha256: att.sha256 || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
@@ -393,6 +399,39 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
       sha1: 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
     }));
   }
+
+  // Fallback: Scan raw email for attachments if none detected yet
+  if (attObjs.length === 0 && email.raw_email) {
+    const raw = email.raw_email;
+    const attachmentRegex = /(?:Content-Disposition:\s*(?:attachment|inline)[^;\r\n]*;\s*filename=["']?([^"'\r\n;]+)["']?|Content-Type:\s*([^;\r\n]+)[^;\r\n]*;\s*name=["']?([^"'\r\n;]+)["']?)/gi;
+    let match;
+    const seenNames = new Set<string>();
+    while ((match = attachmentRegex.exec(raw)) !== null) {
+      const rawName = match[1] || match[3];
+      const rawMime = match[2] || 'application/octet-stream';
+      if (rawName) {
+        const cleanName = decodeRfc2047(rawName.trim().replace(/^["']|["']$/g, ''));
+        if (cleanName && !seenNames.has(cleanName.toLowerCase())) {
+          seenNames.add(cleanName.toLowerCase());
+          attObjs.push({
+            filename: cleanName,
+            mime_type: rawMime.trim(),
+            size: 0,
+            sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            md5: 'd41d8cd98f00b204e9800998ecf8427e',
+            sha1: 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+          });
+        }
+      }
+    }
+  }
+
+  const attachmentsList = attObjs.map(att => ({
+    filename: att.filename,
+    mime_type: att.mime_type,
+    size: att.size,
+    sha256: att.sha256
+  }));
 
   const indicatorsGroup: IndicatorsGroup = {
     ips: ipObjs,
@@ -425,7 +464,8 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     indicators: indicatorsGroup,
     authentication: authAnalysis,
     relay_analysis: relayAnalysis,
-    ip_intelligence: ipIntelMap
+    ip_intelligence: ipIntelMap,
+    attachments: attachmentsList
   };
 };
 
