@@ -3,6 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.api.routes.email import router as email_router
+from backend.api.routes.cases import router as cases_router
+from backend.db.session import engine, Base
+import backend.db.models  # Register models
+
+# Ensure tables exist on startup
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Cybersecurity Email Forensic Parser API",
@@ -21,6 +27,7 @@ app.add_middleware(
 
 # Include API Routers
 app.include_router(email_router)
+app.include_router(cases_router)
 
 
 @app.exception_handler(Exception)

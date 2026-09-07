@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield, Mail, Calendar, User, CornerDownLeft, Repeat, Hash } from 'lucide-react';
+import { ArrowLeft, Shield, Mail, Calendar, User, CornerDownLeft, Repeat, Hash, Briefcase } from 'lucide-react';
 import type { EmailAnalysis } from '../../types/forensic';
 import { CopyButton } from './CopyButton';
+import { AddToCaseModal } from '../case/AddToCaseModal';
 
 interface EmailSummaryHeaderProps {
   email: EmailAnalysis;
@@ -10,6 +11,7 @@ interface EmailSummaryHeaderProps {
 
 export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email }) => {
   const navigate = useNavigate();
+  const [isCaseModalOpen, setIsCaseModalOpen] = useState(false);
 
   const toDisplay = Array.isArray(email.to) ? email.to.join(', ') : email.to;
 
@@ -45,6 +47,14 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
         </div>
 
         <div className="flex items-center space-x-3">
+          <button
+            type="button"
+            onClick={() => setIsCaseModalOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 hover:border-cyan-400 font-mono text-xs font-semibold transition-all shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+          >
+            <Briefcase className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Add to Case</span>
+          </button>
           {email.message_id && (
             <CopyButton
               text={email.message_id}
@@ -62,6 +72,12 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
           </button>
         </div>
       </div>
+
+      <AddToCaseModal
+        email={email}
+        isOpen={isCaseModalOpen}
+        onClose={() => setIsCaseModalOpen(false)}
+      />
 
       {/* Main Header Info */}
       <div className="space-y-4">
