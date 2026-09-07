@@ -7,13 +7,16 @@ from backend.schemas.email import EmailAnalysisResponse, ErrorResponse
 from backend.schemas.ip_intelligence import IPIntelligence
 from backend.schemas.domain_intelligence import DomainIntelligence
 from backend.schemas.lookalike import LookalikeDetectionResult
+from backend.schemas.url_analysis import URLAnalysisResult, URLAnalysisRequest
 from backend.services.email_parser import EmailParserService, EmailParseException
 from backend.services.ip_intelligence_service import global_ip_service
 from backend.services.domain_intelligence_service import DomainIntelligenceService
 from backend.services.lookalike_detector import LookalikeDetectorService
+from backend.services.url_analyzer import URLAnalyzerService
 
 global_lookalike_detector = LookalikeDetectorService()
 global_domain_service = DomainIntelligenceService(lookalike_detector=global_lookalike_detector)
+global_url_analyzer = URLAnalyzerService(lookalike_detector=global_lookalike_detector)
 
 router = APIRouter(prefix="/api/emails", tags=["Email Analysis"])
 
@@ -58,6 +61,22 @@ async def detect_lookalike_domain(domain: str):
     """
     clean_domain = domain.strip().lower().rstrip(".")
     return global_lookalike_detector.detect_lookalike(clean_domain)
+
+
+@router.post(
+    "/analyze-url",
+    response_model=URLAnalysisResult,
+    summary="Statically analyze a single URL for forensic features and suspicion indicators",
+    description="Extracts URL features, identifies brand lookalikes, detects link mismatches, and computes a static suspicion score without visiting the URL."
+)
+async def analyze_url_endpoint(request: URLAnalysisRequest):
+    """
+    Statically analyzes a single URL without fetching or visiting the remote host.
+    """
+    return global_url_analyzer.analyze_url(
+        request.url,
+        visible_text=request.visible_text
+    )
 
 
 @router.post(

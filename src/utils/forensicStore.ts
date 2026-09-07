@@ -35,8 +35,8 @@ export const MOCK_SAMPLE_ANALYSIS: EmailAnalysis = resolveEmailIndicators({
     'from mail.example.net (203.0.113.25) by mx.company.com; Sun, 7 Sep 2026 10:42:01 +0530',
     'from smtp.example.org (198.51.100.12) by mail.example.net; Sun, 7 Sep 2026 10:41:59 +0530'
   ],
-  plain_text_body: 'Your Microsoft account requires immediate verification. Please visit the secure link below to update your login credentials.\n\nLink: https://micros0ft-example.com/login',
-  html_body: '<html><body><p>Your Microsoft account requires immediate verification.</p><p>Please <a href="https://micros0ft-example.com/login">click here</a> to verify your account.</p></body></html>',
+  plain_text_body: 'Your Microsoft account requires immediate verification. Please visit the secure link below to update your login credentials.\n\nLink: https://micros0ft-example.com/login\nShortlink: https://bit.ly/3sample-invoice',
+  html_body: '<html><body><p>Your Microsoft account requires immediate verification.</p><p>Please update your credentials: <a href="http://evil-tracker.example/login">https://microsoft.com/security</a></p><p>Official link: <a href="https://micros0ft-example.com/login">https://micros0ft-example.com/login</a></p><p>Invoice: <a href="https://bit.ly/3sample-invoice">Invoice Details</a></p></body></html>',
   raw_email: `From: Microsoft Security <security@micros0ft-example.com>
 To: employee@company.com
 Subject: URGENT: Verify your Microsoft Account
@@ -73,7 +73,9 @@ Content-Disposition: attachment; filename="invoice.pdf"
       { value: 'company.com', source: 'to' }
     ],
     urls: [
-      { value: 'https://micros0ft-example.com/login', source: 'plain_text_body' }
+      { value: 'https://micros0ft-example.com/login', source: 'plain_text_body' },
+      { value: 'http://evil-tracker.example/login', source: 'html_a_href' },
+      { value: 'https://bit.ly/3sample-invoice', source: 'html_a_href' }
     ],
     email_addresses: [
       { value: 'security@micros0ft-example.com', source: 'header_from' },
@@ -93,7 +95,9 @@ Content-Disposition: attachment; filename="invoice.pdf"
     ]
   },
   urls: [
-    'https://micros0ft-example.com/login'
+    'https://micros0ft-example.com/login',
+    'http://evil-tracker.example/login',
+    'https://bit.ly/3sample-invoice'
   ],
   ips: [
     '203.0.113.25',

@@ -11,7 +11,8 @@ import type {
   RelayPathAnalysis,
   IPIntelligence,
   DomainIntelligence,
-  LookalikeDetectionResult
+  LookalikeDetectionResult,
+  URLAnalysisResult
 } from '../types/forensic';
 
 export const decodeRfc2047 = (str?: string): string => {
@@ -467,6 +468,30 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     }
   });
 
+  // Analyze URLs statically
+  const existingUrlAnalysisMap = new Map<string, URLAnalysisResult>();
+  (email.url_analysis || []).forEach(u => existingUrlAnalysisMap.set(u.url, u));
+
+  // Extract html anchor visible text if available
+  const htmlLinkTextMap = new Map<string, string>();
+  if (email.html_body) {
+    const aRegex = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi;
+    let am;
+    while ((am = aRegex.exec(email.html_body)) !== null) {
+      const href = am[1].trim();
+      const rawText = am[2].replace(/<[^>]+>/g, '').trim();
+      if (href && rawText) {
+        htmlLinkTextMap.set(href, rawText);
+      }
+    }
+  }
+
+  const urlAnalysisList: URLAnalysisResult[] = urlStrings.map(u => {
+    const existing = existingUrlAnalysisMap.get(u);
+    const visText = htmlLinkTextMap.get(u);
+    return resolveURLAnalysis(u, existing, visText);
+  });
+
   return {
     ...email,
     subject,
@@ -486,6 +511,7 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     ip_intelligence: ipIntelMap,
     domain_intelligence: domainIntelMap,
     lookalike_domains: lookalikeList,
+    url_analysis: urlAnalysisList,
     attachments: attachmentsList
   };
 };
@@ -736,5 +762,215 @@ export const resolveIPIntelligence = (ip: string, existing?: Record<string, IPIn
     is_hosting: true,
     is_proxy_vpn_tor: false,
     infrastructure_type: 'Hosting infrastructure'
+  };
+};
+
+const KNOWN_SHORTENERS = new Set([
+  'bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'ow.ly', 'is.gd',
+  'buff.ly', 'cutt.ly', 'rebrand.ly', 'tiny.cc', 'shorturl.at',
+  'adf.ly', 'bit.do', 'rb.gy', 'lnkd.in', 'snip.ly', 'bl.ink'
+]);
+
+const SUSPICIOUS_KEYWORDS = [
+  'login', 'verify', 'secure', 'password', 'account',
+  'update', 'payment', 'wallet', 'invoice', 'signin', 'reset'
+];
+
+export const resolveURLAnalysis = (
+  url: string,
+  existing?: URLAnalysisResult,
+  visibleText?: string
+): URLAnalysisResult => {
+  if (existing && existing.url === url && !visibleText) {
+    return existing;
+  }
+
+  const clean = url.trim();
+  const observations: string[] = [];
+  const score_reasons: string[] = [];
+  let suspicion_score = 0;
+
+  let scheme = 'http';
+  let hostname = '';
+  let port: number | undefined = undefined;
+  let path = '';
+  let query = '';
+
+  try {
+    const parsed = new URL(clean.startsWith('http://') || clean.startsWith('https://') ? clean : `http://${clean}`);
+    scheme = parsed.protocol.replace(':', '').toLowerCase();
+    hostname = parsed.hostname.toLowerCase();
+    if (parsed.port) port = parseInt(parsed.port, 10);
+    path = parsed.pathname || '';
+    query = parsed.search ? parsed.search.replace(/^\?/, '') : '';
+  } catch {
+    hostname = clean.split('/')[0] || '';
+  }
+
+  const is_ip_host = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':');
+  const ip_version = is_ip_host ? (hostname.includes(':') ? 6 : 4) : undefined;
+  const is_punycode = hostname.includes('xn--');
+
+  const parts = hostname.split('.');
+  const registered_domain = is_ip_host ? '' : (parts.length >= 2 ? parts.slice(-2).join('.') : hostname);
+  const subdomain = is_ip_host ? '' : (parts.length > 2 ? parts.slice(0, -2).join('.') : '');
+  const subdomain_count = subdomain ? subdomain.split('.').length : 0;
+  const excessive_subdomains = subdomain_count >= 3;
+
+  const has_credentials = clean.includes('@') && clean.indexOf('@') < (clean.indexOf('/', 8) === -1 ? clean.length : clean.indexOf('/', 8));
+  const has_non_standard_port = port !== undefined && ((scheme === 'http' && port !== 80) || (scheme === 'https' && port !== 443));
+
+  const total_length = clean.length;
+  const path_length = path.length;
+  const query_length = query.length;
+
+  const percent_matches = clean.match(/%[0-9a-fA-F]{2}/g) || [];
+  const percent_encoding_count = percent_matches.length;
+  const has_percent_encoding = percent_encoding_count > 0;
+
+  const special_chars = clean.match(/[@\-_=&%?+$;:!~]/g) || [];
+  const unusual_char_density = (special_chars.length / Math.max(total_length, 1)) > 0.18 || special_chars.length > 15;
+
+  const is_shortener = KNOWN_SHORTENERS.has(registered_domain) || KNOWN_SHORTENERS.has(hostname);
+
+  const tokens = new Set(clean.toLowerCase().match(/[a-zA-Z0-9]+/g) || []);
+  const suspicious_keywords = SUSPICIOUS_KEYWORDS.filter(kw => tokens.has(kw));
+
+  // HTML Link Mismatch
+  let display_link_mismatch = false;
+  let visible_text_domain: string | undefined = undefined;
+  if (visibleText) {
+    const visClean = visibleText.trim();
+    const visMatch = visClean.match(/\b([a-zA-Z0-9][-a-zA-Z0-9]*\.)+[a-zA-Z]{2,}\b/);
+    if (visMatch) {
+      visible_text_domain = visMatch[0].toLowerCase();
+      const visParts = visible_text_domain.split('.');
+      const visReg = visParts.length >= 2 ? visParts.slice(-2).join('.') : visible_text_domain;
+      const actualReg = registered_domain || hostname;
+      if (visReg && actualReg && visReg !== actualReg) {
+        display_link_mismatch = true;
+      }
+    }
+  }
+
+  const lookalike = !is_ip_host && registered_domain ? detectLookalikeDomain(registered_domain) || undefined : undefined;
+
+  // Scoring
+  if (display_link_mismatch) {
+    observations.push(`HTML display link mismatch: visible text claims '${visible_text_domain}' but destination links to '${registered_domain || hostname}'`);
+    suspicion_score += 35;
+    score_reasons.push('HTML display link mismatch (+35)');
+  }
+
+  if (has_credentials) {
+    observations.push('Embedded credentials found in URL authority segment');
+    suspicion_score += 25;
+    score_reasons.push('Embedded user credentials in authority (+25)');
+  }
+
+  if (is_ip_host) {
+    observations.push(`Direct IPv${ip_version} address used as hostname instead of domain`);
+    suspicion_score += 25;
+    score_reasons.push(`Direct IP address host IPv${ip_version} (+25)`);
+  }
+
+  if (is_shortener) {
+    observations.push(`URL shortener domain detected (${registered_domain || hostname})`);
+    suspicion_score += 15;
+    score_reasons.push('Known URL shortener service (+15)');
+  }
+
+  if (has_non_standard_port) {
+    observations.push(`Non-standard port (${port}) specified`);
+    suspicion_score += 10;
+    score_reasons.push(`Non-standard port ${port} (+10)`);
+  }
+
+  if (is_punycode) {
+    observations.push(`Punycode domain detected (${hostname})`);
+    suspicion_score += 15;
+    score_reasons.push('Punycode domain indicator (+15)');
+  }
+
+  if (lookalike) {
+    observations.push(`Potential brand impersonation: similar to ${lookalike.suspected_brand} (${Math.round(lookalike.similarity * 100)}% match)`);
+    suspicion_score += 20;
+    score_reasons.push(`Lookalike brand similarity to ${lookalike.suspected_brand} (+20)`);
+  }
+
+  if (excessive_subdomains) {
+    observations.push(`Excessive subdomain depth detected (${subdomain_count} labels)`);
+    suspicion_score += 10;
+    score_reasons.push(`Excessive subdomains: ${subdomain_count} levels (+10)`);
+  }
+
+  if (total_length > 150) {
+    observations.push(`Abnormally long URL (${total_length} characters)`);
+    suspicion_score += 10;
+    score_reasons.push(`Abnormally long URL (${total_length} chars) (+10)`);
+  }
+
+  if (suspicious_keywords.length > 0) {
+    const kwStr = suspicious_keywords.join(', ');
+    observations.push(`Suspicious security/authentication keywords found: ${kwStr}`);
+    const kwPoints = Math.min(suspicious_keywords.length * 5, 15);
+    suspicion_score += kwPoints;
+    score_reasons.push(`Suspicious keywords (${kwStr}) (+${kwPoints})`);
+  }
+
+  if (percent_encoding_count >= 3) {
+    observations.push(`Heavy percent-encoding (${percent_encoding_count} sequences)`);
+    suspicion_score += 10;
+    score_reasons.push(`Multiple percent-encoded sequences (${percent_encoding_count}) (+10)`);
+  }
+
+  if (unusual_char_density) {
+    observations.push('High special character density');
+    suspicion_score += 10;
+    score_reasons.push('Unusual special character density (+10)');
+  }
+
+  if (observations.length === 0) {
+    observations.push('Standard URL structure with no immediate static anomalies detected');
+  }
+
+  const clampedScore = Math.min(suspicion_score, 100);
+  const suspicion_level = clampedScore >= 60 ? 'high' : (clampedScore >= 25 ? 'suspicious' : 'low');
+
+  return {
+    url: clean,
+    domain: registered_domain || hostname || clean,
+    features: {
+      scheme,
+      hostname,
+      registered_domain,
+      subdomain,
+      subdomain_count,
+      port,
+      has_non_standard_port,
+      path,
+      path_length,
+      query,
+      query_length,
+      total_length,
+      is_ip_host,
+      ip_version,
+      is_punycode,
+      excessive_subdomains,
+      has_credentials,
+      suspicious_keywords,
+      has_percent_encoding,
+      percent_encoding_count,
+      unusual_char_density,
+      is_shortener,
+      display_link_mismatch,
+      visible_text: visibleText,
+      visible_text_domain,
+      lookalike
+    },
+    observations,
+    suspicion_score: clampedScore,
+    suspicion_level,
+    score_reasons
   };
 };

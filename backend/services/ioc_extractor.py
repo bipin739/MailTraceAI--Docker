@@ -20,19 +20,37 @@ from backend.schemas.email import (
 
 
 class HTMLLinkExtractor(HTMLParser):
-    """HTML parser to safely extract URLs from href and src attributes."""
+    """HTML parser to safely extract URLs from href and src attributes with visible text tracking."""
 
     def __init__(self):
         super().__init__()
         self.extracted: List[Tuple[str, str]] = []
+        self.links_with_text: List[Tuple[str, str]] = []
+        self._current_a_href: Optional[str] = None
+        self._current_a_text: List[str] = []
 
     def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]):
+        lower_tag = tag.lower()
         for attr, value in attrs:
             if attr.lower() in ('href', 'src', 'action', 'data-url') and value:
                 val = value.strip()
                 if val.startswith(('http://', 'https://', 'ftp://', 'ftps://')):
-                    source_label = f"html_{tag}_{attr}"
+                    source_label = f"html_{lower_tag}_{attr.lower()}"
                     self.extracted.append((val, source_label))
+                    if lower_tag == 'a' and attr.lower() == 'href':
+                        self._current_a_href = val
+                        self._current_a_text = []
+
+    def handle_data(self, data: str):
+        if self._current_a_href is not None:
+            self._current_a_text.append(data)
+
+    def handle_endtag(self, tag: str):
+        if tag.lower() == 'a' and self._current_a_href is not None:
+            vis_text = " ".join(self._current_a_text).strip()
+            self.links_with_text.append((self._current_a_href, vis_text))
+            self._current_a_href = None
+            self._current_a_text = []
 
 
 class IOCExtractorService:
@@ -164,6 +182,18 @@ class IOCExtractorService:
                     add_url(match, f"header_{h_name.lower()}")
 
         return results
+
+    @classmethod
+    def extract_html_links(cls, html_body: Optional[str]) -> List[Tuple[str, str]]:
+        """Extracts HTML anchor links as tuples of (href, visible_text)."""
+        if not html_body:
+            return []
+        try:
+            parser = HTMLLinkExtractor()
+            parser.feed(html_body)
+            return parser.links_with_text
+        except Exception:
+            return []
 
     @classmethod
     def extract_email_addresses(cls, headers_dict: Dict[str, Any], plain_text: Optional[str], html_body: Optional[str]) -> List[EmailAddressIndicator]:

@@ -1,14 +1,14 @@
 import React from 'react';
 import type {
   EmailAnalysis,
-  URLIndicator,
   EmailAddressIndicator,
   AttachmentIndicator
 } from '../../types/forensic';
 import { CopyButton } from './CopyButton';
 import { IPIntelligenceSection } from './IPIntelligenceSection';
 import { DomainIntelligenceSection } from './DomainIntelligenceSection';
-import { Link, Mail, Hash, Paperclip, Shield } from 'lucide-react';
+import { URLAnalysisSection } from './URLAnalysisSection';
+import { Mail, Hash, Paperclip, Shield } from 'lucide-react';
 
 interface IndicatorsTabProps {
   email: EmailAnalysis;
@@ -16,11 +16,6 @@ interface IndicatorsTabProps {
 
 export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
   const indicators = email.indicators || {};
-
-  // Resolve URL indicators
-  const urlList: URLIndicator[] = indicators.urls && indicators.urls.length > 0
-    ? indicators.urls
-    : (email.urls || []).map(u => ({ value: u, source: 'body' }));
 
   // Resolve Email indicators
   const emailList: EmailAddressIndicator[] = indicators.email_addresses && indicators.email_addresses.length > 0
@@ -79,46 +74,8 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
       {/* Domain Infrastructure & Registration Intelligence */}
       <DomainIntelligenceSection email={email} />
 
-      {/* URLs */}
-      <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3 backdrop-blur-xl shadow-lg">
-        <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-          <Link className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
-            URLs ({urlList.length})
-          </h3>
-        </div>
-
-        {urlList.length === 0 ? (
-          <p className="text-xs font-mono text-slate-500 italic p-2">
-            No URLs detected.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {urlList.map((urlObj, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-2.5 rounded-lg border border-slate-800/80 bg-slate-900/50 hover:bg-slate-900 transition-colors gap-3"
-              >
-                <div className="flex items-center space-x-2.5 min-w-0 flex-1">
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 border border-slate-700 shrink-0">
-                    Extracted Indicator
-                  </span>
-                  {/* Non-clickable readable text representation */}
-                  <span className="text-xs font-mono text-slate-200 break-all select-all">
-                    {urlObj.value}
-                  </span>
-                  {urlObj.source && (
-                    <span className="text-[10px] font-mono text-slate-400 hidden sm:inline-block truncate">
-                      ({urlObj.source})
-                    </span>
-                  )}
-                </div>
-                <CopyButton text={urlObj.value} iconOnly className="shrink-0" />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Static URL Forensic Analysis */}
+      <URLAnalysisSection email={email} />
 
       {/* Email Addresses */}
       <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3 backdrop-blur-xl shadow-lg">

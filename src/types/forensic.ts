@@ -143,6 +143,45 @@ export interface LookalikeDetectionResult {
   details?: string;
 }
 
+export interface URLFeatures {
+  scheme: string;
+  hostname: string;
+  registered_domain: string;
+  subdomain: string;
+  subdomain_count: number;
+  port?: number;
+  has_non_standard_port: boolean;
+  path: string;
+  path_length: number;
+  query: string;
+  query_length: number;
+  total_length: number;
+  is_ip_host: boolean;
+  ip_version?: number;
+  is_punycode: boolean;
+  excessive_subdomains: boolean;
+  has_credentials: boolean;
+  suspicious_keywords: string[];
+  has_percent_encoding: boolean;
+  percent_encoding_count: number;
+  unusual_char_density: boolean;
+  is_shortener: boolean;
+  display_link_mismatch: boolean;
+  visible_text?: string;
+  visible_text_domain?: string;
+  lookalike?: LookalikeDetectionResult;
+}
+
+export interface URLAnalysisResult {
+  url: string;
+  domain: string;
+  features: URLFeatures;
+  observations: string[];
+  suspicion_score: number;
+  suspicion_level: 'low' | 'suspicious' | 'high';
+  score_reasons: string[];
+}
+
 export interface DomainIntelligence {
   domain: string;
   punycode?: string;
@@ -163,6 +202,7 @@ export interface EmailAnalysis {
   ip_intelligence?: Record<string, IPIntelligence>;
   domain_intelligence?: Record<string, DomainIntelligence>;
   lookalike_domains?: LookalikeDetectionResult[];
+  url_analysis?: URLAnalysisResult[];
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;

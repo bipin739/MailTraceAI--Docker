@@ -16,6 +16,7 @@ from backend.schemas.email import (
 from backend.services.ioc_extractor import IOCExtractorService
 from backend.services.auth_analyzer import AuthAnalyzerService
 from backend.services.relay_reconstructor import RelayReconstructorService
+from backend.services.url_analyzer import URLAnalyzerService
 
 
 class EmailParseException(Exception):
@@ -253,7 +254,13 @@ class EmailParserService:
 
         # 4. Extract IOCs using IOCExtractorService
         url_indicators = IOCExtractorService.extract_urls(plain_text_str, html_str, headers_dict)
+        html_links = IOCExtractorService.extract_html_links(html_str)
         email_indicators = IOCExtractorService.extract_email_addresses(headers_dict, plain_text_str, html_str)
+
+        # Static non-invasive URL analysis
+        url_analyzer = URLAnalyzerService()
+        url_strings = [u.value for u in url_indicators]
+        analyzed_urls = url_analyzer.analyze_urls(url_strings, html_links=html_links)
 
         text_sources = [
             (raw_email_str, "raw_email_source"),
@@ -313,6 +320,7 @@ class EmailParserService:
             authentication=auth_analysis,
             relay_analysis=relay_analysis,
             indicators=indicators_group,
+            url_analysis=analyzed_urls,
             subject=subject,
             from_header=from_header,
             to=to_header,
