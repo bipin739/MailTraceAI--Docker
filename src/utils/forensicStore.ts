@@ -221,6 +221,71 @@ Content-Disposition: attachment; filename="invoice.pdf"
       is_resolvable: true,
       status_message: 'Active / Resolvable'
     }
+  },
+  ml_phishing_probability: 0.89,
+  ml_assessment: {
+    classification: 'phishing',
+    probability: 0.89,
+    confidence: 'high',
+    available: true,
+    top_features: ['httpurl', 'verify', 'password', 'update', 'account'],
+    model_name: 'TF-IDF + Logistic Regression'
+  },
+  threat_score: {
+    score: 82,
+    severity: 'critical',
+    summary: 'Email risk assessed as Critical (82/100) driven by 5 forensic signal(s): Brand impersonation (+18), Credential harvesting (+12), DMARC failure (+12), Link mismatch (+15), NLP phishing classifier (+10).',
+    reasons: [
+      {
+        signal: 'brand_impersonation',
+        label: 'Potential brand impersonation detected',
+        points: 18,
+        evidence: "Substitutes '0' for 'o' targeting Microsoft brand keyword"
+      },
+      {
+        signal: 'html_link_mismatch',
+        label: 'HTML link text and destination domain mismatch',
+        points: 15,
+        evidence: 'Text shows microsoft.com but links to evil-tracker.example'
+      },
+      {
+        signal: 'dmarc_fail',
+        label: 'DMARC authentication failed',
+        points: 12,
+        evidence: 'dmarc=fail (p=reject dis=none)'
+      },
+      {
+        signal: 'credential_request',
+        label: 'Credential harvesting or urgent security language',
+        points: 12,
+        evidence: "Detected pattern: 'update your login credentials'"
+      },
+      {
+        signal: 'ml_phishing_signal',
+        label: 'NLP phishing classifier flagged high suspicion',
+        points: 10,
+        evidence: 'ML text classifier estimated 89% phishing probability based on language and phrasing patterns'
+      },
+      {
+        signal: 'newly_registered_domain',
+        label: 'Newly registered domain (< 30 days old)',
+        points: 10,
+        evidence: 'micros0ft-example.com registered 18 days ago'
+      },
+      {
+        signal: 'spf_fail',
+        label: 'SPF authentication failed',
+        points: 8,
+        evidence: 'spf=fail (domain of bounce@example.net does not designate 203.0.113.25)'
+      },
+      {
+        signal: 'dkim_fail',
+        label: 'DKIM signature verification failed',
+        points: 8,
+        evidence: 'dkim=fail header.i=@company.com'
+      }
+    ],
+    positive_evidence: []
   }
 });
 

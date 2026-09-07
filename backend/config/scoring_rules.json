@@ -15,7 +15,14 @@
     "credential_request": 12,
     "financial_language": 10,
     "suspicious_attachment_extension": 15,
-    "suspicious_ip_hosting_or_proxy": 8
+    "suspicious_ip_hosting_or_proxy": 8,
+    "ml_phishing_signal": 10
+  },
+  "ml_scoring": {
+    "enabled": true,
+    "probability_threshold": 0.75,
+    "max_points": 10,
+    "low_risk_threshold": 0.15
   },
   "severity_thresholds": {
     "low": { "min": 0, "max": 29 },

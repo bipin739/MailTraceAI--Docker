@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from backend.schemas.email import EmailAnalysisResponse, ErrorResponse
+from backend.schemas.email import EmailAnalysisResponse, ErrorResponse, MLAssessmentResult, MLClassifyRequest
 from backend.schemas.ip_intelligence import IPIntelligence
 from backend.schemas.domain_intelligence import DomainIntelligence
 from backend.schemas.lookalike import LookalikeDetectionResult
@@ -15,6 +15,7 @@ from backend.services.domain_intelligence_service import DomainIntelligenceServi
 from backend.services.lookalike_detector import LookalikeDetectorService
 from backend.services.url_analyzer import URLAnalyzerService
 from backend.services.threat_scorer import ThreatScorerService
+from backend.app.ml.classifier import global_phishing_classifier
 
 global_lookalike_detector = LookalikeDetectorService()
 global_domain_service = DomainIntelligenceService(lookalike_detector=global_lookalike_detector)
@@ -86,13 +87,27 @@ async def analyze_url_endpoint(request: URLAnalysisRequest):
     "/calculate-threat-score",
     response_model=ThreatScoreResult,
     summary="Calculate global deterministic threat score from email analysis",
-    description="Combines authentication, lookalikes, URLs, domain age, intent keywords, and attachments into an explainable threat score."
+    description="Combines authentication, lookalikes, URLs, domain age, intent keywords, attachments, and bounded ML assessment into an explainable threat score."
 )
 async def calculate_threat_score_endpoint(analysis: EmailAnalysisResponse):
     """
     Calculates global threat score for a given EmailAnalysisResponse object.
     """
     return global_threat_scorer.calculate_score(analysis)
+
+
+@router.post(
+    "/ml-classify",
+    response_model=MLAssessmentResult,
+    summary="Classify email subject and body text using NLP ML model",
+    description="Applies text normalization, TF-IDF vectorization, and Logistic Regression to evaluate phishing probability."
+)
+async def classify_email_text(request: MLClassifyRequest):
+    """
+    Direct prediction endpoint for NLP-based phishing classification on subject and body text.
+    """
+    res = global_phishing_classifier.predict(subject=request.subject, body=request.body)
+    return res
 
 
 @router.post(
@@ -152,6 +167,20 @@ async def analyze_email(file: UploadFile = File(...)):
         analysis_result.ip_intelligence = ip_intel_dict
         analysis_result.domain_intelligence = domain_intel_dict
         analysis_result.lookalike_domains = global_lookalike_detector.detect_lookalikes_batch(domain_list)
+
+        # Section 11: NLP-Based Phishing Classification (Complements deterministic scoring)
+        try:
+            ml_pred = global_phishing_classifier.predict(
+                subject=analysis_result.subject,
+                body=analysis_result.plain_text_body
+            )
+            analysis_result.ml_assessment = MLAssessmentResult(**ml_pred)
+            analysis_result.ml_phishing_probability = ml_pred.get("probability") if ml_pred.get("available") else None
+        except Exception:
+            # Failure mode: If ML model fails, continue forensic analysis. The entire email pipeline must not fail.
+            analysis_result.ml_assessment = None
+            analysis_result.ml_phishing_probability = None
+
         analysis_result.threat_score = global_threat_scorer.calculate_score(analysis_result)
 
         return analysis_result

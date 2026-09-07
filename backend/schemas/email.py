@@ -134,6 +134,21 @@ class RelayPathAnalysis(BaseModel):
     )
 
 
+class MLAssessmentResult(BaseModel):
+    classification: str = Field(..., description="Binary classification: phishing or legitimate")
+    probability: Optional[float] = Field(None, description="NLP-based phishing probability between 0.0 and 1.0")
+    confidence: str = Field("medium", description="Confidence level: high, medium, low, or none")
+    available: bool = Field(True, description="Whether the ML inference service was available")
+    top_features: List[str] = Field(default_factory=list, description="Top indicative linguistic features detected")
+    model_name: str = Field("TF-IDF + Logistic Regression", description="Model architecture identifier")
+    notice: Optional[str] = Field(None, description="Informational notice regarding model execution or edge cases")
+
+
+class MLClassifyRequest(BaseModel):
+    subject: Optional[str] = Field("", description="Email subject line")
+    body: Optional[str] = Field("", description="Email body content (plain text or extracted)")
+
+
 class EmailAnalysisResponse(BaseModel):
     email_sha256: Optional[str] = Field(None, description="SHA-256 hash of raw uploaded email bytes")
     authentication: Optional[AuthenticationAnalysis] = Field(None, description="Structured authentication analysis and sender alignment")
@@ -143,6 +158,8 @@ class EmailAnalysisResponse(BaseModel):
     lookalike_domains: List[LookalikeDetectionResult] = Field(default_factory=list, description="Suspicious lookalike domains and potential brand impersonation findings")
     url_analysis: List[URLAnalysisResult] = Field(default_factory=list, description="Static non-invasive URL feature and suspicion analysis")
     threat_score: Optional[ThreatScoreResult] = Field(None, description="Explainable deterministic global threat score")
+    ml_phishing_probability: Optional[float] = Field(None, description="NLP-based phishing probability (0.0 to 1.0)")
+    ml_assessment: Optional[MLAssessmentResult] = Field(None, description="Detailed ML NLP text classification assessment")
     indicators: IndicatorsGroup = Field(default_factory=IndicatorsGroup, description="Structured indicators group")
 
     # Top-level flat fields for direct accessibility / backwards compatibility

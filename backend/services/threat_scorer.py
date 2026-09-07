@@ -33,6 +33,12 @@ class ThreatScorerService:
         self.suspicious_extensions = [ext.lower() for ext in self.config.get("suspicious_extensions", [])]
         self.credential_keywords = [kw.lower() for kw in self.config.get("credential_keywords", [])]
         self.financial_keywords = [kw.lower() for kw in self.config.get("financial_keywords", [])]
+        self.ml_scoring = self.config.get("ml_scoring", {
+            "enabled": True,
+            "probability_threshold": 0.75,
+            "max_points": 10,
+            "low_risk_threshold": 0.15
+        })
 
     def _load_config(self) -> Dict[str, Any]:
         """Safely loads scoring configuration JSON."""
@@ -59,7 +65,14 @@ class ThreatScorerService:
                 "credential_request": 12,
                 "financial_language": 10,
                 "suspicious_attachment_extension": 15,
-                "suspicious_ip_hosting_or_proxy": 8
+                "suspicious_ip_hosting_or_proxy": 8,
+                "ml_phishing_signal": 10
+            },
+            "ml_scoring": {
+                "enabled": true,
+                "probability_threshold": 0.75,
+                "max_points": 10,
+                "low_risk_threshold": 0.15
             },
             "severity_thresholds": {
                 "low": {"min": 0, "max": 29},
@@ -364,6 +377,39 @@ class ThreatScorerService:
                     evidence=f"Relay IP {ip_addr} flagged as proxy or VPN exit"
                 ))
                 break
+
+        # 8. NLP Machine Learning Phishing Assessment (Section 11)
+        # ML signal complements deterministic forensic scoring with a limited, bounded weight.
+        # It does not replace deterministic forensic scoring or dictate the final verdict.
+        if self.ml_scoring.get("enabled", True):
+            ml_prob = getattr(email_analysis, "ml_phishing_probability", None)
+            if ml_prob is None:
+                ml_assessment = getattr(email_analysis, "ml_assessment", None)
+                if ml_assessment:
+                    ml_prob = getattr(ml_assessment, "probability", None)
+                    if ml_prob is None and isinstance(ml_assessment, dict):
+                        ml_prob = ml_assessment.get("probability")
+
+            if ml_prob is not None:
+                threshold = self.ml_scoring.get("probability_threshold", 0.75)
+                low_threshold = self.ml_scoring.get("low_risk_threshold", 0.15)
+                max_pts = self.weights.get("ml_phishing_signal", self.ml_scoring.get("max_points", 10))
+
+                if ml_prob >= threshold:
+                    pts = max_pts
+                    raw_score += pts
+                    reasons.append(ThreatScoreContribution(
+                        signal="ml_phishing_signal",
+                        label="NLP text classification flagged high phishing probability",
+                        points=pts,
+                        evidence=f"ML model estimated {int(ml_prob * 100)}% phishing probability based on language and phrasing patterns"
+                    ))
+                elif ml_prob <= low_threshold:
+                    positive_evidence.append(PositiveEvidence(
+                        signal="ml_low_risk_content",
+                        label="NLP content assessment indicates benign language",
+                        evidence=f"ML text classifier estimated low phishing risk ({int(ml_prob * 100)}%)"
+                    ))
 
         # Score Clamping
         final_score = max(0, min(100, raw_score))

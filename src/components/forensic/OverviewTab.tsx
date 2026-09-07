@@ -23,7 +23,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
   return (
     <div className="space-y-6">
       {/* Section 10: Global Threat Scoring Engine */}
-      <GlobalThreatScoreSection threatScore={email.threat_score} />
+      <GlobalThreatScoreSection
+        threatScore={email.threat_score}
+        mlAssessment={email.ml_assessment}
+        mlProbability={email.ml_phishing_probability}
+      />
 
       {/* Authentication & Alignment Section */}
       <AuthenticationSection authentication={email.authentication} />

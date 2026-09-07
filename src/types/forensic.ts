@@ -203,6 +203,16 @@ export interface ThreatScoreResult {
   summary: string;
 }
 
+export interface MLAssessmentResult {
+  classification: 'phishing' | 'legitimate' | string;
+  probability?: number | null;
+  confidence?: 'high' | 'medium' | 'low' | 'none' | string;
+  available?: boolean;
+  top_features?: string[];
+  model_name?: string;
+  notice?: string;
+}
+
 export interface DomainIntelligence {
   domain: string;
   punycode?: string;
@@ -225,6 +235,8 @@ export interface EmailAnalysis {
   lookalike_domains?: LookalikeDetectionResult[];
   url_analysis?: URLAnalysisResult[];
   threat_score?: ThreatScoreResult;
+  ml_phishing_probability?: number | null;
+  ml_assessment?: MLAssessmentResult;
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;
