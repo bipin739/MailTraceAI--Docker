@@ -4,6 +4,7 @@ from backend.schemas.ip_intelligence import IPIntelligence
 from backend.schemas.domain_intelligence import DomainIntelligence
 from backend.schemas.lookalike import LookalikeDetectionResult
 from backend.schemas.url_analysis import URLAnalysisResult
+from backend.schemas.threat_score import ThreatScoreResult
 
 
 class ProtocolResult(BaseModel):
@@ -141,6 +142,7 @@ class EmailAnalysisResponse(BaseModel):
     domain_intelligence: Dict[str, DomainIntelligence] = Field(default_factory=dict, description="Contextual domain intelligence and DNS/RDAP registration metadata keyed by domain")
     lookalike_domains: List[LookalikeDetectionResult] = Field(default_factory=list, description="Suspicious lookalike domains and potential brand impersonation findings")
     url_analysis: List[URLAnalysisResult] = Field(default_factory=list, description="Static non-invasive URL feature and suspicion analysis")
+    threat_score: Optional[ThreatScoreResult] = Field(None, description="Explainable deterministic global threat score")
     indicators: IndicatorsGroup = Field(default_factory=IndicatorsGroup, description="Structured indicators group")
 
     # Top-level flat fields for direct accessibility / backwards compatibility

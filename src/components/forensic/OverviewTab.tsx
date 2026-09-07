@@ -4,6 +4,7 @@ import { MetadataRow } from './MetadataRow';
 import { AuthenticationSection } from './AuthenticationSection';
 import { TransmissionPathSection } from './TransmissionPathSection';
 import { IPIntelligenceSection } from './IPIntelligenceSection';
+import { GlobalThreatScoreSection } from './GlobalThreatScoreSection';
 import { User, Info, Layers, Activity } from 'lucide-react';
 
 interface OverviewTabProps {
@@ -21,6 +22,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
 
   return (
     <div className="space-y-6">
+      {/* Section 10: Global Threat Scoring Engine */}
+      <GlobalThreatScoreSection threatScore={email.threat_score} />
+
       {/* Authentication & Alignment Section */}
       <AuthenticationSection authentication={email.authentication} />
 

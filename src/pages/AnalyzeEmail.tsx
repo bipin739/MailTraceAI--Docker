@@ -110,7 +110,8 @@ export const AnalyzeEmail: React.FC = () => {
           ip_intelligence: data.ip_intelligence || {},
           domain_intelligence: data.domain_intelligence || {},
           lookalike_domains: data.lookalike_domains || [],
-          url_analysis: data.url_analysis || []
+          url_analysis: data.url_analysis || [],
+          threat_score: data.threat_score
         };
 
         saveAnalysisResult(analysisId, parsedAnalysis);

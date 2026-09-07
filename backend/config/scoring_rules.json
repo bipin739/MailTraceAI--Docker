@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "weights": {
+    "spf_fail": 8,
+    "spf_softfail": 4,
+    "dkim_fail": 8,
+    "dmarc_fail": 12,
+    "reply_to_mismatch": 8,
+    "return_path_mismatch": 6,
+    "brand_impersonation": 18,
+    "url_high_risk": 15,
+    "url_suspicious": 8,
+    "html_link_mismatch": 15,
+    "newly_registered_domain": 10,
+    "credential_request": 12,
+    "financial_language": 10,
+    "suspicious_attachment_extension": 15,
+    "suspicious_ip_hosting_or_proxy": 8
+  },
+  "severity_thresholds": {
+    "low": { "min": 0, "max": 29 },
+    "suspicious": { "min": 30, "max": 59 },
+    "high": { "min": 60, "max": 79 },
+    "critical": { "min": 80, "max": 100 }
+  },
+  "suspicious_extensions": [
+    ".exe", ".scr", ".bat", ".cmd", ".vbs", ".js", ".jse",
+    ".wsf", ".iso", ".img", ".hta", ".cpl", ".ps1", ".jar",
+    ".docm", ".xlsm", ".pptm", ".ace", ".arj", ".pif"
+  ],
+  "credential_keywords": [
+    "password", "login credentials", "verify your account", "verify password",
+    "reset your password", "security alert", "account suspended", "sign-in attempt",
+    "validate credentials", "confirm your identity", "immediate verification",
+    "update your password", "unlock account", "unauthorized login"
+  ],
+  "financial_keywords": [
+    "wire transfer", "bank account", "invoice payment", "remittance",
+    "urgent payment", "gift card", "routing number", "swift code",
+    "overdue invoice", "cryptocurrency", "bitcoin wallet", "payroll update",
+    "payment confirmation", "billing statement"
+  ]
+}

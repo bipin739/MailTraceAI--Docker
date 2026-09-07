@@ -17,11 +17,31 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
     <div className="bg-slate-950/90 rounded-2xl border border-slate-800 p-6 backdrop-blur-xl space-y-6 shadow-xl">
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
-        <div className="flex items-center space-x-2">
-          <Shield className="w-5 h-5 text-cyan-400" />
-          <span className="text-xs font-mono font-bold tracking-widest text-cyan-400 uppercase">
-            FORENSIC EVIDENCE ANALYSIS
-          </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-2">
+            <Shield className="w-5 h-5 text-cyan-400" />
+            <span className="text-xs font-mono font-bold tracking-widest text-cyan-400 uppercase">
+              FORENSIC EVIDENCE ANALYSIS
+            </span>
+          </div>
+
+          {email.threat_score && (
+            <div className={`px-2.5 py-1 rounded-full border text-xs font-mono font-bold flex items-center space-x-1.5 ${
+              email.threat_score.score >= 80 ? 'bg-rose-950/60 border-rose-800 text-rose-300' :
+              email.threat_score.score >= 60 ? 'bg-orange-950/60 border-orange-800 text-orange-300' :
+              email.threat_score.score >= 30 ? 'bg-amber-950/60 border-amber-800 text-amber-300' :
+              'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${
+                email.threat_score.score >= 80 ? 'bg-rose-400' :
+                email.threat_score.score >= 60 ? 'bg-orange-400' :
+                email.threat_score.score >= 30 ? 'bg-amber-400' :
+                'bg-emerald-400'
+              }`} />
+              <span>Threat Score: {email.threat_score.score}/100</span>
+              <span className="opacity-80 uppercase text-[10px]">({email.threat_score.severity})</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center space-x-3">

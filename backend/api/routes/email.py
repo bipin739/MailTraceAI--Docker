@@ -8,15 +8,18 @@ from backend.schemas.ip_intelligence import IPIntelligence
 from backend.schemas.domain_intelligence import DomainIntelligence
 from backend.schemas.lookalike import LookalikeDetectionResult
 from backend.schemas.url_analysis import URLAnalysisResult, URLAnalysisRequest
+from backend.schemas.threat_score import ThreatScoreResult
 from backend.services.email_parser import EmailParserService, EmailParseException
 from backend.services.ip_intelligence_service import global_ip_service
 from backend.services.domain_intelligence_service import DomainIntelligenceService
 from backend.services.lookalike_detector import LookalikeDetectorService
 from backend.services.url_analyzer import URLAnalyzerService
+from backend.services.threat_scorer import ThreatScorerService
 
 global_lookalike_detector = LookalikeDetectorService()
 global_domain_service = DomainIntelligenceService(lookalike_detector=global_lookalike_detector)
 global_url_analyzer = URLAnalyzerService(lookalike_detector=global_lookalike_detector)
+global_threat_scorer = ThreatScorerService()
 
 router = APIRouter(prefix="/api/emails", tags=["Email Analysis"])
 
@@ -80,6 +83,19 @@ async def analyze_url_endpoint(request: URLAnalysisRequest):
 
 
 @router.post(
+    "/calculate-threat-score",
+    response_model=ThreatScoreResult,
+    summary="Calculate global deterministic threat score from email analysis",
+    description="Combines authentication, lookalikes, URLs, domain age, intent keywords, and attachments into an explainable threat score."
+)
+async def calculate_threat_score_endpoint(analysis: EmailAnalysisResponse):
+    """
+    Calculates global threat score for a given EmailAnalysisResponse object.
+    """
+    return global_threat_scorer.calculate_score(analysis)
+
+
+@router.post(
     "/analyze",
     response_model=EmailAnalysisResponse,
     responses={
@@ -136,6 +152,7 @@ async def analyze_email(file: UploadFile = File(...)):
         analysis_result.ip_intelligence = ip_intel_dict
         analysis_result.domain_intelligence = domain_intel_dict
         analysis_result.lookalike_domains = global_lookalike_detector.detect_lookalikes_batch(domain_list)
+        analysis_result.threat_score = global_threat_scorer.calculate_score(analysis_result)
 
         return analysis_result
     except EmailParseException as e:

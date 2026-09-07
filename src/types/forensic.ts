@@ -182,6 +182,27 @@ export interface URLAnalysisResult {
   score_reasons: string[];
 }
 
+export interface ThreatScoreContribution {
+  signal: string;
+  label: string;
+  points: number;
+  evidence: string;
+}
+
+export interface PositiveEvidence {
+  signal: string;
+  label: string;
+  evidence: string;
+}
+
+export interface ThreatScoreResult {
+  score: number;
+  severity: 'low' | 'suspicious' | 'high' | 'critical';
+  reasons: ThreatScoreContribution[];
+  positive_evidence: PositiveEvidence[];
+  summary: string;
+}
+
 export interface DomainIntelligence {
   domain: string;
   punycode?: string;
@@ -203,6 +224,7 @@ export interface EmailAnalysis {
   domain_intelligence?: Record<string, DomainIntelligence>;
   lookalike_domains?: LookalikeDetectionResult[];
   url_analysis?: URLAnalysisResult[];
+  threat_score?: ThreatScoreResult;
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;

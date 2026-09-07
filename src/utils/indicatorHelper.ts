@@ -12,7 +12,10 @@ import type {
   IPIntelligence,
   DomainIntelligence,
   LookalikeDetectionResult,
-  URLAnalysisResult
+  URLAnalysisResult,
+  ThreatScoreContribution,
+  PositiveEvidence,
+  ThreatScoreResult
 } from '../types/forensic';
 
 export const decodeRfc2047 = (str?: string): string => {
@@ -492,6 +495,17 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     return resolveURLAnalysis(u, existing, visText);
   });
 
+  const threatScoreResult = email.threat_score || calculateThreatScore({
+    authentication: authAnalysis,
+    lookalike_domains: lookalikeList,
+    url_analysis: urlAnalysisList,
+    domain_intelligence: domainIntelMap,
+    subject,
+    plain_text_body: email.plain_text_body,
+    html_body: email.html_body,
+    attachments: attachmentsList
+  });
+
   return {
     ...email,
     subject,
@@ -512,6 +526,7 @@ export const resolveEmailIndicators = (email: EmailAnalysis): EmailAnalysis => {
     domain_intelligence: domainIntelMap,
     lookalike_domains: lookalikeList,
     url_analysis: urlAnalysisList,
+    threat_score: threatScoreResult,
     attachments: attachmentsList
   };
 };
@@ -972,5 +987,261 @@ export const resolveURLAnalysis = (
     suspicion_score: clampedScore,
     suspicion_level,
     score_reasons
+  };
+};
+
+const CREDENTIAL_KEYWORDS = [
+  'password', 'login credentials', 'verify your account', 'verify password',
+  'reset your password', 'security alert', 'account suspended', 'sign-in attempt',
+  'validate credentials', 'confirm your identity', 'immediate verification'
+];
+
+const FINANCIAL_KEYWORDS = [
+  'wire transfer', 'bank account', 'invoice payment', 'remittance',
+  'urgent payment', 'gift card', 'routing number', 'swift code',
+  'overdue invoice', 'cryptocurrency', 'bitcoin wallet'
+];
+
+const SUSPICIOUS_EXTENSIONS = [
+  '.exe', '.scr', '.bat', '.cmd', '.vbs', '.js', '.jse',
+  '.wsf', '.iso', '.img', '.hta', '.cpl', '.ps1', '.jar',
+  '.docm', '.xlsm', '.pptm'
+];
+
+export const calculateThreatScore = (email: Partial<EmailAnalysis>): ThreatScoreResult => {
+  const reasons: ThreatScoreContribution[] = [];
+  const positive_evidence: PositiveEvidence[] = [];
+  let rawScore = 0;
+
+  // 1. Authentication
+  const auth = email.authentication;
+  if (auth) {
+    if (auth.spf?.result?.toLowerCase() === 'fail') {
+      rawScore += 8;
+      reasons.push({
+        signal: 'spf_fail',
+        label: 'SPF authentication failed',
+        points: 8,
+        evidence: auth.spf.details || 'Observed SPF header check failed'
+      });
+    } else if (auth.spf?.result?.toLowerCase() === 'pass') {
+      positive_evidence.push({
+        signal: 'spf_pass',
+        label: 'SPF authentication passed',
+        evidence: 'Originating mail server authorized by SPF'
+      });
+    }
+
+    if (auth.dkim?.result?.toLowerCase() === 'fail') {
+      rawScore += 8;
+      reasons.push({
+        signal: 'dkim_fail',
+        label: 'DKIM cryptographic signature verification failed',
+        points: 8,
+        evidence: auth.dkim.details || 'DKIM signature invalid'
+      });
+    } else if (auth.dkim?.result?.toLowerCase() === 'pass') {
+      positive_evidence.push({
+        signal: 'dkim_pass',
+        label: 'DKIM signature verified',
+        evidence: 'Valid cryptographic signature'
+      });
+    }
+
+    if (auth.dmarc?.result?.toLowerCase() === 'fail') {
+      rawScore += 12;
+      reasons.push({
+        signal: 'dmarc_fail',
+        label: 'DMARC policy alignment failed',
+        points: 12,
+        evidence: auth.dmarc.details || 'DMARC policy check failed'
+      });
+    } else if (auth.dmarc?.result?.toLowerCase() === 'pass') {
+      positive_evidence.push({
+        signal: 'dmarc_pass',
+        label: 'DMARC policy aligned and passed',
+        evidence: 'DMARC policy alignment succeeded'
+      });
+    }
+
+    if (auth.alignment?.reply_to_mismatch) {
+      rawScore += 8;
+      reasons.push({
+        signal: 'reply_to_mismatch',
+        label: 'Reply-To header domain mismatch',
+        points: 8,
+        evidence: `From domain '${auth.alignment.from_domain}' differs from Reply-To '${auth.alignment.reply_to_domain}'`
+      });
+    }
+
+    if (auth.alignment?.return_path_mismatch) {
+      rawScore += 6;
+      reasons.push({
+        signal: 'return_path_mismatch',
+        label: 'Return-Path envelope sender mismatch',
+        points: 6,
+        evidence: `From domain '${auth.alignment.from_domain}' differs from Return-Path '${auth.alignment.return_path_domain}'`
+      });
+    }
+  }
+
+  // 2. Lookalike / Brand Impersonation
+  const lookalikes = email.lookalike_domains || [];
+  const seenBrands = new Set<string>();
+  lookalikes.forEach(lk => {
+    if (!seenBrands.has(lk.suspected_brand)) {
+      seenBrands.add(lk.suspected_brand);
+      rawScore += 18;
+      reasons.push({
+        signal: 'brand_impersonation',
+        label: `Possible ${lk.brand_name} lookalike domain`,
+        points: 18,
+        evidence: `${lk.domain} (${Math.round(lk.similarity * 100)}% match, techniques: ${lk.techniques.join(', ')})`
+      });
+    }
+  });
+
+  // 3. URL Signals
+  const urls = email.url_analysis || [];
+  let hasHighUrl = false;
+  let hasSuspUrl = false;
+  let hasLinkMismatch = false;
+
+  urls.forEach(u => {
+    if (!hasLinkMismatch && u.features.display_link_mismatch) {
+      hasLinkMismatch = true;
+      rawScore += 15;
+      reasons.push({
+        signal: 'html_link_mismatch',
+        label: 'HTML display link mismatch',
+        points: 15,
+        evidence: `Visible anchor text claimed '${u.features.visible_text_domain || u.features.visible_text}' but links to '${u.domain}'`
+      });
+    }
+
+    if (!hasHighUrl && u.suspicion_score >= 60) {
+      hasHighUrl = true;
+      rawScore += 15;
+      reasons.push({
+        signal: 'url_high_risk',
+        label: 'High-risk URL structure detected',
+        points: 15,
+        evidence: `${u.url} (suspicion score ${u.suspicion_score}/100)`
+      });
+    } else if (!hasHighUrl && !hasSuspUrl && u.suspicion_score >= 25) {
+      hasSuspUrl = true;
+      rawScore += 8;
+      reasons.push({
+        signal: 'url_suspicious',
+        label: 'Suspicious URL detected',
+        points: 8,
+        evidence: `${u.url} (suspicion score ${u.suspicion_score}/100)`
+      });
+    }
+  });
+
+  if (urls.length > 0 && !hasHighUrl && !hasSuspUrl && !hasLinkMismatch) {
+    positive_evidence.push({
+      signal: 'clean_urls',
+      label: 'Extracted URLs exhibit normal structure',
+      evidence: `${urls.length} URL(s) inspected without anomalies`
+    });
+  }
+
+  // 4. Domain Age
+  const domainIntel = email.domain_intelligence || {};
+  const newFlagged = new Set<string>();
+  const established: string[] = [];
+
+  Object.entries(domainIntel).forEach(([dName, dData]) => {
+    const isNew = dData.newly_registered_domain || (dData.domain_age_days !== undefined && dData.domain_age_days < 30);
+    if (isNew && !newFlagged.has(dName)) {
+      newFlagged.add(dName);
+      rawScore += 10;
+      reasons.push({
+        signal: 'newly_registered_domain',
+        label: 'Newly registered domain',
+        points: 10,
+        evidence: `Domain '${dName}' was registered recently (${dData.domain_age_days !== undefined ? dData.domain_age_days + ' days old' : '< 30 days old'})`
+      });
+    } else if (dData.domain_age_days !== undefined && dData.domain_age_days > 365) {
+      established.push(`${dName} (${dData.domain_age_days} days)`);
+    }
+  });
+
+  if (established.length > 0 && newFlagged.size === 0) {
+    positive_evidence.push({
+      signal: 'established_domain',
+      label: 'Domain registration is well-established',
+      evidence: established.slice(0, 2).join(', ')
+    });
+  }
+
+  // 5. Content Keywords
+  const fullText = `${email.subject || ''} ${email.plain_text_body || ''} ${email.html_body || ''}`.toLowerCase();
+  const matchedCred = CREDENTIAL_KEYWORDS.find(kw => fullText.includes(kw));
+  if (matchedCred) {
+    rawScore += 12;
+    reasons.push({
+      signal: 'credential_request',
+      label: 'Credential harvesting or urgent security language',
+      points: 12,
+      evidence: `Detected pattern: '${matchedCred}'`
+    });
+  }
+
+  const matchedFin = FINANCIAL_KEYWORDS.find(kw => fullText.includes(kw));
+  if (matchedFin) {
+    rawScore += 10;
+    reasons.push({
+      signal: 'financial_language',
+      label: 'Urgent financial or wire transfer language',
+      points: 10,
+      evidence: `Detected pattern: '${matchedFin}'`
+    });
+  }
+
+  // 6. Attachments
+  const atts = email.attachments || email.indicators?.attachments || [];
+  let suspiciousAtt = false;
+  atts.forEach(att => {
+    const fn = (att.filename || '').toLowerCase();
+    const isBadExt = SUSPICIOUS_EXTENSIONS.some(ext => fn.endsWith(ext));
+    if (isBadExt) {
+      suspiciousAtt = true;
+      rawScore += 15;
+      reasons.push({
+        signal: 'suspicious_attachment_extension',
+        label: 'Dangerous executable or script attachment',
+        points: 15,
+        evidence: `Attachment '${att.filename}'`
+      });
+    }
+  });
+
+  if (atts.length > 0 && !suspiciousAtt) {
+    positive_evidence.push({
+      signal: 'safe_attachments',
+      label: 'No executable or macro attachments detected',
+      evidence: `${atts.length} attachment(s) verified safe`
+    });
+  }
+
+  const score = Math.max(0, Math.min(100, rawScore));
+  let severity: 'low' | 'suspicious' | 'high' | 'critical' = 'low';
+  if (score >= 80) severity = 'critical';
+  else if (score >= 60) severity = 'high';
+  else if (score >= 30) severity = 'suspicious';
+
+  const summary = score === 0
+    ? 'No anomalous forensic indicators detected. Email exhibits normal baseline characteristics.'
+    : `Email risk assessed as ${severity.toUpperCase()} (${score}/100) driven by ${reasons.length} forensic signal(s).`;
+
+  return {
+    score,
+    severity,
+    reasons,
+    positive_evidence,
+    summary
   };
 };
