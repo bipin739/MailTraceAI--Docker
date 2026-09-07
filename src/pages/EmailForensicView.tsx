@@ -12,6 +12,7 @@ import { IndicatorsTab } from '../components/forensic/IndicatorsTab';
 import { AttachmentsTab } from '../components/forensic/AttachmentsTab';
 import { RawEmailTab } from '../components/forensic/RawEmailTab';
 import { InvestigationGraphTab } from '../components/forensic/InvestigationGraphTab';
+import { InvestigationMapTab } from '../components/forensic/InvestigationMapTab';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 
 export const EmailForensicView: React.FC = () => {
@@ -180,6 +181,7 @@ export const EmailForensicView: React.FC = () => {
       <div className="transition-all duration-200">
         {activeTab === 'overview' && <OverviewTab email={analysis} />}
         {activeTab === 'graph' && <InvestigationGraphTab email={analysis} />}
+        {activeTab === 'map' && <InvestigationMapTab email={analysis} />}
         {activeTab === 'headers' && <HeadersTab email={analysis} />}
         {activeTab === 'content' && <ContentTab email={analysis} />}
         {activeTab === 'indicators' && <IndicatorsTab email={analysis} />}
