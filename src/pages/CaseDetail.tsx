@@ -21,7 +21,8 @@ import {
   X,
   ExternalLink,
   Target,
-  GitMerge
+  GitMerge,
+  Download
 } from 'lucide-react';
 import type {
   CaseDetail as CaseDetailType,
@@ -74,10 +75,35 @@ export const CaseDetail: React.FC = () => {
 
   // Success toast banner
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isDownloadingDossier, setIsDownloadingDossier] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleDownloadDossier = async () => {
+    if (!caseData) return;
+    setIsDownloadingDossier(true);
+    try {
+      const res = await fetch(`http://localhost:8000/api/reports/case/${caseData.id}`);
+      if (!res.ok) throw new Error(`Dossier generation failed (${res.status})`);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Case_Dossier_${caseData.case_number}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      showToast('Case Dossier PDF downloaded successfully');
+    } catch (err) {
+      console.error('Failed to download case dossier:', err);
+      showToast('Failed to generate case dossier');
+    } finally {
+      setIsDownloadingDossier(false);
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -343,6 +369,29 @@ export const CaseDetail: React.FC = () => {
                   <option value="medium">Medium</option>
                   <option value="low">Low</option>
                 </select>
+              </div>
+
+              <div className="pt-3 sm:pt-0 border-t sm:border-t-0 sm:border-l border-slate-800 sm:pl-3">
+                <button
+                  id="export-case-dossier-btn"
+                  type="button"
+                  onClick={handleDownloadDossier}
+                  disabled={isDownloadingDossier}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/50 border border-cyan-500/60 text-cyan-300 hover:bg-cyan-900/60 hover:border-cyan-400 font-mono text-xs font-bold transition-all shadow-[0_0_12px_rgba(6,182,212,0.2)] disabled:opacity-50"
+                  title="Generate and download complete case investigation PDF dossier"
+                >
+                  {isDownloadingDossier ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                      <span>Generating PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Export Dossier PDF</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

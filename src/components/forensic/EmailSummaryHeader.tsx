@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield, Mail, Calendar, User, CornerDownLeft, Repeat, Hash, Briefcase } from 'lucide-react';
+import { ArrowLeft, Shield, Mail, Calendar, User, CornerDownLeft, Repeat, Hash, Briefcase, FileText, Loader2, CheckCircle2 } from 'lucide-react';
 import type { EmailAnalysis } from '../../types/forensic';
 import { CopyButton } from './CopyButton';
 import { AddToCaseModal } from '../case/AddToCaseModal';
@@ -12,6 +12,44 @@ interface EmailSummaryHeaderProps {
 export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email }) => {
   const navigate = useNavigate();
   const [isCaseModalOpen, setIsCaseModalOpen] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
+
+  const handleGenerateReport = async () => {
+    setIsGeneratingReport(true);
+    try {
+      const res = await fetch('http://localhost:8000/api/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysis: email,
+          analyst_name: 'SOC Lead Analyst'
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Report generation failed (${res.status})`);
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const sha = email.email_sha256 || email.id || 'forensic';
+      a.download = `MailTrace_Forensic_Report_${sha.slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setReportSuccess(true);
+      setTimeout(() => setReportSuccess(false), 4000);
+    } catch (err) {
+      console.error('Failed to generate report:', err);
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
 
   const toDisplay = Array.isArray(email.to) ? email.to.join(', ') : email.to;
 
@@ -46,7 +84,32 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
           )}
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            id="generate-forensic-report-btn"
+            type="button"
+            onClick={handleGenerateReport}
+            disabled={isGeneratingReport}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/50 border border-cyan-500/60 text-cyan-300 hover:bg-cyan-900/60 hover:border-cyan-400 font-mono text-xs font-bold transition-all shadow-[0_0_12px_rgba(6,182,212,0.2)] disabled:opacity-50"
+            title="Generate and download official PDF forensic evidence dossier"
+          >
+            {isGeneratingReport ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                <span>Generating PDF...</span>
+              </>
+            ) : reportSuccess ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Report Downloaded</span>
+              </>
+            ) : (
+              <>
+                <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Forensic Report</span>
+              </>
+            )}
+          </button>
           <button
             id="add-to-case-button"
             type="button"

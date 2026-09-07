@@ -102,3 +102,22 @@ class AuditLogModel(Base):
 
     # Relationships
     case = relationship("CaseModel", back_populates="audit_logs")
+
+
+class ReportModel(Base):
+    __tablename__ = "reports"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    report_number = Column(String(32), unique=True, nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    case_id = Column(String(36), ForeignKey("cases.id", ondelete="SET NULL"), nullable=True, index=True)
+    evidence_id = Column(String(128), nullable=True)
+    email_sha256 = Column(String(64), nullable=True, index=True)
+    threat_score = Column(Float, nullable=True, default=0.0)
+    severity = Column(String(20), nullable=True, default="low")
+    analyst_name = Column(String(100), nullable=True, default="SOC Lead Analyst")
+    summary = Column(Text, nullable=True)
+    file_path = Column(String(255), nullable=True)
+    file_size_bytes = Column(Integer, nullable=True, default=0)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
