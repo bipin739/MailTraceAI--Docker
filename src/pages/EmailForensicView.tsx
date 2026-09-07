@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { EmailAnalysis, ForensicTabType } from '../types/forensic';
-import { getAnalysisResult } from '../utils/forensicStore';
+import { getAnalysisResult, saveAnalysisResult } from '../utils/forensicStore';
 import { resolveEmailIndicators } from '../utils/indicatorHelper';
 import { EmailSummaryHeader } from '../components/forensic/EmailSummaryHeader';
 import { ForensicTabs } from '../components/forensic/ForensicTabs';
@@ -30,7 +30,42 @@ export const EmailForensicView: React.FC = () => {
     const result = getAnalysisResult(targetId);
 
     if (result) {
-      setAnalysis(resolveEmailIndicators(result));
+      const resolved = resolveEmailIndicators(result);
+      setAnalysis(resolved);
+
+      // Dynamically fetch ML classification if not already cached
+      const hasML = resolved.ml_phishing_probability !== undefined &&
+                    resolved.ml_phishing_probability !== null &&
+                    Boolean(resolved.ml_assessment);
+      if (!hasML) {
+        const textToAnalyze = resolved.plain_text_body || (resolved.html_body ? resolved.html_body.replace(/<[^>]+>/g, ' ') : '');
+        if (resolved.subject || textToAnalyze) {
+          fetch('http://localhost:8000/api/emails/ml-classify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subject: resolved.subject || '',
+              body: textToAnalyze || ''
+            })
+          })
+            .then(res => (res.ok ? res.json() : null))
+            .then(mlData => {
+              if (mlData && mlData.available) {
+                setAnalysis(prev => {
+                  if (!prev) return prev;
+                  const updated: EmailAnalysis = {
+                    ...prev,
+                    ml_phishing_probability: mlData.probability,
+                    ml_assessment: mlData
+                  };
+                  saveAnalysisResult(targetId, updated);
+                  return updated;
+                });
+              }
+            })
+            .catch(() => {});
+        }
+      }
     } else {
       setError('Unable to load the forensic analysis for this email.');
     }

@@ -170,9 +170,14 @@ async def analyze_email(file: UploadFile = File(...)):
 
         # Section 11: NLP-Based Phishing Classification (Complements deterministic scoring)
         try:
+            body_text = analysis_result.plain_text_body
+            if not body_text and analysis_result.html_body:
+                import re
+                body_text = re.sub(r'<[^>]+>', ' ', analysis_result.html_body)
+
             ml_pred = global_phishing_classifier.predict(
                 subject=analysis_result.subject,
-                body=analysis_result.plain_text_body
+                body=body_text
             )
             analysis_result.ml_assessment = MLAssessmentResult(**ml_pred)
             analysis_result.ml_phishing_probability = ml_pred.get("probability") if ml_pred.get("available") else None
