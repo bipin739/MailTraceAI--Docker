@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { EmailAnalysis } from '../../types/forensic';
 import { MetadataRow } from './MetadataRow';
 import { AuthenticationSection } from './AuthenticationSection';
@@ -6,6 +6,8 @@ import { TransmissionPathSection } from './TransmissionPathSection';
 import { IPIntelligenceSection } from './IPIntelligenceSection';
 import { GlobalThreatScoreSection } from './GlobalThreatScoreSection';
 import { AIAnalystSection } from './AIAnalystSection';
+import { RelatedInvestigationsCard } from '../correlation/RelatedInvestigationsCard';
+import type { CampaignCorrelationResponse } from '../../types/correlation';
 import { User, Info, Layers, Activity } from 'lucide-react';
 
 interface OverviewTabProps {
@@ -13,6 +15,25 @@ interface OverviewTabProps {
 }
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
+  const [correlations, setCorrelations] = useState<CampaignCorrelationResponse | null>(null);
+  const [loadingCorrelations, setLoadingCorrelations] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!email) return;
+    setLoadingCorrelations(true);
+    fetch('http://localhost:8000/api/correlation/email?min_score=0.15', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(email)
+    })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (data) setCorrelations(data);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingCorrelations(false));
+  }, [email]);
+
   const receivedHopsCount = email.received?.length || 0;
   const urlsCount = email.urls?.length || 0;
   const attachmentsCount = email.attachments?.length || email.indicators?.attachments?.length || 0;
@@ -32,6 +53,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
 
       {/* Section 12: AI Analyst Assistant Assessment */}
       <AIAnalystSection aiAnalyst={email.ai_analyst} />
+
+      {/* Section 15: Campaign Correlation & Related Investigations */}
+      <RelatedInvestigationsCard
+        relatedCases={correlations?.related_cases ?? []}
+        isLoading={loadingCorrelations}
+        emptyMessage="No existing investigation cases currently share technical infrastructure with this email."
+      />
 
       {/* Authentication & Alignment Section */}
       <AuthenticationSection authentication={email.authentication} />

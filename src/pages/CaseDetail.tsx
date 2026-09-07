@@ -20,7 +20,8 @@ import {
   Check,
   X,
   ExternalLink,
-  Target
+  Target,
+  GitMerge
 } from 'lucide-react';
 import type {
   CaseDetail as CaseDetailType,
@@ -29,6 +30,8 @@ import type {
   CaseNoteCreateRequest,
   CaseFindingCreateRequest
 } from '../types/case';
+import type { CampaignCorrelationResponse } from '../types/correlation';
+import { RelatedInvestigationsCard } from '../components/correlation/RelatedInvestigationsCard';
 
 const STATUS_CONFIG: Record<CaseStatus, { label: string; badge: string }> = {
   open: { label: 'Open', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/40' },
@@ -51,8 +54,10 @@ export const CaseDetail: React.FC = () => {
   const [caseData, setCaseData] = useState<CaseDetailType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'emails' | 'indicators' | 'findings' | 'notes' | 'timeline'>('emails');
+  const [activeTab, setActiveTab] = useState<'emails' | 'indicators' | 'findings' | 'notes' | 'timeline' | 'correlations'>('emails');
   const [copiedText, setCopiedText] = useState<string | null>(null);
+  const [correlations, setCorrelations] = useState<CampaignCorrelationResponse | null>(null);
+  const [loadingCorrelations, setLoadingCorrelations] = useState<boolean>(false);
 
   // Note form state
   const [noteText, setNoteText] = useState('');
@@ -98,6 +103,18 @@ export const CaseDetail: React.FC = () => {
       })
       .finally(() => {
         setLoading(false);
+      });
+
+    // Fetch related investigations
+    setLoadingCorrelations(true);
+    fetch(`http://localhost:8000/api/cases/${id}/correlation`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(corrData => {
+        if (corrData) setCorrelations(corrData);
+      })
+      .catch(() => {})
+      .finally(() => {
+        setLoadingCorrelations(false);
       });
   }, [id]);
 
@@ -340,6 +357,7 @@ export const CaseDetail: React.FC = () => {
           { id: 'findings' as const, label: 'Forensic Findings', icon: <ShieldAlert className="w-4 h-4" />, count: caseData.findings.length },
           { id: 'notes' as const, label: 'Analyst Notes', icon: <FileText className="w-4 h-4" />, count: caseData.notes.length },
           { id: 'timeline' as const, label: 'Audit Timeline', icon: <History className="w-4 h-4" />, count: caseData.audit_logs.length },
+          { id: 'correlations' as const, label: 'Related Investigations', icon: <GitMerge className="w-4 h-4" />, count: correlations?.related_cases.length ?? 0 },
         ].map(tab => {
           const isActive = activeTab === tab.id;
           return (
@@ -666,6 +684,15 @@ export const CaseDetail: React.FC = () => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* TAB 6: RELATED INVESTIGATIONS (CAMPAIGN CORRELATION) */}
+      {activeTab === 'correlations' && (
+        <RelatedInvestigationsCard
+          relatedCases={correlations?.related_cases ?? []}
+          isLoading={loadingCorrelations}
+          emptyMessage="No cross-case infrastructure or campaign pattern overlap observed."
+        />
       )}
 
       {/* ADD FINDING MODAL */}

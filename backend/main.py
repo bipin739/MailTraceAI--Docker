@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 from backend.api.routes.email import router as email_router
 from backend.api.routes.cases import router as cases_router
+from backend.api.routes.correlation import router as correlation_router
 from backend.db.session import engine, Base
 import backend.db.models  # Register models
 
@@ -28,6 +29,7 @@ app.add_middleware(
 # Include API Routers
 app.include_router(email_router)
 app.include_router(cases_router)
+app.include_router(correlation_router)
 
 
 @app.exception_handler(Exception)
