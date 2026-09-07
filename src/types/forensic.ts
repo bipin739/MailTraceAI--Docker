@@ -213,6 +213,20 @@ export interface MLAssessmentResult {
   notice?: string;
 }
 
+export interface AIAnalystAssessment {
+  summary: string;
+  likely_attack_type: string;
+  likely_objective: string;
+  key_evidence: string[];
+  recommended_actions: string[];
+  limitations: string[];
+  available: boolean;
+  provider?: string;
+  model?: string;
+  model_name?: string;
+  error?: string;
+}
+
 export interface DomainIntelligence {
   domain: string;
   punycode?: string;
@@ -237,6 +251,7 @@ export interface EmailAnalysis {
   threat_score?: ThreatScoreResult;
   ml_phishing_probability?: number | null;
   ml_assessment?: MLAssessmentResult;
+  ai_analyst?: AIAnalystAssessment;
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;

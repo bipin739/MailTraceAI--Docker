@@ -113,7 +113,8 @@ export const AnalyzeEmail: React.FC = () => {
           url_analysis: data.url_analysis || [],
           threat_score: data.threat_score,
           ml_phishing_probability: data.ml_phishing_probability,
-          ml_assessment: data.ml_assessment
+          ml_assessment: data.ml_assessment,
+          ai_analyst: data.ai_analyst
         };
 
         saveAnalysisResult(analysisId, parsedAnalysis);

@@ -5,6 +5,7 @@ from backend.schemas.domain_intelligence import DomainIntelligence
 from backend.schemas.lookalike import LookalikeDetectionResult
 from backend.schemas.url_analysis import URLAnalysisResult
 from backend.schemas.threat_score import ThreatScoreResult
+from backend.schemas.ai_analyst import AIAnalystAssessment
 
 
 class ProtocolResult(BaseModel):
@@ -160,6 +161,7 @@ class EmailAnalysisResponse(BaseModel):
     threat_score: Optional[ThreatScoreResult] = Field(None, description="Explainable deterministic global threat score")
     ml_phishing_probability: Optional[float] = Field(None, description="NLP-based phishing probability (0.0 to 1.0)")
     ml_assessment: Optional[MLAssessmentResult] = Field(None, description="Detailed ML NLP text classification assessment")
+    ai_analyst: Optional[AIAnalystAssessment] = Field(None, description="Structured AI Analyst assessment based on forensic findings")
     indicators: IndicatorsGroup = Field(default_factory=IndicatorsGroup, description="Structured indicators group")
 
     # Top-level flat fields for direct accessibility / backwards compatibility

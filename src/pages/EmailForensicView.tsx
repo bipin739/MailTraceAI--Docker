@@ -66,6 +66,30 @@ export const EmailForensicView: React.FC = () => {
             .catch(() => {});
         }
       }
+
+      // Dynamically fetch AI Analyst assessment if not already cached
+      if (!resolved.ai_analyst) {
+        fetch('http://localhost:8000/api/emails/ai-analyst', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(resolved)
+        })
+          .then(res => (res.ok ? res.json() : null))
+          .then(aiData => {
+            if (aiData) {
+              setAnalysis(prev => {
+                if (!prev) return prev;
+                const updated: EmailAnalysis = {
+                  ...prev,
+                  ai_analyst: aiData
+                };
+                saveAnalysisResult(targetId, updated);
+                return updated;
+              });
+            }
+          })
+          .catch(() => {});
+      }
     } else {
       setError('Unable to load the forensic analysis for this email.');
     }

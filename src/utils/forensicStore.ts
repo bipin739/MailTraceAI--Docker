@@ -286,6 +286,31 @@ Content-Disposition: attachment; filename="invoice.pdf"
       }
     ],
     positive_evidence: []
+  },
+  ai_analyst: {
+    summary: "Suspicious message exhibiting critical credential-harvesting indicators with severe sender spoofing, including failed DMARC and SPF checks alongside a deceptive lookalike domain.",
+    likely_attack_type: "Credential Harvesting / Brand Impersonation Spear-Phishing",
+    likely_objective: "Exfiltrate corporate Microsoft credentials via disguised credential-collection landing pages.",
+    key_evidence: [
+      "Failed DMARC (p=reject) and SPF authentication from sending IP 203.0.113.25",
+      "Lookalike domain micros0ft-example.com imitating Microsoft (registered 18 days ago)",
+      "HTML display anchor showing microsoft.com while pointing to evil-tracker.example",
+      "NLP Phishing Classifier flagged high confidence (89% probability) for credential harvesting language",
+      "Suspicious embedded shortened link (bit.ly/3sample-invoice)"
+    ],
+    recommended_actions: [
+      "Block sending IP 203.0.113.25 and domain micros0ft-example.com on perimeter email gateway",
+      "Revoke active sessions and force password resets for any recipient who accessed the link",
+      "Search SIEM proxy/DNS telemetry for outbound HTTP requests to evil-tracker.example and bit.ly/3sample-invoice",
+      "Purge matching message IDs from all internal Exchange/M365 mailboxes"
+    ],
+    limitations: [
+      "Assessment is strictly derived from observed telemetry and headers; no dynamic sandbox detonation was executed on external URLs.",
+      "Threat actor infrastructure may rotate dynamically across unobserved IP ranges."
+    ],
+    model_name: "Grounded Forensic Assistant (Local / Abstracted)",
+    provider: "local-mock",
+    available: true
   }
 });
 

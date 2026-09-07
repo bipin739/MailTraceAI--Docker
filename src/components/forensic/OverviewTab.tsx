@@ -5,6 +5,7 @@ import { AuthenticationSection } from './AuthenticationSection';
 import { TransmissionPathSection } from './TransmissionPathSection';
 import { IPIntelligenceSection } from './IPIntelligenceSection';
 import { GlobalThreatScoreSection } from './GlobalThreatScoreSection';
+import { AIAnalystSection } from './AIAnalystSection';
 import { User, Info, Layers, Activity } from 'lucide-react';
 
 interface OverviewTabProps {
@@ -28,6 +29,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
         mlAssessment={email.ml_assessment}
         mlProbability={email.ml_phishing_probability}
       />
+
+      {/* Section 12: AI Analyst Assistant Assessment */}
+      <AIAnalystSection aiAnalyst={email.ai_analyst} />
 
       {/* Authentication & Alignment Section */}
       <AuthenticationSection authentication={email.authentication} />

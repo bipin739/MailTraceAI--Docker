@@ -4,6 +4,7 @@ from fastapi import APIRouter, File, UploadFile, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from backend.schemas.email import EmailAnalysisResponse, ErrorResponse, MLAssessmentResult, MLClassifyRequest
+from backend.schemas.ai_analyst import AIAnalystAssessment
 from backend.schemas.ip_intelligence import IPIntelligence
 from backend.schemas.domain_intelligence import DomainIntelligence
 from backend.schemas.lookalike import LookalikeDetectionResult
@@ -15,6 +16,7 @@ from backend.services.domain_intelligence_service import DomainIntelligenceServi
 from backend.services.lookalike_detector import LookalikeDetectorService
 from backend.services.url_analyzer import URLAnalyzerService
 from backend.services.threat_scorer import ThreatScorerService
+from backend.services.ai_analyst_service import global_ai_analyst_service
 from backend.app.ml.classifier import global_phishing_classifier
 
 global_lookalike_detector = LookalikeDetectorService()
@@ -111,6 +113,19 @@ async def classify_email_text(request: MLClassifyRequest):
 
 
 @router.post(
+    "/ai-analyst",
+    response_model=AIAnalystAssessment,
+    summary="Generate AI Analyst structured assessment from forensic evidence",
+    description="Synthesizes structured forensic findings (authentication, URLs, lookalikes, IP intel, threat score, ML probability) into concise executive findings, attack classification, and prescriptive guidance."
+)
+async def generate_ai_analyst_assessment(analysis: EmailAnalysisResponse):
+    """
+    Direct endpoint to generate AI Analyst assessment for a supplied EmailAnalysisResponse.
+    """
+    return await global_ai_analyst_service.analyze(analysis)
+
+
+@router.post(
     "/analyze",
     response_model=EmailAnalysisResponse,
     responses={
@@ -187,6 +202,13 @@ async def analyze_email(file: UploadFile = File(...)):
             analysis_result.ml_phishing_probability = None
 
         analysis_result.threat_score = global_threat_scorer.calculate_score(analysis_result)
+
+        # Section 12: AI Analyst Assistant (Synthesizes structured forensic telemetry)
+        try:
+            analysis_result.ai_analyst = await global_ai_analyst_service.analyze(analysis_result)
+        except Exception:
+            # Failure mode: If AI Analyst fails, continue forensic analysis. The entire email pipeline must not fail.
+            analysis_result.ai_analyst = None
 
         return analysis_result
     except EmailParseException as e:
