@@ -252,6 +252,7 @@ export interface EmailAnalysis {
   ml_phishing_probability?: number | null;
   ml_assessment?: MLAssessmentResult;
   ai_analyst?: AIAnalystAssessment;
+  investigation_graph?: import('./graph').InvestigationGraphData;
   indicators?: IndicatorsGroup;
   subject?: string;
   from?: string;
@@ -273,6 +274,6 @@ export interface EmailAnalysis {
   attachments?: EmailAttachment[];
 }
 
-export type ForensicTabType = 'overview' | 'headers' | 'content' | 'indicators' | 'attachments' | 'raw';
+export type ForensicTabType = 'overview' | 'headers' | 'content' | 'indicators' | 'attachments' | 'raw' | 'graph';
 
 

@@ -11,6 +11,7 @@ import { ContentTab } from '../components/forensic/ContentTab';
 import { IndicatorsTab } from '../components/forensic/IndicatorsTab';
 import { AttachmentsTab } from '../components/forensic/AttachmentsTab';
 import { RawEmailTab } from '../components/forensic/RawEmailTab';
+import { InvestigationGraphTab } from '../components/forensic/InvestigationGraphTab';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 
 export const EmailForensicView: React.FC = () => {
@@ -90,6 +91,30 @@ export const EmailForensicView: React.FC = () => {
           })
           .catch(() => {});
       }
+
+      // Dynamically fetch Investigation Graph if not already cached
+      if (!resolved.investigation_graph) {
+        fetch('http://localhost:8000/api/emails/investigation-graph', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(resolved)
+        })
+          .then(res => (res.ok ? res.json() : null))
+          .then(graphData => {
+            if (graphData && graphData.nodes) {
+              setAnalysis(prev => {
+                if (!prev) return prev;
+                const updated: EmailAnalysis = {
+                  ...prev,
+                  investigation_graph: graphData
+                };
+                saveAnalysisResult(targetId, updated);
+                return updated;
+              });
+            }
+          })
+          .catch(() => {});
+      }
     } else {
       setError('Unable to load the forensic analysis for this email.');
     }
@@ -154,6 +179,7 @@ export const EmailForensicView: React.FC = () => {
       {/* TAB CONTENT VIEWS */}
       <div className="transition-all duration-200">
         {activeTab === 'overview' && <OverviewTab email={analysis} />}
+        {activeTab === 'graph' && <InvestigationGraphTab email={analysis} />}
         {activeTab === 'headers' && <HeadersTab email={analysis} />}
         {activeTab === 'content' && <ContentTab email={analysis} />}
         {activeTab === 'indicators' && <IndicatorsTab email={analysis} />}

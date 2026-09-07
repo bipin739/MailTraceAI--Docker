@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from backend.schemas.email import EmailAnalysisResponse, ErrorResponse, MLAssessmentResult, MLClassifyRequest
 from backend.schemas.ai_analyst import AIAnalystAssessment
+from backend.schemas.graph import InvestigationGraphResponse, GraphFilterRequest
 from backend.schemas.ip_intelligence import IPIntelligence
 from backend.schemas.domain_intelligence import DomainIntelligence
 from backend.schemas.lookalike import LookalikeDetectionResult
@@ -17,6 +18,7 @@ from backend.services.lookalike_detector import LookalikeDetectorService
 from backend.services.url_analyzer import URLAnalyzerService
 from backend.services.threat_scorer import ThreatScorerService
 from backend.services.ai_analyst_service import global_ai_analyst_service
+from backend.services.graph_service import global_graph_service
 from backend.app.ml.classifier import global_phishing_classifier
 
 global_lookalike_detector = LookalikeDetectorService()
@@ -126,6 +128,32 @@ async def generate_ai_analyst_assessment(analysis: EmailAnalysisResponse):
 
 
 @router.post(
+    "/investigation-graph",
+    response_model=InvestigationGraphResponse,
+    summary="Generate investigation relationship graph from email forensic telemetry",
+    description="Constructs a directed forensic relationship graph connecting Email, Email Address, Domain, URL, IP, ASN, and Attachment entities with deduplication."
+)
+async def generate_investigation_graph(analysis: EmailAnalysisResponse):
+    """
+    Direct endpoint to generate relationship graph for a supplied EmailAnalysisResponse.
+    """
+    return global_graph_service.build_graph(analysis)
+
+
+@router.post(
+    "/investigation-graph/filter",
+    response_model=InvestigationGraphResponse,
+    summary="Filter investigation relationship graph by node types",
+    description="Filters an existing graph by node types and prunes dangling edges."
+)
+async def filter_investigation_graph(request: GraphFilterRequest):
+    """
+    Filters graph nodes and cascading edges.
+    """
+    return global_graph_service.filter_graph(request.graph, allowed_types=request.node_types)
+
+
+@router.post(
     "/analyze",
     response_model=EmailAnalysisResponse,
     responses={
@@ -209,6 +237,13 @@ async def analyze_email(file: UploadFile = File(...)):
         except Exception:
             # Failure mode: If AI Analyst fails, continue forensic analysis. The entire email pipeline must not fail.
             analysis_result.ai_analyst = None
+
+        # Section 13: Investigation Relationship Graph
+        try:
+            analysis_result.investigation_graph = global_graph_service.build_graph(analysis_result)
+        except Exception:
+            # Failure mode: If Graph build fails, continue forensic analysis. The entire email pipeline must not fail.
+            analysis_result.investigation_graph = None
 
         return analysis_result
     except EmailParseException as e:

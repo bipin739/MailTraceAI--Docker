@@ -311,6 +311,142 @@ Content-Disposition: attachment; filename="invoice.pdf"
     model_name: "Grounded Forensic Assistant (Local / Abstracted)",
     provider: "local-mock",
     available: true
+  },
+  investigation_graph: {
+    nodes: [
+      {
+        id: 'email:sample-001',
+        type: 'Email',
+        label: 'Email: Urgent: Update Your Microsoft Account',
+        metadata: { subject: 'Urgent: Update Your Microsoft Account', threat_score: 82, severity: 'critical', date: '2026-09-07T12:00:00Z' }
+      },
+      {
+        id: 'email_addr:security@micros0ft-example.com',
+        type: 'Email Address',
+        label: 'security@micros0ft-example.com',
+        metadata: { role: 'sender' }
+      },
+      {
+        id: 'email_addr:employee@company.com',
+        type: 'Email Address',
+        label: 'employee@company.com',
+        metadata: { role: 'recipient' }
+      },
+      {
+        id: 'domain:micros0ft-example.com',
+        type: 'Domain',
+        label: 'micros0ft-example.com',
+        metadata: {
+          domain: 'micros0ft-example.com',
+          is_lookalike: true,
+          suspected_brand: 'microsoft.com',
+          similarity: 0.91,
+          domain_age_days: 18,
+          newly_registered: true,
+          registrar: 'NameCheap, Inc.'
+        }
+      },
+      {
+        id: 'domain:company.com',
+        type: 'Domain',
+        label: 'company.com',
+        metadata: { domain: 'company.com', domain_age_days: 8700, newly_registered: false, registrar: 'Network Solutions' }
+      },
+      {
+        id: 'domain:evil-tracker.example',
+        type: 'Domain',
+        label: 'evil-tracker.example',
+        metadata: { domain: 'evil-tracker.example', newly_registered: true }
+      },
+      {
+        id: 'domain:bit.ly',
+        type: 'Domain',
+        label: 'bit.ly',
+        metadata: { domain: 'bit.ly', status_message: 'Shortener Service' }
+      },
+      {
+        id: 'url:evil-tracker',
+        type: 'URL',
+        label: 'URL: hxxps://evil-tracker[.]example/track',
+        metadata: {
+          url: 'https://evil-tracker.example/track?id=987',
+          defanged_url: 'hxxps://evil-tracker[.]example/track?id=987',
+          suspicion_level: 'high',
+          score_reasons: ['Destination domain mismatch with anchor text']
+        }
+      },
+      {
+        id: 'url:bitly-invoice',
+        type: 'URL',
+        label: 'URL: hxxps://bit[.]ly/3sample-invoice',
+        metadata: {
+          url: 'https://bit.ly/3sample-invoice',
+          defanged_url: 'hxxps://bit[.]ly/3sample-invoice',
+          suspicion_level: 'suspicious',
+          score_reasons: ['Shortened link masking destination']
+        }
+      },
+      {
+        id: 'ip:203.0.113.25',
+        type: 'IP',
+        label: '203.0.113.25',
+        metadata: { ip: '203.0.113.25', country: 'US', asn: 'AS64512', org: 'Threat Hosting Corp', is_proxy_vpn_tor: true }
+      },
+      {
+        id: 'ip:198.51.100.12',
+        type: 'IP',
+        label: '198.51.100.12',
+        metadata: { ip: '198.51.100.12', country: 'DE', asn: 'AS24940', org: 'Hetzner Online GmbH', is_proxy_vpn_tor: false }
+      },
+      {
+        id: 'asn:AS64512',
+        type: 'ASN',
+        label: 'AS64512 (Threat Hosting)',
+        metadata: { asn: 'AS64512', org: 'Threat Hosting Corp', country: 'US' }
+      },
+      {
+        id: 'asn:AS24940',
+        type: 'ASN',
+        label: 'AS24940 (Hetzner Online)',
+        metadata: { asn: 'AS24940', org: 'Hetzner Online GmbH', country: 'DE' }
+      },
+      {
+        id: 'attachment:invoice-pdf',
+        type: 'Attachment',
+        label: 'invoice.pdf',
+        metadata: { filename: 'invoice.pdf', mime_type: 'application/pdf', size_bytes: 241000, sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' }
+      }
+    ],
+    edges: [
+      { id: 'edge:email:sample-001->SENT_FROM->email_addr:security@micros0ft-example.com', source: 'email:sample-001', target: 'email_addr:security@micros0ft-example.com', label: 'SENT_FROM' },
+      { id: 'edge:email:sample-001->SENT_TO->email_addr:employee@company.com', source: 'email:sample-001', target: 'email_addr:employee@company.com', label: 'SENT_TO' },
+      { id: 'edge:email_addr:security@micros0ft-example.com->BELONGS_TO_DOMAIN->domain:micros0ft-example.com', source: 'email_addr:security@micros0ft-example.com', target: 'domain:micros0ft-example.com', label: 'BELONGS_TO_DOMAIN' },
+      { id: 'edge:email_addr:employee@company.com->BELONGS_TO_DOMAIN->domain:company.com', source: 'email_addr:employee@company.com', target: 'domain:company.com', label: 'BELONGS_TO_DOMAIN' },
+      { id: 'edge:email:sample-001->CONTAINS_URL->url:evil-tracker', source: 'email:sample-001', target: 'url:evil-tracker', label: 'CONTAINS_URL' },
+      { id: 'edge:email:sample-001->CONTAINS_URL->url:bitly-invoice', source: 'email:sample-001', target: 'url:bitly-invoice', label: 'CONTAINS_URL' },
+      { id: 'edge:url:evil-tracker->RESOLVES_TO_DOMAIN->domain:evil-tracker.example', source: 'url:evil-tracker', target: 'domain:evil-tracker.example', label: 'RESOLVES_TO_DOMAIN' },
+      { id: 'edge:url:bitly-invoice->RESOLVES_TO_DOMAIN->domain:bit.ly', source: 'url:bitly-invoice', target: 'domain:bit.ly', label: 'RESOLVES_TO_DOMAIN' },
+      { id: 'edge:domain:micros0ft-example.com->RESOLVES_TO_IP->ip:203.0.113.25', source: 'domain:micros0ft-example.com', target: 'ip:203.0.113.25', label: 'RESOLVES_TO_IP' },
+      { id: 'edge:email:sample-001->ROUTED_THROUGH->ip:203.0.113.25', source: 'email:sample-001', target: 'ip:203.0.113.25', label: 'ROUTED_THROUGH' },
+      { id: 'edge:email:sample-001->ROUTED_THROUGH->ip:198.51.100.12', source: 'email:sample-001', target: 'ip:198.51.100.12', label: 'ROUTED_THROUGH' },
+      { id: 'edge:ip:203.0.113.25->BELONGS_TO_ASN->asn:AS64512', source: 'ip:203.0.113.25', target: 'asn:AS64512', label: 'BELONGS_TO_ASN' },
+      { id: 'edge:ip:198.51.100.12->BELONGS_TO_ASN->asn:AS24940', source: 'ip:198.51.100.12', target: 'asn:AS24940', label: 'BELONGS_TO_ASN' },
+      { id: 'edge:email:sample-001->HAS_ATTACHMENT->attachment:invoice-pdf', source: 'email:sample-001', target: 'attachment:invoice-pdf', label: 'HAS_ATTACHMENT' }
+    ],
+    summary: {
+      total_nodes: 14,
+      total_edges: 14,
+      node_type_counts: {
+        'Email': 1,
+        'Email Address': 2,
+        'Domain': 4,
+        'URL': 2,
+        'IP': 2,
+        'ASN': 2,
+        'Attachment': 1
+      },
+      has_high_risk_entities: true
+    }
   }
 });
 

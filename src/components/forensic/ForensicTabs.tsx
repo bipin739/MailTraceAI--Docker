@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ForensicTabType } from '../../types/forensic';
-import { LayoutDashboard, FileText, Code, Target, Paperclip, Terminal } from 'lucide-react';
+import { LayoutDashboard, FileText, Code, Target, Paperclip, Terminal, Share2 } from 'lucide-react';
 
 interface ForensicTabsProps {
   activeTab: ForensicTabType;
@@ -19,6 +19,7 @@ export const ForensicTabs: React.FC<ForensicTabsProps> = ({
 }) => {
   const tabs: { id: ForensicTabType; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'graph', label: 'Investigation Graph', icon: <Share2 className="w-4 h-4" /> },
     { id: 'headers', label: 'Headers', icon: <FileText className="w-4 h-4" />, badge: counts.receivedHops },
     { id: 'content', label: 'Content', icon: <Code className="w-4 h-4" /> },
     { id: 'indicators', label: 'Indicators', icon: <Target className="w-4 h-4" />, badge: counts.urls },
