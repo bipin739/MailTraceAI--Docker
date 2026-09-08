@@ -24,6 +24,8 @@ from backend.services.ai_analyst_service import global_ai_analyst_service
 from backend.services.graph_service import global_graph_service
 from backend.services.ioc_extractor import IOCExtractorService
 from backend.services.audit_service import AuditService
+from backend.services.upload_security import UploadSecurityService
+from backend.services.html_sanitizer import HTMLSanitizerService
 from backend.app.ml.classifier import global_phishing_classifier
 
 global_lookalike_detector = LookalikeDetectorService()
@@ -176,7 +178,8 @@ async def analyze_email(
     """
     Accepts an .eml file upload and parses headers, body, URLs, attachments, authentication, relay hops, and IP intelligence into structured JSON.
     """
-    filename = file.filename or "unknown.eml"
+    raw_filename = file.filename or "unknown.eml"
+    safe_filename = UploadSecurityService.sanitize_filename(raw_filename)
     uploader_identity = (user or "SOC Analyst").strip()
 
     try:
@@ -187,18 +190,19 @@ async def analyze_email(
             detail=f"Failed to read uploaded file stream: {str(e)}"
         )
 
-    if not content_bytes or len(content_bytes.strip()) == 0:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"detail": "Uploaded email file is empty.", "error_code": "EMPTY_FILE"}
-        )
+    # Section 20: Validate upload security (file size limit <= 10MB, no executables, RFC-822 structure)
+    UploadSecurityService.validate_email_upload(
+        filename=safe_filename,
+        content_type=file.content_type,
+        content_bytes=content_bytes
+    )
 
     # Section 18: Cryptographic evidence hash & persistence
     raw_sha256 = IOCExtractorService.calculate_sha256(content_bytes)
     evidence_record = AuditService.record_evidence(
         db=db,
         sha256=raw_sha256,
-        original_filename=filename,
+        original_filename=safe_filename,
         size=len(content_bytes),
         uploader=uploader_identity
     )
@@ -213,10 +217,10 @@ async def analyze_email(
         metadata={
             "evidence_id": evidence_record.evidence_id,
             "sha256": raw_sha256,
-            "filename": filename,
+            "filename": safe_filename,
             "size": len(content_bytes)
         },
-        details=f"Email file '{filename}' ({len(content_bytes)} bytes) uploaded. SHA-256 recorded: {raw_sha256[:16]}..."
+        details=f"Email file '{safe_filename}' ({len(content_bytes)} bytes) uploaded. SHA-256 recorded: {raw_sha256[:16]}..."
     )
 
     # Log ANALYSIS_STARTED audit event
@@ -229,13 +233,17 @@ async def analyze_email(
         metadata={
             "evidence_id": evidence_record.evidence_id,
             "sha256": raw_sha256,
-            "filename": filename
+            "filename": safe_filename
         },
         details=f"Forensic analysis and threat evaluation started for evidence {evidence_record.evidence_id}."
     )
 
     try:
-        analysis_result = EmailParserService.parse_eml_bytes(content_bytes, filename=filename)
+        analysis_result = EmailParserService.parse_eml_bytes(content_bytes, filename=safe_filename)
+
+        # Section 20: Sanitize HTML body to block active scripts, iframes, objects, forms, and remote image beacons
+        if analysis_result.html_body:
+            analysis_result.html_body = HTMLSanitizerService.sanitize_html(analysis_result.html_body)
 
         # Enrich IP intelligence asynchronously
         ip_list = list(set(analysis_result.ips))
@@ -296,7 +304,7 @@ async def analyze_email(
         # Attach Section 18 Evidence Integrity Metadata
         analysis_result.id = evidence_record.evidence_id
         analysis_result.evidence_id = evidence_record.evidence_id
-        analysis_result.original_filename = filename
+        analysis_result.original_filename = safe_filename
         analysis_result.upload_timestamp = evidence_record.upload_timestamp.isoformat()
         analysis_result.size = evidence_record.size
         analysis_result.uploader = evidence_record.uploader

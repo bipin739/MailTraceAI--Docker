@@ -119,6 +119,13 @@ class RDAPService:
                 status=["Invalid domain name"]
             )
 
+        from backend.services.ssrf_protector import SSRFProtector
+        if not SSRFProtector.is_safe_public_domain(clean_domain):
+            return DomainRegistration(
+                registration_source="unavailable",
+                status=["Internal, loopback, or invalid domain rejected by SSRF protection"]
+            )
+
         # 1. Attempt RDAP query for target domain
         try:
             async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:

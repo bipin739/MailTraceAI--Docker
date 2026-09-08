@@ -8,45 +8,32 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend.main import app
-from backend.db.session import Base, get_db
+from backend.db.session import Base, engine, SessionLocal
 from backend.db.models import CaseModel, CaseEmailModel, EmailAnalysisModel, EvidenceModel
 
-
-# Dedicated isolated SQLite in-memory test database for clean unit tests
-TEST_DB_URL = "sqlite:///:memory:"
-test_engine = create_engine(
-    TEST_DB_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-
-
-def override_get_db():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
 def setup_teardown_db():
-    Base.metadata.create_all(bind=test_engine)
-    db = TestingSessionLocal()
-    # Clean tables
-    db.query(CaseEmailModel).delete()
-    db.query(CaseModel).delete()
-    db.query(EmailAnalysisModel).delete()
-    db.query(EvidenceModel).delete()
-    db.commit()
-    db.close()
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        db.query(CaseEmailModel).delete()
+        db.query(CaseModel).delete()
+        db.query(EmailAnalysisModel).delete()
+        db.commit()
+    finally:
+        db.close()
     yield
-    Base.metadata.drop_all(bind=test_engine)
+    db = SessionLocal()
+    try:
+        db.query(CaseEmailModel).delete()
+        db.query(CaseModel).delete()
+        db.query(EmailAnalysisModel).delete()
+        db.commit()
+    finally:
+        db.close()
 
 
 def test_dashboard_summary_empty():
@@ -74,7 +61,7 @@ def test_dashboard_summary_empty():
 
 def test_dashboard_summary_with_real_records():
     """Verify metrics and analytics aggregation with populated cases and analyzed emails."""
-    db = TestingSessionLocal()
+    db = SessionLocal()
 
     # Create 2 cases: 1 open, 1 resolved
     c1 = CaseModel(
@@ -177,7 +164,7 @@ def test_dashboard_summary_with_real_records():
 
 def test_dashboard_emails_pagination():
     """Verify paginated listing of analyzed emails."""
-    db = TestingSessionLocal()
+    db = SessionLocal()
     for i in range(5):
         db.add(EmailAnalysisModel(
             subject=f"Email Test {i}",

@@ -21,13 +21,32 @@ export const ContentTab: React.FC<ContentTabProps> = ({ email }) => {
       : null;
 
   // Sanitize HTML body for sandboxed preview:
-  // Remove script tags, inline event handlers (on*), remote image automatic fetches
+  // Strictly block script, iframe, object, embed, form, event handlers, and remote image loading
   const createSafeSandboxDoc = (html: string): string => {
+    let sanitized = html
+      // 1. Strip dangerous tags
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+      .replace(/<embed\b[^>]*>/gi, '')
+      .replace(/<applet\b[^<]*(?:(?!<\/applet>)<[^<]*)*<\/applet>/gi, '')
+      .replace(/<form\b[^<]*(?:(?!<\/form>)<[^<]*)*<\/form>/gi, '')
+      .replace(/<base\b[^>]*>/gi, '')
+      .replace(/<meta\b[^>]*>/gi, '')
+      // 2. Strip standalone dangerous tags
+      .replace(/<\/?(?:script|iframe|object|embed|applet|form|base|meta)\b[^>]*>/gi, '')
+      // 3. Strip all event handlers (quoted and unquoted)
+      .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      // 4. Strip javascript: and vbscript: URIs
+      .replace(/(?:href|src|action)\s*=\s*["']?\s*(?:javascript|vbscript):[^"'>]+["']?/gi, 'href="#"')
+      // 5. Block remote images
+      .replace(/<img\b([^>]*?)\bsrc\s*=\s*["'](https?:\/\/[^"']+)["']([^>]*?)>/gi, '<div class="blocked-image">[Remote Image Blocked: $2]</div>');
+
     return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'none' data:; style-src 'unsafe-inline'; form-action 'none';">
 <style>
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -37,15 +56,30 @@ export const ContentTab: React.FC<ContentTabProps> = ({ email }) => {
     line-height: 1.6;
     word-break: break-word;
   }
-  a { color: #38bdf8; text-decoration: underline; }
-  img { max-width: 100%; border: 1px dashed #475569; padding: 4px; display: block; margin: 8px 0; }
-  img::before { content: "[Remote Image Blocked]"; display: block; color: #94a3b8; font-size: 11px; }
+  a {
+    color: #94a3b8 !important;
+    text-decoration: underline !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+  }
+  .blocked-image {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 4px 0;
+    border: 1px dashed #475569;
+    border-radius: 4px;
+    background: #0f172a;
+    color: #94a3b8;
+    font-size: 11px;
+    font-family: monospace;
+  }
+  img {
+    display: none !important;
+  }
 </style>
 </head>
 <body>
-${html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/on\w+\s*=\s*"[^"]*"/gi, '')
-      .replace(/on\w+\s*=\s*'[^']*'/gi, '')}
+${sanitized}
 </body>
 </html>`;
   };

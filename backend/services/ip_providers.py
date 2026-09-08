@@ -25,9 +25,20 @@ class IPApiProvider(BaseIPIntelligenceProvider):
         self.api_key = api_key or os.getenv("IP_INTELLIGENCE_API_KEY") or os.getenv("IPAPI_KEY")
 
     async def lookup(self, ip: str) -> IPIntelligence:
-        url = f"http://ip-api.com/json/{ip}?fields=status,message,country,countryCode,regionName,city,lat,lon,timezone,isp,org,as,proxy,hosting"
+        from backend.services.ssrf_protector import SSRFProtector
+        clean_ip = ip.strip()
+        if not SSRFProtector.is_safe_public_ip(clean_ip):
+            return IPIntelligence(
+                ip=clean_ip,
+                scope="private",
+                enrichment_available=False,
+                infrastructure_type="Private / Internal infrastructure",
+                error=None
+            )
+
+        url = f"http://ip-api.com/json/{clean_ip}?fields=status,message,country,countryCode,regionName,city,lat,lon,timezone,isp,org,as,proxy,hosting"
         if self.api_key:
-            url = f"https://pro.ip-api.com/json/{ip}?key={self.api_key}&fields=status,message,country,countryCode,regionName,city,lat,lon,timezone,isp,org,as,proxy,hosting"
+            url = f"https://pro.ip-api.com/json/{clean_ip}?key={self.api_key}&fields=status,message,country,countryCode,regionName,city,lat,lon,timezone,isp,org,as,proxy,hosting"
 
         try:
             async with httpx.AsyncClient(timeout=4.0) as client:

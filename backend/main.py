@@ -8,8 +8,14 @@ from backend.api.routes.correlation import router as correlation_router
 from backend.api.routes.reports import router as reports_router
 from backend.api.routes.audit import router as audit_router, evidence_router
 from backend.api.routes.dashboard import router as dashboard_router
+from backend.api.middleware.security_headers import SecurityHeadersMiddleware
+from backend.api.middleware.rate_limiter import RateLimiterMiddleware
+from backend.services.log_sanitizer import install_log_sanitizer
 from backend.db.session import engine, Base
 import backend.db.models  # Register models
+
+# Initialize logging privacy filter
+install_log_sanitizer()
 
 # Ensure tables exist on startup
 Base.metadata.create_all(bind=engine)
@@ -19,6 +25,10 @@ app = FastAPI(
     description="FastAPI service to ingest, parse, and analyze RFC-822 / .eml email files for cybersecurity threat investigation.",
     version="1.0.0"
 )
+
+# Section 20: Register HTTP Security Hardening Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimiterMiddleware)
 
 # Enable CORS for frontend integration
 app.add_middleware(
