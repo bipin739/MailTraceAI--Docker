@@ -91,17 +91,51 @@ class CaseFindingModel(Base):
     case = relationship("CaseModel", back_populates="findings")
 
 
+class EvidenceModel(Base):
+    __tablename__ = "evidence"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    evidence_id = Column(String(64), unique=True, nullable=False, index=True)
+    sha256 = Column(String(64), nullable=False, index=True)
+    original_filename = Column(String(255), nullable=False)
+    upload_timestamp = Column(DateTime, default=get_utc_now, nullable=False)
+    size = Column(Integer, nullable=False)
+    uploader = Column(String(100), nullable=True, default="SOC Analyst")
+
+
 class AuditLogModel(Base):
     __tablename__ = "audit_logs"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    case_id = Column(String(36), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True)
-    action = Column(String(50), nullable=False)  # CASE_CREATED, STATUS_CHANGED, SEVERITY_CHANGED, EMAIL_ADDED, EMAIL_REMOVED, NOTE_ADDED, FINDING_ADDED
-    details = Column(Text, nullable=False)
-    timestamp = Column(DateTime, default=get_utc_now, nullable=False)
+    timestamp = Column(DateTime, default=get_utc_now, nullable=False, index=True)
+    user = Column(String(100), nullable=True, default="SOC Analyst")
+    action = Column(String(50), nullable=False, index=True)  # EMAIL_UPLOADED, ANALYSIS_STARTED, ANALYSIS_COMPLETED, CASE_CREATED, EMAIL_ADDED_TO_CASE, CASE_STATUS_CHANGED, NOTE_ADDED, REPORT_GENERATED
+    resource_type = Column(String(50), nullable=False, default="case", index=True)
+    resource_id = Column(String(128), nullable=False, default="", index=True)
+    metadata_json = Column(Text, nullable=True, default="{}")
+
+    # Backwards compatibility fields
+    case_id = Column(String(36), ForeignKey("cases.id", ondelete="CASCADE"), nullable=True, index=True)
+    details = Column(Text, nullable=True, default="")
 
     # Relationships
     case = relationship("CaseModel", back_populates="audit_logs")
+
+
+# Immutability enforcement: audit records are strictly append-only
+from sqlalchemy import event
+
+
+@event.listens_for(AuditLogModel, "before_update")
+def _prevent_audit_log_update(mapper, connection, target):
+    raise PermissionError("Audit log records are append-only and immutable. Modifications are prohibited.")
+
+
+@event.listens_for(AuditLogModel, "before_delete")
+def _prevent_audit_log_delete(mapper, connection, target):
+    if getattr(connection, "_allow_audit_cleanup", False):
+        return
+    raise PermissionError("Audit log records are append-only and immutable. Deletions are prohibited.")
 
 
 class ReportModel(Base):

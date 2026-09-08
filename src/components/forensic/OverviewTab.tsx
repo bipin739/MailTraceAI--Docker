@@ -6,6 +6,7 @@ import { TransmissionPathSection } from './TransmissionPathSection';
 import { IPIntelligenceSection } from './IPIntelligenceSection';
 import { GlobalThreatScoreSection } from './GlobalThreatScoreSection';
 import { AIAnalystSection } from './AIAnalystSection';
+import { EvidenceIntegritySection } from './EvidenceIntegritySection';
 import { RelatedInvestigationsCard } from '../correlation/RelatedInvestigationsCard';
 import type { CampaignCorrelationResponse } from '../../types/correlation';
 import { User, Info, Layers, Activity } from 'lucide-react';
@@ -60,6 +61,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
         isLoading={loadingCorrelations}
         emptyMessage="No existing investigation cases currently share technical infrastructure with this email."
       />
+
+      {/* Section 18: Evidence Integrity & Chain-of-Custody Audit Trail */}
+      <EvidenceIntegritySection email={email} />
 
       {/* Authentication & Alignment Section */}
       <AuthenticationSection authentication={email.authentication} />

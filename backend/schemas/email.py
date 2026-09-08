@@ -152,7 +152,13 @@ class MLClassifyRequest(BaseModel):
 
 
 class EmailAnalysisResponse(BaseModel):
+    id: Optional[str] = Field(None, description="Identifier for the analysis session or evidence record")
+    evidence_id: Optional[str] = Field(None, description="Unique chain-of-custody evidence identifier (e.g. EVD-A1B2C3D4)")
     email_sha256: Optional[str] = Field(None, description="SHA-256 hash of raw uploaded email bytes")
+    original_filename: Optional[str] = Field(None, description="Original filename of uploaded .eml file")
+    upload_timestamp: Optional[str] = Field(None, description="ISO timestamp when email was ingested")
+    size: Optional[int] = Field(None, description="Uploaded file size in bytes")
+    uploader: Optional[str] = Field("SOC Analyst", description="Uploader or analyst identity")
     authentication: Optional[AuthenticationAnalysis] = Field(None, description="Structured authentication analysis and sender alignment")
     relay_analysis: Optional[RelayPathAnalysis] = Field(None, description="Parsed Received header chain and relay transmission path")
     ip_intelligence: Dict[str, IPIntelligence] = Field(default_factory=dict, description="Contextual IP intelligence and infrastructure metadata dictionary keyed by IP")

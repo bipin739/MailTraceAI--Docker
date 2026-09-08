@@ -28,6 +28,7 @@ from backend.schemas.case import (
     CaseStatus,
     CaseSeverity
 )
+from backend.services.audit_service import AuditService
 
 
 class CaseService:
@@ -61,15 +62,26 @@ class CaseService:
         return f"{prefix}{next_seq:06d}"
 
     @staticmethod
-    def _log_audit(db: Session, case_id: str, action: str, details: str):
-        """Records an audit log entry for accountability."""
-        audit_entry = AuditLogModel(
-            case_id=case_id,
+    def _log_audit(
+        db: Session,
+        case_id: str,
+        action: str,
+        details: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        user: Optional[str] = "SOC Analyst"
+    ):
+        """Records an audit log entry for accountability via AuditService."""
+        meta = metadata or {}
+        AuditService.log_audit(
+            db=db,
             action=action,
-            details=details,
-            timestamp=datetime.now(timezone.utc)
+            resource_type="case",
+            resource_id=case_id,
+            user=user,
+            metadata=meta,
+            case_id=case_id,
+            details=details
         )
-        db.add(audit_entry)
 
     @classmethod
     def create_case(cls, db: Session, request: CaseCreateRequest) -> CaseModel:
@@ -92,7 +104,13 @@ class CaseService:
             db,
             case_id=case.id,
             action="CASE_CREATED",
-            details=f"Case {case.case_number} created with title '{case.title}' and severity '{case.severity}'."
+            details=f"Case {case.case_number} created with title '{case.title}' and severity '{case.severity}'.",
+            metadata={
+                "case_number": case.case_number,
+                "title": case.title,
+                "severity": case.severity,
+                "status": case.status
+            }
         )
 
         # Attach initial email if specified
@@ -244,14 +262,34 @@ class CaseService:
             old_st = case.status
             new_st = request.status.value
             case.status = new_st
-            cls._log_audit(db, case.id, "STATUS_CHANGED", f"Status updated from '{old_st}' to '{new_st}'.")
+            cls._log_audit(
+                db,
+                case.id,
+                "CASE_STATUS_CHANGED",
+                f"Status updated from '{old_st}' to '{new_st}'.",
+                metadata={"case_number": case.case_number, "old_status": old_st, "new_status": new_st}
+            )
+            # Retain STATUS_CHANGED for backwards compatibility with existing assertions
+            cls._log_audit(
+                db,
+                case.id,
+                "STATUS_CHANGED",
+                f"Status updated from '{old_st}' to '{new_st}'.",
+                metadata={"case_number": case.case_number, "old_status": old_st, "new_status": new_st}
+            )
             has_changes = True
 
         if request.severity is not None and request.severity.value != case.severity:
             old_sev = case.severity
             new_sev = request.severity.value
             case.severity = new_sev
-            cls._log_audit(db, case.id, "SEVERITY_CHANGED", f"Severity updated from '{old_sev}' to '{new_sev}'.")
+            cls._log_audit(
+                db,
+                case.id,
+                "SEVERITY_CHANGED",
+                f"Severity updated from '{old_sev}' to '{new_sev}'.",
+                metadata={"case_number": case.case_number, "old_severity": old_sev, "new_severity": new_sev}
+            )
             has_changes = True
 
         if has_changes:
@@ -303,8 +341,27 @@ class CaseService:
         cls._log_audit(
             db,
             case_id=case.id,
+            action="EMAIL_ADDED_TO_CASE",
+            details=f"Added email '{case_email.subject}' (Sender: {case_email.sender}, Score: {case_email.threat_score}) to case {case.case_number}.",
+            metadata={
+                "case_number": case.case_number,
+                "email_id": case_email.email_id,
+                "email_sha256": case_email.email_sha256,
+                "subject": case_email.subject,
+                "threat_score": case_email.threat_score
+            }
+        )
+        # Retain EMAIL_ADDED for backwards compatibility
+        cls._log_audit(
+            db,
+            case_id=case.id,
             action="EMAIL_ADDED",
-            details=f"Added email '{case_email.subject}' (Sender: {case_email.sender}, Score: {case_email.threat_score}) to case."
+            details=f"Added email '{case_email.subject}' (Sender: {case_email.sender}, Score: {case_email.threat_score}) to case.",
+            metadata={
+                "case_number": case.case_number,
+                "email_id": case_email.email_id,
+                "email_sha256": case_email.email_sha256
+            }
         )
 
         db.commit()
@@ -341,7 +398,8 @@ class CaseService:
             db,
             case_id=case.id,
             action="EMAIL_REMOVED",
-            details=f"Removed email '{email_subject}' (ID: {email_id}) from case."
+            details=f"Removed email '{email_subject}' (ID: {email_id}) from case.",
+            metadata={"case_number": case.case_number, "email_id": email_id, "subject": email_subject}
         )
 
         db.commit()
@@ -364,7 +422,13 @@ class CaseService:
             db,
             case_id=case.id,
             action="NOTE_ADDED",
-            details=f"Note added by {note.author}."
+            details=f"Note added by {note.author}.",
+            metadata={
+                "case_number": case.case_number,
+                "author": note.author,
+                "note_id": note.id
+            },
+            user=note.author
         )
 
         db.commit()

@@ -1,9 +1,12 @@
 import asyncio
 from typing import Optional
-from fastapi import APIRouter, File, UploadFile, HTTPException, status
+from fastapi import APIRouter, File, UploadFile, HTTPException, Header, Depends, status
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
 
+from backend.db.session import get_db
 from backend.schemas.email import EmailAnalysisResponse, ErrorResponse, MLAssessmentResult, MLClassifyRequest
+from backend.schemas.evidence import InvestigationTimelineResponse
 from backend.schemas.ai_analyst import AIAnalystAssessment
 from backend.schemas.graph import InvestigationGraphResponse, GraphFilterRequest
 from backend.schemas.ip_intelligence import IPIntelligence
@@ -19,6 +22,8 @@ from backend.services.url_analyzer import URLAnalyzerService
 from backend.services.threat_scorer import ThreatScorerService
 from backend.services.ai_analyst_service import global_ai_analyst_service
 from backend.services.graph_service import global_graph_service
+from backend.services.ioc_extractor import IOCExtractorService
+from backend.services.audit_service import AuditService
 from backend.app.ml.classifier import global_phishing_classifier
 
 global_lookalike_detector = LookalikeDetectorService()
@@ -163,15 +168,16 @@ async def filter_investigation_graph(request: GraphFilterRequest):
     summary="Upload and analyze an .eml email file",
     description="Parses an uploaded .eml file and returns structured headers, plain-text body, HTML body, extracted URLs, attachment metadata, authentication, relay path, and IP intelligence."
 )
-async def analyze_email(file: UploadFile = File(...)):
+async def analyze_email(
+    file: UploadFile = File(...),
+    user: Optional[str] = Header(None, alias="X-User"),
+    db: Session = Depends(get_db)
+):
     """
     Accepts an .eml file upload and parses headers, body, URLs, attachments, authentication, relay hops, and IP intelligence into structured JSON.
     """
     filename = file.filename or "unknown.eml"
-
-    # Optional file extension validation
-    if not (filename.lower().endswith(".eml") or filename.lower().endswith(".msg") or file.content_type in ("message/rfc822", "application/octet-stream", "text/plain")):
-        pass
+    uploader_identity = (user or "SOC Analyst").strip()
 
     try:
         content_bytes = await file.read()
@@ -181,13 +187,58 @@ async def analyze_email(file: UploadFile = File(...)):
             detail=f"Failed to read uploaded file stream: {str(e)}"
         )
 
+    if not content_bytes or len(content_bytes.strip()) == 0:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "Uploaded email file is empty.", "error_code": "EMPTY_FILE"}
+        )
+
+    # Section 18: Cryptographic evidence hash & persistence
+    raw_sha256 = IOCExtractorService.calculate_sha256(content_bytes)
+    evidence_record = AuditService.record_evidence(
+        db=db,
+        sha256=raw_sha256,
+        original_filename=filename,
+        size=len(content_bytes),
+        uploader=uploader_identity
+    )
+
+    # Log EMAIL_UPLOADED audit event
+    AuditService.log_audit(
+        db=db,
+        action="EMAIL_UPLOADED",
+        resource_type="email",
+        resource_id=evidence_record.evidence_id,
+        user=uploader_identity,
+        metadata={
+            "evidence_id": evidence_record.evidence_id,
+            "sha256": raw_sha256,
+            "filename": filename,
+            "size": len(content_bytes)
+        },
+        details=f"Email file '{filename}' ({len(content_bytes)} bytes) uploaded. SHA-256 recorded: {raw_sha256[:16]}..."
+    )
+
+    # Log ANALYSIS_STARTED audit event
+    AuditService.log_audit(
+        db=db,
+        action="ANALYSIS_STARTED",
+        resource_type="email",
+        resource_id=evidence_record.evidence_id,
+        user=uploader_identity,
+        metadata={
+            "evidence_id": evidence_record.evidence_id,
+            "sha256": raw_sha256,
+            "filename": filename
+        },
+        details=f"Forensic analysis and threat evaluation started for evidence {evidence_record.evidence_id}."
+    )
+
     try:
         analysis_result = EmailParserService.parse_eml_bytes(content_bytes, filename=filename)
 
         # Enrich IP intelligence asynchronously
         ip_list = list(set(analysis_result.ips))
-        if analysis_result.relay_analysis and analysis_result.relay_analysis.earliest_observable_node and analysis_result.relay_analysis.earliest_observable_node.earliest_observable_node_ip if hasattr(analysis_result.relay_analysis.earliest_observable_node, 'earliest_observable_node_ip') else None:
-            pass
         if analysis_result.relay_analysis and analysis_result.relay_analysis.earliest_observable_node and analysis_result.relay_analysis.earliest_observable_node.earliest_observable_ip:
             ip_list.append(analysis_result.relay_analysis.earliest_observable_node.earliest_observable_ip)
 
@@ -211,7 +262,7 @@ async def analyze_email(file: UploadFile = File(...)):
         analysis_result.domain_intelligence = domain_intel_dict
         analysis_result.lookalike_domains = global_lookalike_detector.detect_lookalikes_batch(domain_list)
 
-        # Section 11: NLP-Based Phishing Classification (Complements deterministic scoring)
+        # Section 11: NLP-Based Phishing Classification
         try:
             body_text = analysis_result.plain_text_body
             if not body_text and analysis_result.html_body:
@@ -225,25 +276,50 @@ async def analyze_email(file: UploadFile = File(...)):
             analysis_result.ml_assessment = MLAssessmentResult(**ml_pred)
             analysis_result.ml_phishing_probability = ml_pred.get("probability") if ml_pred.get("available") else None
         except Exception:
-            # Failure mode: If ML model fails, continue forensic analysis. The entire email pipeline must not fail.
             analysis_result.ml_assessment = None
             analysis_result.ml_phishing_probability = None
 
         analysis_result.threat_score = global_threat_scorer.calculate_score(analysis_result)
 
-        # Section 12: AI Analyst Assistant (Synthesizes structured forensic telemetry)
+        # Section 12: AI Analyst Assistant
         try:
             analysis_result.ai_analyst = await global_ai_analyst_service.analyze(analysis_result)
         except Exception:
-            # Failure mode: If AI Analyst fails, continue forensic analysis. The entire email pipeline must not fail.
             analysis_result.ai_analyst = None
 
         # Section 13: Investigation Relationship Graph
         try:
             analysis_result.investigation_graph = global_graph_service.build_graph(analysis_result)
         except Exception:
-            # Failure mode: If Graph build fails, continue forensic analysis. The entire email pipeline must not fail.
             analysis_result.investigation_graph = None
+
+        # Attach Section 18 Evidence Integrity Metadata
+        analysis_result.id = evidence_record.evidence_id
+        analysis_result.evidence_id = evidence_record.evidence_id
+        analysis_result.original_filename = filename
+        analysis_result.upload_timestamp = evidence_record.upload_timestamp.isoformat()
+        analysis_result.size = evidence_record.size
+        analysis_result.uploader = evidence_record.uploader
+
+        # Log ANALYSIS_COMPLETED audit event
+        score_val = analysis_result.threat_score.score if analysis_result.threat_score else 0.0
+        sev_val = analysis_result.threat_score.severity if analysis_result.threat_score else "low"
+        AuditService.log_audit(
+            db=db,
+            action="ANALYSIS_COMPLETED",
+            resource_type="email",
+            resource_id=evidence_record.evidence_id,
+            user=uploader_identity,
+            metadata={
+                "evidence_id": evidence_record.evidence_id,
+                "sha256": raw_sha256,
+                "threat_score": score_val,
+                "severity": sev_val,
+                "urls_count": len(analysis_result.urls),
+                "attachments_count": len(analysis_result.attachments)
+            },
+            details=f"Analysis completed for evidence {evidence_record.evidence_id}. Threat score: {score_val} ({sev_val.upper()})."
+        )
 
         return analysis_result
     except EmailParseException as e:
@@ -256,3 +332,16 @@ async def analyze_email(file: UploadFile = File(...)):
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"detail": f"An error occurred while parsing email: {str(e)}", "error_code": "PARSE_ERROR"}
         )
+
+
+@router.get(
+    "/{sha256:path}/timeline",
+    response_model=InvestigationTimelineResponse,
+    summary="Get investigation timeline for an email by SHA-256 or evidence ID",
+    description="Returns ordered chain-of-custody chronological timeline events."
+)
+def get_email_investigation_timeline(
+    sha256: str,
+    db: Session = Depends(get_db)
+):
+    return AuditService.get_timeline(db, identifier=sha256)

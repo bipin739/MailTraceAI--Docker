@@ -239,9 +239,38 @@ export interface DomainIntelligence {
   lookalike?: LookalikeDetectionResult;
 }
 
+export interface InvestigationTimelineItem {
+  id: string;
+  timestamp: string;
+  time_display: string;
+  action: string;
+  title: string;
+  description?: string;
+  user?: string;
+  resource_type: string;
+  resource_id: string;
+  metadata?: Record<string, any>;
+}
+
+export interface InvestigationTimelineResponse {
+  evidence_id?: string;
+  sha256?: string;
+  events: InvestigationTimelineItem[];
+  total: number;
+}
+
 export interface EmailAnalysis {
   id?: string;
+  evidence_id?: string;
   email_sha256?: string;
+  original_filename?: string;
+  upload_timestamp?: string;
+  size?: number;
+  uploader?: string;
+  file_info?: {
+    filename?: string;
+    size_bytes?: number;
+  };
   authentication?: AuthenticationAnalysis;
   relay_analysis?: RelayPathAnalysis;
   ip_intelligence?: Record<string, IPIntelligence>;

@@ -13,6 +13,7 @@ from backend.schemas.report import (
     ReportListItemResponse
 )
 from backend.services.report_service import ReportService
+from backend.services.audit_service import AuditService
 
 router = APIRouter(prefix="/api/reports", tags=["Forensic Reports"])
 
@@ -110,6 +111,26 @@ def generate_forensic_report(
     db.add(report_record)
     db.commit()
     db.refresh(report_record)
+
+    # Section 18: Audit trail logging for report generation
+    AuditService.log_audit(
+        db=db,
+        action="REPORT_GENERATED",
+        resource_type="report",
+        resource_id=report_record.id,
+        user=request.analyst_name or "SOC Lead Analyst",
+        case_id=request.case_id,
+        metadata={
+            "report_number": report_record.report_number,
+            "evidence_id": evidence_id,
+            "email_sha256": sha256,
+            "case_id": request.case_id,
+            "threat_score": score,
+            "severity": severity,
+            "file_size_bytes": len(pdf_bytes)
+        },
+        details=f"Forensic report {report_record.report_number} generated for evidence {evidence_id} (SHA-256: {sha256[:16]}...)."
+    )
 
     if format == "json":
         return {
@@ -246,6 +267,23 @@ def generate_case_dossier_endpoint(
     )
     db.add(report_record)
     db.commit()
+
+    # Section 18: Audit trail logging for case dossier generation
+    AuditService.log_audit(
+        db=db,
+        action="REPORT_GENERATED",
+        resource_type="report",
+        resource_id=report_record.id,
+        user="SOC Lead Analyst",
+        case_id=case_id,
+        metadata={
+            "report_number": report_num,
+            "case_id": case_id,
+            "case_number": case_num,
+            "file_size_bytes": len(pdf_bytes)
+        },
+        details=f"Case dossier report {report_num} generated for {case_num}."
+    )
 
     return Response(
         content=pdf_bytes,
