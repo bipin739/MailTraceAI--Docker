@@ -321,6 +321,18 @@ async def analyze_email(
             details=f"Analysis completed for evidence {evidence_record.evidence_id}. Threat score: {score_val} ({sev_val.upper()})."
         )
 
+        # Section 19: Record in email_analyses for Analyst Dashboard
+        try:
+            from backend.services.dashboard_service import DashboardService
+            DashboardService.record_email_analysis(
+                db=db,
+                evidence_record=evidence_record,
+                analysis_result=analysis_result,
+                raw_sha256=raw_sha256
+            )
+        except Exception:
+            pass
+
         return analysis_result
     except EmailParseException as e:
         return JSONResponse(

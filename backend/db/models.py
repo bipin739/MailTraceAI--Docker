@@ -155,3 +155,24 @@ class ReportModel(Base):
     file_size_bytes = Column(Integer, nullable=True, default=0)
     created_at = Column(DateTime, default=get_utc_now, nullable=False)
 
+
+class EmailAnalysisModel(Base):
+    __tablename__ = "email_analyses"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    evidence_id = Column(String(64), nullable=True, index=True)
+    email_sha256 = Column(String(64), nullable=True, index=True)
+    subject = Column(String(255), nullable=True, default="Untitled Email")
+    sender = Column(String(255), nullable=True, default="unknown")
+    recipient = Column(String(255), nullable=True)
+    threat_score = Column(Float, nullable=False, default=0.0)
+    severity = Column(String(20), nullable=False, default="low", index=True)
+    spf_result = Column(String(20), nullable=True)
+    dkim_result = Column(String(20), nullable=True)
+    dmarc_result = Column(String(20), nullable=True)
+    domains_json = Column(Text, nullable=True, default="[]")
+    countries_json = Column(Text, nullable=True, default="[]")
+    indicators_json = Column(Text, nullable=True, default="{}")
+    analyzed_at = Column(DateTime, default=get_utc_now, nullable=False, index=True)
+
+

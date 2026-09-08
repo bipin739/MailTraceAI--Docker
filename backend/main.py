@@ -7,6 +7,7 @@ from backend.api.routes.cases import router as cases_router
 from backend.api.routes.correlation import router as correlation_router
 from backend.api.routes.reports import router as reports_router
 from backend.api.routes.audit import router as audit_router, evidence_router
+from backend.api.routes.dashboard import router as dashboard_router
 from backend.db.session import engine, Base
 import backend.db.models  # Register models
 
@@ -35,6 +36,7 @@ app.include_router(correlation_router)
 app.include_router(reports_router)
 app.include_router(audit_router)
 app.include_router(evidence_router)
+app.include_router(dashboard_router)
 
 
 
