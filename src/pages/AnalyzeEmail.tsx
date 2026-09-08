@@ -43,11 +43,110 @@ export const AnalyzeEmail: React.FC = () => {
     }
   }, [selectedSampleId]);
 
-  const handleRunAnalysis = () => {
+  const handleRunAnalysis = async () => {
+    if (!rawInput.trim()) return;
     setIsAnalyzing(true);
-    setTimeout(() => {
+    const analysisId = `analysis-${Date.now()}`;
+
+    try {
+      const blob = new Blob([rawInput], { type: 'message/rfc822' });
+      const formData = new FormData();
+      formData.append('file', blob, 'pasted_email.eml');
+
+      let res: Response | null = null;
+      try {
+        res = await fetch('/api/emails/analyze', { method: 'POST', body: formData });
+      } catch {
+        res = await fetch('http://127.0.0.1:8000/api/emails/analyze', { method: 'POST', body: formData });
+      }
+
+      if (res && res.ok) {
+        const data = await res.json();
+        const parsedAnalysis: EmailAnalysis = {
+          id: analysisId,
+          evidence_id: data.evidence_id || (data.email_sha256 ? `EVD-${data.email_sha256.slice(0, 10).toUpperCase()}` : `EVD-${analysisId.slice(-8).toUpperCase()}`),
+          email_sha256: data.email_sha256,
+          original_filename: data.original_filename || 'pasted_email.eml',
+          upload_timestamp: data.upload_timestamp || new Date().toISOString(),
+          size: data.size || rawInput.length,
+          uploader: data.uploader || 'SOC Analyst',
+          authentication: data.authentication,
+          relay_analysis: data.relay_analysis,
+          indicators: data.indicators,
+          subject: decodeRfc2047(data.subject || data.headers?.subject || 'Pasted Email Analysis'),
+          from: decodeRfc2047(data.from || data.from_header || data.headers?.from || ''),
+          to: decodeRfc2047(Array.isArray(data.to) ? data.to.join(', ') : (data.to || data.headers?.to || '')),
+          cc: decodeRfc2047(Array.isArray(data.cc) ? data.cc.join(', ') : (data.cc || data.headers?.cc || '')),
+          date: decodeRfc2047(data.date || data.headers?.date || ''),
+          reply_to: decodeRfc2047(data.reply_to || data.headers?.reply_to || ''),
+          return_path: decodeRfc2047(data.return_path || data.headers?.return_path || ''),
+          message_id: decodeRfc2047(data.message_id || data.headers?.message_id || ''),
+          received: data.received || data.headers?.received || [],
+          authentication_results: data.authentication_results || data.headers?.authentication_results || '',
+          plain_text_body: data.plain_text_body || data.body?.plain_text || rawInput,
+          html_body: data.html_body || data.body?.html || '',
+          raw_email: data.raw_email || rawInput,
+          urls: data.urls || [],
+          ips: data.ips || [],
+          domains: data.domains || [],
+          emails: data.emails || [],
+          attachments: data.attachments || [],
+          ip_intelligence: data.ip_intelligence || {},
+          domain_intelligence: data.domain_intelligence || {},
+          lookalike_domains: data.lookalike_domains || [],
+          url_analysis: data.url_analysis || [],
+          threat_score: data.threat_score,
+          ml_phishing_probability: data.ml_phishing_probability,
+          ml_assessment: data.ml_assessment,
+          ai_analyst: data.ai_analyst,
+          investigation_graph: data.investigation_graph
+        };
+
+        saveAnalysisResult(analysisId, parsedAnalysis);
+        navigate(`/analysis/${analysisId}`);
+        return;
+      }
+    } catch (err) {
+      console.warn('Backend parse failed, fallback to local analysis:', err);
+    } finally {
       setIsAnalyzing(false);
-    }, 800);
+    }
+
+    // Fallback: parse headers locally and save
+    const getHeaderVal = (name: string): string => {
+      const match = rawInput.match(new RegExp(`^${name}:[ \\t]*([^\\r\\n]+(?:\\r?\\n[ \\t]+[^\\r\\n]+)*)`, 'im'));
+      return match ? decodeRfc2047(match[1].replace(/\s+/g, ' ').trim()) : '';
+    };
+
+    const extractReceivedHeaders = (text: string): string[] => {
+      const matches = Array.from(text.matchAll(/^Received:[ \t]*(.+?)(?=\r?\n\S|\r?\n\r?\n|$)/gms));
+      return matches.map(m => m[1].replace(/\s+/g, ' ').trim()).filter(Boolean);
+    };
+
+    const fallbackAnalysis: EmailAnalysis = {
+      id: analysisId,
+      evidence_id: `EVD-${analysisId.slice(-8).toUpperCase()}`,
+      original_filename: 'pasted_email.eml',
+      upload_timestamp: new Date().toISOString(),
+      size: rawInput.length,
+      uploader: 'SOC Analyst',
+      subject: getHeaderVal('Subject') || currentEmail.subject || 'Forensic Analysis',
+      from: getHeaderVal('From') || currentEmail.senderEmail || '',
+      to: getHeaderVal('To') || currentEmail.recipientEmail || '',
+      cc: getHeaderVal('Cc') || '',
+      date: getHeaderVal('Date') || new Date().toUTCString(),
+      reply_to: getHeaderVal('Reply-To') || '',
+      return_path: getHeaderVal('Return-Path') || '',
+      message_id: getHeaderVal('Message-ID') || '',
+      received: extractReceivedHeaders(rawInput),
+      authentication_results: getHeaderVal('Authentication-Results') || '',
+      raw_email: rawInput,
+      plain_text_body: rawInput,
+      urls: [],
+      attachments: []
+    };
+    saveAnalysisResult(analysisId, fallbackAnalysis);
+    navigate(`/analysis/${analysisId}`);
   };
 
   const handleCopyEvidence = () => {
@@ -76,16 +175,29 @@ export const AnalyzeEmail: React.FC = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch('http://localhost:8000/api/emails/analyze', {
-        method: 'POST',
-        body: formData,
-      });
+      let res: Response | null = null;
+      try {
+        res = await fetch('/api/emails/analyze', {
+          method: 'POST',
+          body: formData,
+        });
+      } catch {
+        res = await fetch('http://127.0.0.1:8000/api/emails/analyze', {
+          method: 'POST',
+          body: formData,
+        });
+      }
 
-      if (res.ok) {
+      if (res && res.ok) {
         const data = await res.json();
         const parsedAnalysis: EmailAnalysis = {
           id: analysisId,
+          evidence_id: data.evidence_id || (data.email_sha256 ? `EVD-${data.email_sha256.slice(0, 10).toUpperCase()}` : `EVD-${analysisId.slice(-8).toUpperCase()}`),
           email_sha256: data.email_sha256,
+          original_filename: data.original_filename || file.name,
+          upload_timestamp: data.upload_timestamp || new Date().toISOString(),
+          size: data.size || file.size,
+          uploader: data.uploader || 'SOC Analyst',
           authentication: data.authentication,
           relay_analysis: data.relay_analysis,
           indicators: data.indicators,
@@ -162,6 +274,11 @@ export const AnalyzeEmail: React.FC = () => {
 
     const fallbackAnalysis: EmailAnalysis = {
       id: analysisId,
+      evidence_id: `EVD-${analysisId.slice(-8).toUpperCase()}`,
+      original_filename: file.name,
+      upload_timestamp: new Date().toISOString(),
+      size: file.size,
+      uploader: 'SOC Analyst',
       subject: getHeaderVal('Subject') || file.name,
       from: getHeaderVal('From') || '',
       to: getHeaderVal('To') || '',

@@ -19,8 +19,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
   const [correlations, setCorrelations] = useState<CampaignCorrelationResponse | null>(null);
   const [loadingCorrelations, setLoadingCorrelations] = useState<boolean>(false);
 
+  const emailKey = email?.id || email?.evidence_id || email?.email_sha256;
+
   useEffect(() => {
-    if (!email) return;
+    if (!emailKey || !email) return;
     setLoadingCorrelations(true);
     fetch('http://localhost:8000/api/correlation/email?min_score=0.15', {
       method: 'POST',
@@ -33,7 +35,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
       })
       .catch(() => {})
       .finally(() => setLoadingCorrelations(false));
-  }, [email]);
+  }, [emailKey]);
 
   const receivedHopsCount = email.received?.length || 0;
   const urlsCount = email.urls?.length || 0;

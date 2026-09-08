@@ -6,7 +6,12 @@ const memoryStore = new Map<string, EmailAnalysis>();
 
 export const MOCK_SAMPLE_ANALYSIS: EmailAnalysis = resolveEmailIndicators({
   id: 'sample-001',
+  evidence_id: 'EVD-97D4B2E811',
   email_sha256: '97d4b2e811c7520e5e79603f9050d268159b360b9432df03d4083d8e57ef228a',
+  original_filename: 'urgent_microsoft_verification.eml',
+  upload_timestamp: '2026-09-07T05:12:00Z',
+  size: 15420,
+  uploader: 'SOC Analyst',
   subject: 'URGENT: Verify your Microsoft Account',
   from: 'Microsoft Security <security@micros0ft-example.com>',
   to: 'employee@company.com',
