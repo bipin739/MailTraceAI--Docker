@@ -1,78 +1,298 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-sidebar-bg: var(--sidebar-background);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-danger: var(--danger);
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-border: var(--danger-border);
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --color-success: var(--success);
+  --color-success-surface: var(--success-surface);
+  --color-success-border: var(--success-border);
+  --color-info: var(--info);
+  --color-info-surface: var(--info-surface);
+  --color-info-border: var(--info-border);
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* =========================================================================
+   1. THEME DEFINITIONS (Obsidian, Blossom, Violet, Paper)
+   ========================================================================= */
+
+:root,
+[data-theme="obsidian"] {
+  --background: #0c0e0d;
+  --surface: #141715;
+  --surface-secondary: #1a1e1b;
+  --surface-elevated: #222723;
+  --foreground: #e4e8e5;
+  --foreground-muted: #8a948c;
+  --foreground-subtle: #58615a;
+  --border: #232924;
+  --border-subtle: #191e1a;
+  --primary: #7d9456;
+  --primary-hover: #8fa762;
+  --primary-foreground: #0c0e0d;
+  --primary-subtle: rgba(125, 148, 86, 0.12);
+  --sidebar-background: #0f1210;
+  --sidebar-border: #1c221e;
+  --danger: #df5252;
+  --danger-surface: rgba(223, 82, 82, 0.1);
+  --danger-border: rgba(223, 82, 82, 0.25);
+  --warning: #d99538;
+  --warning-surface: rgba(217, 149, 56, 0.1);
+  --warning-border: rgba(217, 149, 56, 0.25);
+  --success: #50a86e;
+  --success-surface: rgba(80, 168, 110, 0.1);
+  --success-border: rgba(80, 168, 110, 0.25);
+  --info: #508ca8;
+  --info-surface: rgba(80, 140, 168, 0.1);
+  --info-border: rgba(80, 140, 168, 0.25);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  color-scheme: dark;
+}
+
+[data-theme="blossom"] {
+  --background: #faf9fa;
+  --surface: #ffffff;
+  --surface-secondary: #f4f1f3;
+  --surface-elevated: #ffffff;
+  --foreground: #1e191c;
+  --foreground-muted: #776e74;
+  --foreground-subtle: #a89fa5;
+  --border: #e8e1e5;
+  --border-subtle: #f0ebef;
+  --primary: #c8698a;
+  --primary-hover: #b8597a;
+  --primary-foreground: #ffffff;
+  --primary-subtle: rgba(200, 105, 138, 0.1);
+  --sidebar-background: #f5f2f4;
+  --sidebar-border: #e5dee2;
+  --danger: #d44343;
+  --danger-surface: rgba(212, 67, 67, 0.08);
+  --danger-border: rgba(212, 67, 67, 0.2);
+  --warning: #c87f22;
+  --warning-surface: rgba(200, 127, 34, 0.08);
+  --warning-border: rgba(200, 127, 34, 0.2);
+  --success: #3c9a5c;
+  --success-surface: rgba(60, 154, 92, 0.08);
+  --success-border: rgba(60, 154, 92, 0.2);
+  --info: #497fa0;
+  --info-surface: rgba(73, 127, 160, 0.08);
+  --info-border: rgba(73, 127, 160, 0.2);
+  --shadow: 0 4px 16px rgba(30, 25, 28, 0.06);
+  --card-shadow: 0 1px 3px rgba(30, 25, 28, 0.04);
+  color-scheme: light;
+}
+
+[data-theme="violet"] {
+  --background: #0f0e17;
+  --surface: #181524;
+  --surface-secondary: #211d32;
+  --surface-elevated: #2a2540;
+  --foreground: #edeaf5;
+  --foreground-muted: #8e86a8;
+  --foreground-subtle: #5f5878;
+  --border: #2a2540;
+  --border-subtle: #1f1b32;
+  --primary: #8070e6;
+  --primary-hover: #9283f5;
+  --primary-foreground: #ffffff;
+  --primary-subtle: rgba(128, 112, 230, 0.12);
+  --sidebar-background: #13111e;
+  --sidebar-border: #231f36;
+  --danger: #df5252;
+  --danger-surface: rgba(223, 82, 82, 0.1);
+  --danger-border: rgba(223, 82, 82, 0.25);
+  --warning: #d99538;
+  --warning-surface: rgba(217, 149, 56, 0.1);
+  --warning-border: rgba(217, 149, 56, 0.25);
+  --success: #4da86c;
+  --success-surface: rgba(77, 168, 108, 0.1);
+  --success-border: rgba(77, 168, 108, 0.25);
+  --info: #5f82b8;
+  --info-surface: rgba(95, 130, 184, 0.1);
+  --info-border: rgba(95, 130, 184, 0.25);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+
+[data-theme="paper"] {
+  --background: #f6f3eb;
+  --surface: #fcfaf6;
+  --surface-secondary: #ede8dc;
+  --surface-elevated: #ffffff;
+  --foreground: #23201b;
+  --foreground-muted: #6f6a5f;
+  --foreground-subtle: #9c9689;
+  --border: #ded7c9;
+  --border-subtle: #eae5db;
+  --primary: #7a5f45;
+  --primary-hover: #654d35;
+  --primary-foreground: #fcfaf6;
+  --primary-subtle: rgba(122, 95, 69, 0.1);
+  --sidebar-background: #f0ebe0;
+  --sidebar-border: #ded7c8;
+  --danger: #b83a3a;
+  --danger-surface: rgba(184, 58, 58, 0.08);
+  --danger-border: rgba(184, 58, 58, 0.2);
+  --warning: #a66f1e;
+  --warning-surface: rgba(166, 111, 30, 0.08);
+  --warning-border: rgba(166, 111, 30, 0.2);
+  --success: #3b7f4e;
+  --success-surface: rgba(59, 127, 78, 0.08);
+  --success-border: rgba(59, 127, 78, 0.2);
+  --info: #476f87;
+  --info-surface: rgba(71, 111, 135, 0.08);
+  --info-border: rgba(71, 111, 135, 0.2);
+  --shadow: 0 4px 14px rgba(35, 32, 27, 0.06);
+  --card-shadow: 0 1px 3px rgba(35, 32, 27, 0.04);
+  color-scheme: light;
+}
+
+/* =========================================================================
+   2. BASE & GLOBAL ELEMENT STYLES
+   ========================================================================= */
+
 @layer base {
-  :root {
-    --bg-dark: #090d16;
-    --card-dark: #0f172a;
-    --border-dark: #1e293b;
+  * {
+    border-color: var(--border);
   }
-  
+
+  html {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
   body {
-    background-color: #080c14;
-    color: #e2e8f0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    min-height: 100vh;
     overflow-x: hidden;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+                color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Accessible focus outline */
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
   }
 }
 
-/* Custom scrollbars */
+/* Custom modern scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b1120;
+  background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
+  background: var(--border);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--foreground-muted);
 }
 
-/* Glassmorphism helpers */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* =========================================================================
+   3. MINIMALIST CARD & INTERACTION UTILITIES
+   ========================================================================= */
+
+.panel {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: var(--card-shadow);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.glass-panel-hover:hover {
-  border-color: rgba(56, 189, 248, 0.3);
-  box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+.panel-interactive {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: var(--card-shadow);
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 140ms ease,
+              box-shadow 140ms ease;
 }
 
-/* Glowing text and borders */
-.glow-cyan {
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+.panel-interactive:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
 }
 
-.glow-red {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+/* Button micro-interactions */
+.btn-press {
+  transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 150ms ease,
+              border-color 150ms ease,
+              color 150ms ease;
 }
 
-.glow-amber {
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+.btn-press:active {
+  transform: scale(0.975);
 }
 
-/* Radar pulse animation */
-@keyframes ping-slow {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.4);
-    opacity: 0.2;
-  }
-  100% {
-    transform: scale(1.8);
+/* Smooth page transitions */
+.page-enter {
+  animation: pageFadeIn 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pageFadeIn {
+  from {
     opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.animate-ping-slow {
-  animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .page-enter {
+    animation: none !important;
+  }
+  .panel-interactive:hover {
+    transform: none !important;
+  }
+  .btn-press:active {
+    transform: none !important;
+  }
 }

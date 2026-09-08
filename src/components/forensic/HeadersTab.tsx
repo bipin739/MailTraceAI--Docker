@@ -22,12 +22,13 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
 
       {/* Relay Transmission Path Reconstruction Section */}
       <TransmissionPathSection relayAnalysis={email.relay_analysis} />
+
       {/* Important Individual Headers */}
-      <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4 backdrop-blur-xl shadow-lg">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+      <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+        <div className="flex items-center justify-between pb-2 border-b border-border">
           <div className="flex items-center space-x-2">
-            <FileCode className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
+            <FileCode className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
               Essential Header Metadata
             </h3>
           </div>
@@ -47,16 +48,16 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
       </div>
 
       {/* Received Hops in Original Order */}
-      <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4 backdrop-blur-xl shadow-lg">
-        <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-          <Route className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
+      <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+        <div className="flex items-center space-x-2 pb-2 border-b border-border">
+          <Route className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
             Received Relay Hops ({receivedHops.length})
           </h3>
         </div>
 
         {receivedHops.length === 0 ? (
-          <p className="text-xs font-mono text-slate-500 italic p-3">
+          <p className="text-xs font-mono text-foreground-subtle italic p-3">
             No Received headers available.
           </p>
         ) : (
@@ -64,15 +65,15 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
             {receivedHops.map((hop, index) => (
               <div
                 key={index}
-                className="p-3.5 rounded-xl border border-slate-800/80 bg-slate-900/50 space-y-2 font-mono text-xs"
+                className="p-3.5 rounded-xl border border-border bg-surface-secondary/50 space-y-2 font-mono text-xs"
               >
                 <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 font-bold text-[11px]">
+                  <span className="px-2 py-0.5 rounded bg-surface border border-border text-primary font-bold text-[11px]">
                     Received Hop {index + 1}
                   </span>
                   <CopyButton text={hop} iconOnly />
                 </div>
-                <pre className="text-slate-300 whitespace-pre-wrap break-all leading-relaxed pt-1 text-[11.5px]">
+                <pre className="text-foreground-muted whitespace-pre-wrap break-all leading-relaxed pt-1 text-[11.5px]">
                   {hop}
                 </pre>
               </div>
@@ -82,34 +83,34 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
       </div>
 
       {/* Expandable View All Headers */}
-      <div className="bg-slate-950/80 rounded-2xl border border-slate-800 overflow-hidden backdrop-blur-xl shadow-lg">
+      <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-xs">
         <button
           type="button"
           onClick={() => setShowAllHeaders(!showAllHeaders)}
-          className="w-full flex items-center justify-between p-4 bg-slate-900/60 hover:bg-slate-900 text-left transition-colors"
+          className="w-full flex items-center justify-between p-4 bg-surface-secondary/40 hover:bg-surface-secondary text-left transition-colors"
         >
           <div className="flex items-center space-x-2">
-            <Key className="w-4 h-4 text-purple-400" />
-            <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider">
+            <Key className="w-4 h-4 text-primary" />
+            <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">
               View all raw parsed headers
             </span>
           </div>
           {showAllHeaders ? (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-foreground-muted" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <ChevronRight className="w-4 h-4 text-foreground-muted" />
           )}
         </button>
 
         {showAllHeaders && (
-          <div className="p-4 bg-slate-950 border-t border-slate-800 space-y-3">
+          <div className="p-4 bg-surface border-t border-border space-y-3">
             <div className="flex justify-end">
               <CopyButton
                 text={`From: ${email.from || ''}\nTo: ${email.to || ''}\nCc: ${email.cc || ''}\nSubject: ${email.subject || ''}\nDate: ${email.date || ''}\nReply-To: ${email.reply_to || ''}\nReturn-Path: ${email.return_path || ''}\nMessage-ID: ${email.message_id || ''}\nAuthentication-Results: ${email.authentication_results || ''}\n${(email.received || []).map(r => `Received: ${r}`).join('\n')}`}
                 label="Copy Headers"
               />
             </div>
-            <pre className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 font-mono text-xs text-slate-300 whitespace-pre-wrap break-all leading-relaxed max-h-96 overflow-y-auto">
+            <pre className="p-4 rounded-xl bg-surface-secondary/70 border border-border font-mono text-xs text-foreground whitespace-pre-wrap break-all leading-relaxed max-h-96 overflow-y-auto">
 {`From: ${email.from || 'N/A'}
 To: ${Array.isArray(email.to) ? email.to.join(', ') : email.to || 'N/A'}
 Cc: ${Array.isArray(email.cc) ? email.cc.join(', ') : email.cc || 'N/A'}

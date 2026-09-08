@@ -7,110 +7,142 @@ interface HeaderProtocolStatusProps {
 }
 
 export const HeaderProtocolStatus: React.FC<HeaderProtocolStatusProps> = ({ protocols }) => {
-  const getIcon = (status: 'PASS' | 'FAIL' | 'NEUTRAL' | 'NONE') => {
+  const getStatusPresentation = (status: 'PASS' | 'FAIL' | 'NEUTRAL' | 'NONE') => {
     switch (status) {
       case 'PASS':
-        return <CheckCircle2 className="w-5 h-5 text-emerald-400" />;
+        return {
+          icon: <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />,
+          badgeClass: 'bg-success-surface text-success border-success-border',
+          borderClass: 'border-border hover:border-success-border',
+        };
       case 'FAIL':
-        return <XCircle className="w-5 h-5 text-red-400" />;
+        return {
+          icon: <XCircle className="w-4 h-4 text-danger flex-shrink-0" />,
+          badgeClass: 'bg-danger-surface text-danger border-danger-border font-bold',
+          borderClass: 'border-danger-border/60 hover:border-danger-border',
+        };
       case 'NEUTRAL':
-        return <AlertCircle className="w-5 h-5 text-amber-400" />;
+        return {
+          icon: <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />,
+          badgeClass: 'bg-warning-surface text-warning border-warning-border',
+          borderClass: 'border-warning-border/60 hover:border-warning-border',
+        };
       case 'NONE':
       default:
-        return <HelpCircle className="w-5 h-5 text-slate-400" />;
+        return {
+          icon: <HelpCircle className="w-4 h-4 text-foreground-muted flex-shrink-0" />,
+          badgeClass: 'bg-surface-secondary text-foreground-muted border-border',
+          borderClass: 'border-border',
+        };
     }
   };
 
-  const getBadgeColor = (status: 'PASS' | 'FAIL' | 'NEUTRAL' | 'NONE') => {
-    switch (status) {
-      case 'PASS':
-        return 'bg-emerald-950/60 border-emerald-800/80 text-emerald-300';
-      case 'FAIL':
-        return 'bg-red-950/60 border-red-800/80 text-red-300';
-      case 'NEUTRAL':
-        return 'bg-amber-950/60 border-amber-800/80 text-amber-300';
-      case 'NONE':
-      default:
-        return 'bg-slate-900 border-slate-700 text-slate-400';
-    }
-  };
+  const spfStyle = getStatusPresentation(protocols.spf);
+  const dkimStyle = getStatusPresentation(protocols.dkim);
+  const dmarcStyle = getStatusPresentation(protocols.dmarc);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
       {/* SPF Card */}
-      <div className={`p-3.5 rounded-xl border backdrop-blur-md transition-all ${getBadgeColor(protocols.spf)}`}>
+      <div className={`p-3.5 rounded-xl border bg-surface transition-all ${spfStyle.borderClass}`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            {getIcon(protocols.spf)}
-            <span className="font-mono font-bold text-sm tracking-wider">SPF VALIDATION</span>
+            {spfStyle.icon}
+            <span className="font-mono font-semibold text-xs tracking-wide text-foreground">
+              SPF VALIDATION
+            </span>
           </div>
-          <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-black/40">
+          <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${spfStyle.badgeClass}`}>
             {protocols.spf}
           </span>
         </div>
-        <p className="text-xs text-slate-300 leading-relaxed font-sans">
+        <p className="text-xs text-foreground-muted leading-relaxed font-sans">
           {protocols.spfDetails}
         </p>
       </div>
 
       {/* DKIM Card */}
-      <div className={`p-3.5 rounded-xl border backdrop-blur-md transition-all ${getBadgeColor(protocols.dkim)}`}>
+      <div className={`p-3.5 rounded-xl border bg-surface transition-all ${dkimStyle.borderClass}`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            {getIcon(protocols.dkim)}
-            <span className="font-mono font-bold text-sm tracking-wider">DKIM SIGNATURE</span>
+            {dkimStyle.icon}
+            <span className="font-mono font-semibold text-xs tracking-wide text-foreground">
+              DKIM SIGNATURE
+            </span>
           </div>
-          <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-black/40">
+          <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${dkimStyle.badgeClass}`}>
             {protocols.dkim}
           </span>
         </div>
-        <p className="text-xs text-slate-300 leading-relaxed font-sans">
+        <p className="text-xs text-foreground-muted leading-relaxed font-sans">
           {protocols.dkimDetails}
         </p>
       </div>
 
       {/* DMARC Card */}
-      <div className={`p-3.5 rounded-xl border backdrop-blur-md transition-all ${getBadgeColor(protocols.dmarc)}`}>
+      <div className={`p-3.5 rounded-xl border bg-surface transition-all ${dmarcStyle.borderClass}`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            {getIcon(protocols.dmarc)}
-            <span className="font-mono font-bold text-sm tracking-wider">DMARC POLICY</span>
+            {dmarcStyle.icon}
+            <span className="font-mono font-semibold text-xs tracking-wide text-foreground">
+              DMARC POLICY
+            </span>
           </div>
-          <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-black/40">
+          <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${dmarcStyle.badgeClass}`}>
             {protocols.dmarc}
           </span>
         </div>
-        <p className="text-xs text-slate-300 leading-relaxed font-sans">
+        <p className="text-xs text-foreground-muted leading-relaxed font-sans">
           {protocols.dmarcDetails}
         </p>
       </div>
 
       {/* Alignment & Reply-To Bar */}
       <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-        <div className={`flex items-center justify-between p-3 rounded-lg border ${protocols.returnPathMatch ? 'bg-slate-900/60 border-slate-800 text-slate-300' : 'bg-red-950/40 border-red-900/80 text-red-300'}`}>
+        <div
+          className={`flex items-center justify-between p-3 rounded-lg border ${
+            protocols.returnPathMatch
+              ? 'bg-surface border-border text-foreground'
+              : 'bg-danger-surface border-danger-border text-danger'
+          }`}
+        >
           <div className="flex items-center space-x-2">
             {protocols.returnPathMatch ? (
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <ShieldCheck className="w-4 h-4 text-success" />
             ) : (
-              <ShieldAlert className="w-4 h-4 text-red-400" />
+              <ShieldAlert className="w-4 h-4 text-danger" />
             )}
             <span className="text-xs font-medium">Return-Path Domain Alignment</span>
           </div>
-          <span className={`text-xs font-mono font-semibold ${protocols.returnPathMatch ? 'text-emerald-400' : 'text-red-400'}`}>
+          <span
+            className={`text-xs font-mono font-semibold ${
+              protocols.returnPathMatch ? 'text-success' : 'text-danger'
+            }`}
+          >
             {protocols.returnPathMatch ? 'ALIGNED' : 'MISMATCH / SPOOFED'}
           </span>
         </div>
 
-        <div className={`flex items-center justify-between p-3 rounded-lg border ${!protocols.replyToMismatch ? 'bg-slate-900/60 border-slate-800 text-slate-300' : 'bg-amber-950/40 border-amber-900/80 text-amber-300'}`}>
+        <div
+          className={`flex items-center justify-between p-3 rounded-lg border ${
+            !protocols.replyToMismatch
+              ? 'bg-surface border-border text-foreground'
+              : 'bg-warning-surface border-warning-border text-warning'
+          }`}
+        >
           <div className="flex items-center space-x-2">
             {!protocols.replyToMismatch ? (
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <ShieldCheck className="w-4 h-4 text-success" />
             ) : (
-              <ShieldAlert className="w-4 h-4 text-amber-400" />
+              <ShieldAlert className="w-4 h-4 text-warning" />
             )}
             <span className="text-xs font-medium">Reply-To Address Consistency</span>
           </div>
-          <span className={`text-xs font-mono font-semibold ${!protocols.replyToMismatch ? 'text-emerald-400' : 'text-amber-400'}`}>
+          <span
+            className={`text-xs font-mono font-semibold ${
+              !protocols.replyToMismatch ? 'text-success' : 'text-warning'
+            }`}
+          >
             {!protocols.replyToMismatch ? 'MATCHED' : 'DECEPTIVE MISMATCH'}
           </span>
         </div>

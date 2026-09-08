@@ -124,9 +124,9 @@ export const EmailForensicView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-        <p className="text-sm font-mono text-slate-300">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-3">
+        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+        <p className="text-xs font-mono text-foreground-muted">
           Loading forensic evidence...
         </p>
       </div>
@@ -135,23 +135,23 @@ export const EmailForensicView: React.FC = () => {
 
   if (error || !analysis) {
     return (
-      <div className="max-w-xl mx-auto my-12 p-8 bg-slate-950/90 rounded-2xl border border-red-900/50 backdrop-blur-xl text-center space-y-4 shadow-2xl">
-        <div className="p-3 bg-red-950/50 rounded-full w-12 h-12 mx-auto flex items-center justify-center border border-red-800/50">
-          <AlertCircle className="w-6 h-6 text-red-400" />
+      <div className="max-w-xl mx-auto my-12 p-8 bg-surface rounded-xl border border-danger-border text-center space-y-4 shadow-sm">
+        <div className="p-3 bg-danger-surface rounded-full w-12 h-12 mx-auto flex items-center justify-center border border-danger-border">
+          <AlertCircle className="w-5 h-5 text-danger" />
         </div>
-        <h2 className="text-lg font-bold text-slate-100 font-mono">
+        <h2 className="text-base font-bold text-foreground font-mono">
           Analysis Not Found
         </h2>
-        <p className="text-xs font-mono text-slate-400">
+        <p className="text-xs font-mono text-foreground-muted">
           {error || 'Unable to load the forensic analysis for this email.'}
         </p>
-        <div className="pt-4">
+        <div className="pt-3">
           <button
             type="button"
             onClick={() => navigate('/analyze')}
-            className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-800/60 font-mono text-xs font-bold transition-all"
+            className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-surface hover:bg-surface-secondary text-primary border border-border font-mono text-xs font-medium transition-colors btn-press cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             <span>Return to Analyze Email</span>
           </button>
         </div>
@@ -178,7 +178,7 @@ export const EmailForensicView: React.FC = () => {
       />
 
       {/* TAB CONTENT VIEWS */}
-      <div className="transition-all duration-200">
+      <div key={activeTab} className="page-enter">
         {activeTab === 'overview' && <OverviewTab email={analysis} />}
         {activeTab === 'graph' && <InvestigationGraphTab email={analysis} />}
         {activeTab === 'map' && <InvestigationMapTab email={analysis} />}

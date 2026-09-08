@@ -18,17 +18,17 @@ import {
 import type { CaseListItem, CaseStatus, CaseSeverity, CaseCreatePayload } from '../types/case';
 
 const STATUS_CONFIG: Record<CaseStatus, { label: string; badge: string; border: string }> = {
-  open: { label: 'Open', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/40', border: 'border-sky-800/40' },
-  investigating: { label: 'Investigating', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40', border: 'border-amber-800/40' },
-  escalated: { label: 'Escalated', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse', border: 'border-rose-800/60' },
-  resolved: { label: 'Resolved', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', border: 'border-emerald-800/40' },
+  open: { label: 'Open', badge: 'bg-surface-secondary text-foreground border-border', border: 'border-border' },
+  investigating: { label: 'Investigating', badge: 'bg-warning-surface text-warning border-warning-border', border: 'border-border hover:border-warning-border' },
+  escalated: { label: 'Escalated', badge: 'bg-danger-surface text-danger border-danger-border font-semibold', border: 'border-danger-border/60 hover:border-danger-border' },
+  resolved: { label: 'Resolved', badge: 'bg-success-surface text-success border-success-border', border: 'border-border hover:border-success-border' },
 };
 
 const SEVERITY_CONFIG: Record<CaseSeverity, { label: string; badge: string }> = {
-  low: { label: 'Low', badge: 'bg-slate-500/20 text-slate-300 border-slate-500/40' },
-  medium: { label: 'Medium', badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40' },
-  high: { label: 'High', badge: 'bg-orange-500/20 text-orange-300 border-orange-500/40' },
-  critical: { label: 'Critical', badge: 'bg-red-500/20 text-red-300 border-red-500/40 font-bold' },
+  low: { label: 'Low', badge: 'bg-surface-secondary text-foreground-muted border-border' },
+  medium: { label: 'Medium', badge: 'bg-warning-surface/60 text-warning border-warning-border/60' },
+  high: { label: 'High', badge: 'bg-warning-surface text-warning border-warning-border font-medium' },
+  critical: { label: 'Critical', badge: 'bg-danger-surface text-danger border-danger-border font-bold' },
 };
 
 export const Cases: React.FC = () => {
@@ -137,37 +137,39 @@ export const Cases: React.FC = () => {
       {/* 1. HEADER & ACTION BAR */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2">
-            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-              <FolderLock className="w-5 h-5" />
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 rounded-lg bg-surface-secondary border border-border text-primary">
+              <FolderLock className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-xl font-bold font-mono text-slate-100 flex items-center space-x-2">
+              <h1 className="text-xl font-bold font-mono text-foreground flex items-center space-x-2">
                 <span>SOC Case Management</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                <span className="text-[10px] px-2 py-0.5 rounded bg-surface-secondary text-foreground-muted border border-border">
                   Platform
                 </span>
               </h1>
-              <p className="text-xs font-mono text-slate-400">
+              <p className="text-xs font-mono text-foreground-muted">
                 Transforming forensic telemetry into structured, collaborative incident investigations.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
           <button
+            type="button"
             onClick={fetchCases}
-            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-surface hover:bg-surface-secondary border border-border text-foreground-muted hover:text-foreground transition-colors btn-press cursor-pointer"
             title="Refresh Cases"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-primary' : ''}`} />
           </button>
           <button
+            type="button"
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-mono text-xs font-bold transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)]"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-mono text-xs font-semibold transition-colors btn-press cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Create Case</span>
           </button>
         </div>
@@ -175,54 +177,55 @@ export const Cases: React.FC = () => {
 
       {/* 2. METRIC CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl">
-          <div className="text-[11px] font-mono text-slate-400">Total Cases</div>
-          <div className="text-2xl font-mono font-bold text-slate-100 mt-1">{metrics.total}</div>
+        <div className="p-3.5 rounded-xl bg-surface border border-border shadow-xs">
+          <div className="text-[11px] font-mono text-foreground-muted font-medium">Total Cases</div>
+          <div className="text-2xl font-mono font-bold text-foreground mt-1">{metrics.total}</div>
         </div>
-        <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-sky-900/40 backdrop-blur-xl">
-          <div className="text-[11px] font-mono text-sky-400">Open</div>
-          <div className="text-2xl font-mono font-bold text-sky-300 mt-1">{metrics.open}</div>
+        <div className="p-3.5 rounded-xl bg-surface border border-border shadow-xs">
+          <div className="text-[11px] font-mono text-foreground-muted font-medium">Open</div>
+          <div className="text-2xl font-mono font-bold text-foreground mt-1">{metrics.open}</div>
         </div>
-        <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-amber-900/40 backdrop-blur-xl">
-          <div className="text-[11px] font-mono text-amber-400">Investigating</div>
-          <div className="text-2xl font-mono font-bold text-amber-300 mt-1">{metrics.investigating}</div>
+        <div className="p-3.5 rounded-xl bg-surface border border-border shadow-xs">
+          <div className="text-[11px] font-mono text-warning font-medium">Investigating</div>
+          <div className="text-2xl font-mono font-bold text-warning mt-1">{metrics.investigating}</div>
         </div>
-        <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-rose-900/40 backdrop-blur-xl">
-          <div className="text-[11px] font-mono text-rose-400">Escalated</div>
-          <div className="text-2xl font-mono font-bold text-rose-300 mt-1">{metrics.escalated}</div>
+        <div className="p-3.5 rounded-xl bg-surface border border-border shadow-xs">
+          <div className="text-[11px] font-mono text-danger font-medium">Escalated</div>
+          <div className="text-2xl font-mono font-bold text-danger mt-1">{metrics.escalated}</div>
         </div>
-        <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-emerald-900/40 backdrop-blur-xl col-span-2 sm:col-span-1">
-          <div className="text-[11px] font-mono text-emerald-400">Resolved</div>
-          <div className="text-2xl font-mono font-bold text-emerald-300 mt-1">{metrics.resolved}</div>
+        <div className="p-3.5 rounded-xl bg-surface border border-border shadow-xs col-span-2 sm:col-span-1">
+          <div className="text-[11px] font-mono text-success font-medium">Resolved</div>
+          <div className="text-2xl font-mono font-bold text-success mt-1">{metrics.resolved}</div>
         </div>
       </div>
 
       {/* 3. SEARCH & FILTERS BAR */}
-      <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="p-3.5 rounded-xl bg-surface border border-border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Search by title, case number (e.g. CASE-2026-000001)..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-900/90 rounded-xl border border-slate-800 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+            className="w-full pl-9 pr-4 py-1.5 bg-surface-secondary rounded-lg border border-border text-xs font-mono text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary transition-colors"
           />
         </div>
 
         {/* Status & Severity Filter Pills */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Pills */}
-          <div className="flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs font-mono">
+          <div className="flex items-center space-x-1 bg-surface-secondary p-1 rounded-lg border border-border text-xs font-mono">
             {['ALL', 'open', 'investigating', 'escalated', 'resolved'].map(st => (
               <button
                 key={st}
+                type="button"
                 onClick={() => setSelectedStatus(st)}
-                className={`px-2.5 py-1 rounded-lg transition-all capitalize ${
+                className={`px-2.5 py-1 rounded-md transition-colors capitalize cursor-pointer ${
                   selectedStatus === st
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-primary-subtle text-primary border border-primary/30 font-semibold'
+                    : 'text-foreground-muted hover:text-foreground'
                 }`}
               >
                 {st}
@@ -232,11 +235,11 @@ export const Cases: React.FC = () => {
 
           {/* Severity Dropdown */}
           <div className="flex items-center space-x-1">
-            <Filter className="w-3.5 h-3.5 text-slate-500 ml-2" />
+            <Filter className="w-3.5 h-3.5 text-foreground-muted ml-1" />
             <select
               value={selectedSeverity}
               onChange={e => setSelectedSeverity(e.target.value)}
-              className="bg-slate-900 border border-slate-800 text-slate-300 font-mono text-xs px-2.5 py-1.5 rounded-xl focus:outline-none focus:border-cyan-500"
+              className="bg-surface-secondary border border-border text-foreground font-mono text-xs px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-primary"
             >
               <option value="ALL">All Severities</option>
               <option value="critical">Critical</option>
@@ -250,26 +253,27 @@ export const Cases: React.FC = () => {
 
       {/* 4. CASE LIST VIEW */}
       {loading && cases.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-[300px] space-y-3 rounded-2xl border border-slate-800 bg-slate-950/80 backdrop-blur-xl">
-          <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin" />
-          <p className="text-xs font-mono text-slate-400">Loading cases from database...</p>
+        <div className="flex flex-col items-center justify-center min-h-[300px] space-y-3 rounded-xl border border-border bg-surface">
+          <RefreshCw className="w-6 h-6 text-primary animate-spin" />
+          <p className="text-xs font-mono text-foreground-muted">Loading cases from database...</p>
         </div>
       ) : cases.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-[300px] p-8 text-center rounded-2xl border border-slate-800 bg-slate-950/80 backdrop-blur-xl space-y-4">
-          <div className="p-3 rounded-full bg-slate-900 border border-slate-800 text-slate-500">
-            <FolderLock className="w-8 h-8" />
+        <div className="flex flex-col items-center justify-center min-h-[300px] p-8 text-center rounded-xl border border-border bg-surface space-y-3">
+          <div className="p-3 rounded-full bg-surface-secondary border border-border text-foreground-muted">
+            <FolderLock className="w-6 h-6 opacity-50" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold font-mono text-slate-200">No Investigation Cases Found</h3>
-            <p className="text-xs font-mono text-slate-400 max-w-sm">
+            <h3 className="text-sm font-bold font-mono text-foreground">No Investigation Cases Found</h3>
+            <p className="text-xs font-mono text-foreground-muted max-w-sm">
               {searchQuery || selectedStatus !== 'ALL' || selectedSeverity !== 'ALL'
                 ? 'No cases match your filter criteria. Try adjusting your filters or search term.'
                 : 'Create your first investigation case or add analyzed emails to track security incidents.'}
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-mono text-xs font-bold transition-all shadow-lg"
+            className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-mono text-xs font-semibold transition-colors btn-press cursor-pointer"
           >
             Create First Case
           </button>
@@ -284,69 +288,70 @@ export const Cases: React.FC = () => {
               <div
                 key={caseItem.id}
                 onClick={() => navigate(`/cases/${caseItem.id}`)}
-                className={`p-5 rounded-2xl bg-slate-950/80 hover:bg-slate-900/60 border ${statusConfig.border} backdrop-blur-xl cursor-pointer transition-all duration-200 hover:shadow-2xl hover:border-cyan-500/50 group flex flex-col justify-between space-y-4`}
+                className={`p-5 rounded-xl bg-surface hover:bg-surface-secondary/40 border ${statusConfig.border} cursor-pointer transition-all duration-150 shadow-xs hover:shadow-sm group flex flex-col justify-between space-y-3`}
               >
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {/* Top Bar: Case Number & Badges */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center space-x-2">
-                      <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono font-bold text-cyan-400 flex items-center space-x-1.5">
+                      <span className="px-2 py-0.5 rounded bg-surface-secondary border border-border text-xs font-mono font-semibold text-primary flex items-center space-x-1.5">
                         <span>{caseItem.case_number}</span>
                         <button
+                          type="button"
                           onClick={e => copyCaseNumber(caseItem.case_number, e)}
-                          className="hover:text-white p-0.5"
+                          className="hover:text-foreground p-0.5 cursor-pointer"
                           title="Copy Case Number"
                         >
                           {copiedId === caseItem.case_number ? (
-                            <Check className="w-3 h-3 text-emerald-400" />
+                            <Check className="w-3 h-3 text-success" />
                           ) : (
-                            <Copy className="w-3 h-3 text-slate-500" />
+                            <Copy className="w-3 h-3 text-foreground-muted" />
                           )}
                         </button>
                       </span>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono border font-bold uppercase ${statusConfig.badge}`}>
+                    <div className="flex items-center space-x-1.5">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono border font-medium uppercase ${statusConfig.badge}`}>
                         {statusConfig.label}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono border uppercase ${severityConfig.badge}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono border uppercase ${severityConfig.badge}`}>
                         {severityConfig.label}
                       </span>
                     </div>
                   </div>
 
                   {/* Title & Description */}
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-bold font-mono text-slate-100 group-hover:text-cyan-300 transition-colors line-clamp-1">
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-bold font-mono text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {caseItem.title}
                     </h3>
-                    <p className="text-xs font-mono text-slate-400 line-clamp-2">
+                    <p className="text-xs font-mono text-foreground-muted line-clamp-2">
                       {caseItem.description || 'No description provided.'}
                     </p>
                   </div>
                 </div>
 
                 {/* Bottom Bar: Stats & Navigation */}
-                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
+                <div className="pt-2.5 border-t border-border/70 flex items-center justify-between text-xs font-mono text-foreground-muted">
                   <div className="flex items-center space-x-3">
-                    <span className="flex items-center space-x-1 text-slate-300">
-                      <Mail className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="flex items-center space-x-1 text-foreground">
+                      <Mail className="w-3.5 h-3.5 text-primary" />
                       <span>{caseItem.email_count}</span>
                     </span>
-                    <span className="flex items-center space-x-1 text-slate-300">
-                      <FileText className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="flex items-center space-x-1 text-foreground">
+                      <FileText className="w-3.5 h-3.5 text-warning" />
                       <span>{caseItem.note_count}</span>
                     </span>
-                    <span className="flex items-center space-x-1 text-slate-300">
-                      <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                    <span className="flex items-center space-x-1 text-foreground">
+                      <ShieldAlert className="w-3.5 h-3.5 text-danger" />
                       <span>{caseItem.finding_count}</span>
                     </span>
                   </div>
 
-                  <div className="flex items-center space-x-1 text-[11px] text-slate-400 group-hover:text-cyan-400 transition-colors">
+                  <div className="flex items-center space-x-1 text-[11px] text-foreground-muted group-hover:text-primary transition-colors">
                     <span>Investigate</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    <ArrowUpRight className="w-3 h-3 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </div>
                 </div>
               </div>
@@ -357,63 +362,64 @@ export const Cases: React.FC = () => {
 
       {/* 5. CREATE NEW CASE MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-lg rounded-xl bg-surface border border-border shadow-xl p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center space-x-2">
-                <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                <div className="p-1.5 rounded-lg bg-surface-secondary border border-border text-primary">
                   <Plus className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-bold font-mono text-slate-100">Create Investigation Case</h3>
+                <h3 className="text-sm font-bold font-mono text-foreground">Create Investigation Case</h3>
               </div>
               <button
+                type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-secondary transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {formError && (
-              <div className="p-3 rounded-xl bg-red-950/40 border border-red-800/60 text-red-300 text-xs font-mono flex items-center space-x-2">
+              <div className="p-2.5 rounded-lg bg-danger-surface border border-danger-border text-danger text-xs font-mono flex items-center space-x-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
-            <form onSubmit={handleCreateCase} className="space-y-4">
+            <form onSubmit={handleCreateCase} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-xs font-mono text-slate-300 font-bold">
-                  Case Title <span className="text-rose-400">*</span>
+                <label className="text-xs font-mono text-foreground font-semibold">
+                  Case Title <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Targeted Credential Harvesting Campaign - Microsoft O365"
                   value={newTitle}
                   onChange={e => setNewTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 rounded-lg bg-surface-secondary border border-border text-xs font-mono text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono text-slate-300 font-bold">Description</label>
+                <label className="text-xs font-mono text-foreground font-semibold">Description</label>
                 <textarea
                   rows={3}
                   placeholder="Provide incident context, targeted departments, or initial telemetry observations..."
                   value={newDescription}
                   onChange={e => setNewDescription(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 rounded-lg bg-surface-secondary border border-border text-xs font-mono text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-mono text-slate-300 font-bold">Initial Severity</label>
+                  <label className="text-xs font-mono text-foreground font-semibold">Initial Severity</label>
                   <select
                     value={newSeverity}
                     onChange={e => setNewSeverity(e.target.value as CaseSeverity)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-100 focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2 rounded-lg bg-surface-secondary border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                   >
                     <option value="critical">Critical</option>
                     <option value="high">High</option>
@@ -423,11 +429,11 @@ export const Cases: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-mono text-slate-300 font-bold">Initial Status</label>
+                  <label className="text-xs font-mono text-foreground font-semibold">Initial Status</label>
                   <select
                     value={newStatus}
                     onChange={e => setNewStatus(e.target.value as CaseStatus)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-100 focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2 rounded-lg bg-surface-secondary border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                   >
                     <option value="open">Open</option>
                     <option value="investigating">Investigating</option>
@@ -437,18 +443,18 @@ export const Cases: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-end space-x-3">
+              <div className="pt-3 border-t border-border flex items-center justify-end space-x-2.5">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-xs transition-colors"
+                  className="px-3.5 py-1.5 rounded-lg bg-surface hover:bg-surface-secondary text-foreground-muted hover:text-foreground border border-border font-mono text-xs transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="flex items-center space-x-2 px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-mono text-xs font-bold transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] disabled:opacity-50"
+                  className="flex items-center space-x-1.5 px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-mono text-xs font-semibold transition-colors btn-press disabled:opacity-50 cursor-pointer"
                 >
                   {creating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                   <span>{creating ? 'Creating...' : 'Create Case'}</span>

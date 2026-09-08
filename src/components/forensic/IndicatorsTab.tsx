@@ -45,11 +45,11 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
   return (
     <div className="space-y-6">
       {/* Evidence Hash Card */}
-      <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3 backdrop-blur-xl shadow-lg">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+      <div className="bg-surface p-5 rounded-2xl border border-border space-y-3 shadow-xs">
+        <div className="flex items-center justify-between pb-2 border-b border-border">
           <div className="flex items-center space-x-2">
-            <Hash className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
+            <Hash className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
               Evidence SHA-256 Hash
             </h3>
           </div>
@@ -58,10 +58,10 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
           )}
         </div>
 
-        <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80 flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-xl border border-border bg-surface-secondary/60 flex items-center justify-between gap-3">
           <div className="flex items-center space-x-2 min-w-0">
-            <Shield className="w-4 h-4 text-cyan-400 shrink-0" />
-            <span className="text-xs font-mono text-slate-200 break-all select-all font-semibold">
+            <Shield className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-xs font-mono text-foreground break-all select-all font-semibold">
               {evidenceSha256}
             </span>
           </div>
@@ -78,16 +78,16 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
       <URLAnalysisSection email={email} />
 
       {/* Email Addresses */}
-      <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3 backdrop-blur-xl shadow-lg">
-        <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-          <Mail className="w-4 h-4 text-purple-400" />
-          <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
+      <div className="bg-surface p-5 rounded-2xl border border-border space-y-3 shadow-xs">
+        <div className="flex items-center space-x-2 pb-2 border-b border-border">
+          <Mail className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
             Email Addresses ({emailList.length})
           </h3>
         </div>
 
         {emailList.length === 0 ? (
-          <p className="text-xs font-mono text-slate-500 italic p-2">
+          <p className="text-xs font-mono text-foreground-subtle italic p-2">
             No email addresses detected.
           </p>
         ) : (
@@ -95,17 +95,17 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
             {emailList.map((emailObj, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-2.5 rounded-lg border border-slate-800/80 bg-slate-900/50 hover:bg-slate-900 transition-colors gap-3"
+                className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-surface-secondary/40 hover:bg-surface-secondary transition-colors gap-3"
               >
                 <div className="flex items-center space-x-2.5 min-w-0 flex-1">
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 border border-slate-700 shrink-0">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface text-foreground-muted border border-border shrink-0">
                     Extracted Indicator
                   </span>
-                  <span className="text-xs font-mono text-slate-200 break-all select-all">
+                  <span className="text-xs font-mono text-foreground break-all select-all">
                     {emailObj.value}
                   </span>
                   {emailObj.source && (
-                    <span className="text-[10px] font-mono text-slate-400 hidden sm:inline-block truncate">
+                    <span className="text-[10px] font-mono text-foreground-subtle hidden sm:inline-block truncate">
                       ({emailObj.source})
                     </span>
                   )}
@@ -118,16 +118,16 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
       </div>
 
       {/* Attachment Hashes */}
-      <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3 backdrop-blur-xl shadow-lg">
-        <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-          <Paperclip className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
+      <div className="bg-surface p-5 rounded-2xl border border-border space-y-3 shadow-xs">
+        <div className="flex items-center space-x-2 pb-2 border-b border-border">
+          <Paperclip className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
             Attachment Hashes ({attachmentList.length})
           </h3>
         </div>
 
         {attachmentList.length === 0 ? (
-          <p className="text-xs font-mono text-slate-500 italic p-2">
+          <p className="text-xs font-mono text-foreground-subtle italic p-2">
             No attachments detected.
           </p>
         ) : (
@@ -135,29 +135,29 @@ export const IndicatorsTab: React.FC<IndicatorsTabProps> = ({ email }) => {
             {attachmentList.map((att, idx) => (
               <div
                 key={idx}
-                className="p-3.5 rounded-xl border border-slate-800/80 bg-slate-900/50 space-y-2 font-mono text-xs"
+                className="p-3.5 rounded-xl border border-border bg-surface-secondary/40 space-y-2 font-mono text-xs"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-200 font-bold">
+                  <span className="text-foreground font-bold">
                     {att.filename || 'Unnamed Attachment'} ({formatFileSize(att.size)})
                   </span>
                   {att.sha256 && <CopyButton text={att.sha256} label="Copy SHA-256" />}
                 </div>
 
                 <div className="space-y-1 pt-1 text-[11px]">
-                  <div className="flex items-center justify-between text-slate-300">
-                    <span className="text-slate-400">SHA-256:</span>
+                  <div className="flex items-center justify-between text-foreground">
+                    <span className="text-foreground-muted">SHA-256:</span>
                     <span className="break-all select-all font-semibold">{att.sha256 || 'N/A'}</span>
                   </div>
                   {att.md5 && (
-                    <div className="flex items-center justify-between text-slate-300">
-                      <span className="text-slate-400">MD5:</span>
+                    <div className="flex items-center justify-between text-foreground">
+                      <span className="text-foreground-muted">MD5:</span>
                       <span className="break-all select-all">{att.md5}</span>
                     </div>
                   )}
                   {att.sha1 && (
-                    <div className="flex items-center justify-between text-slate-300">
-                      <span className="text-slate-400">SHA-1:</span>
+                    <div className="flex items-center justify-between text-foreground">
+                      <span className="text-foreground-muted">SHA-1:</span>
                       <span className="break-all select-all">{att.sha1}</span>
                     </div>
                   )}

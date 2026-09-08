@@ -31,20 +31,21 @@ import {
   Cell
 } from 'recharts';
 import type { DashboardSummary } from '../types/dashboard';
+import { useTheme } from '../context/ThemeContext';
 
 const STATUS_CONFIG: Record<string, { label: string; badge: string }> = {
-  open: { label: 'Open', badge: 'bg-sky-500/10 text-sky-400 border border-sky-500/30' },
-  investigating: { label: 'Investigating', badge: 'bg-amber-500/10 text-amber-400 border border-amber-500/30' },
-  escalated: { label: 'Escalated', badge: 'bg-rose-500/10 text-rose-400 border border-rose-500/30' },
-  resolved: { label: 'Resolved', badge: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' },
+  open: { label: 'Open', badge: 'bg-surface-secondary text-foreground border-border' },
+  investigating: { label: 'Investigating', badge: 'bg-warning-surface text-warning border-warning-border' },
+  escalated: { label: 'Escalated', badge: 'bg-danger-surface text-danger border-danger-border font-semibold' },
+  resolved: { label: 'Resolved', badge: 'bg-success-surface text-success border-success-border' },
 };
 
 const SEVERITY_CONFIG: Record<string, { label: string; badge: string; color: string }> = {
-  critical: { label: 'Critical', badge: 'bg-red-950/60 text-red-400 border border-red-800/60 font-bold', color: '#ef4444' },
-  high: { label: 'High', badge: 'bg-amber-950/60 text-amber-400 border border-amber-800/60 font-semibold', color: '#f59e0b' },
-  medium: { label: 'Medium', badge: 'bg-yellow-950/60 text-yellow-300 border border-yellow-800/60', color: '#eab308' },
-  low: { label: 'Low', badge: 'bg-slate-800/80 text-slate-300 border border-slate-700/80', color: '#64748b' },
-  suspicious: { label: 'Suspicious', badge: 'bg-yellow-950/60 text-yellow-300 border border-yellow-800/60', color: '#eab308' },
+  critical: { label: 'Critical', badge: 'bg-danger-surface text-danger border-danger-border font-bold', color: '#df5252' },
+  high: { label: 'High', badge: 'bg-warning-surface text-warning border-warning-border font-semibold', color: '#d99538' },
+  medium: { label: 'Medium', badge: 'bg-warning-surface/60 text-warning border-warning-border/70', color: '#e0a648' },
+  low: { label: 'Low', badge: 'bg-surface-secondary text-foreground-muted border-border', color: '#889189' },
+  suspicious: { label: 'Suspicious', badge: 'bg-warning-surface text-warning border-warning-border', color: '#d99538' },
 };
 
 const formatTimestamp = (isoString?: string): string => {
@@ -84,6 +85,7 @@ const formatRelativeTime = (isoString?: string): string => {
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -120,47 +122,106 @@ export const Dashboard: React.FC = () => {
 
   const metrics = summary?.metrics;
 
+  const getChartTheme = () => {
+    switch (theme) {
+      case 'blossom':
+        return {
+          grid: '#ede7eb',
+          text: '#776e74',
+          totalStroke: '#c8698a',
+          totalFill: '#c8698a',
+          threatsStroke: '#d44343',
+          threatsFill: '#d44343',
+          tooltipBg: '#ffffff',
+          tooltipBorder: '#e8e1e5',
+          tooltipText: '#1e191c'
+        };
+      case 'violet':
+        return {
+          grid: '#2a2540',
+          text: '#8e86a8',
+          totalStroke: '#8070e6',
+          totalFill: '#8070e6',
+          threatsStroke: '#e05555',
+          threatsFill: '#e05555',
+          tooltipBg: '#181524',
+          tooltipBorder: '#2a2540',
+          tooltipText: '#edeaf5'
+        };
+      case 'paper':
+        return {
+          grid: '#ded7c9',
+          text: '#6f6a5f',
+          totalStroke: '#7a5f45',
+          totalFill: '#7a5f45',
+          threatsStroke: '#b83a3a',
+          threatsFill: '#b83a3a',
+          tooltipBg: '#fcfaf6',
+          tooltipBorder: '#ded7c9',
+          tooltipText: '#23201b'
+        };
+      case 'obsidian':
+      default:
+        return {
+          grid: '#232924',
+          text: '#8a948c',
+          totalStroke: '#7d9456',
+          totalFill: '#7d9456',
+          threatsStroke: '#df5252',
+          threatsFill: '#df5252',
+          tooltipBg: '#141715',
+          tooltipBorder: '#232924',
+          tooltipText: '#e4e8e5'
+        };
+    }
+  };
+
+  const chartTheme = getChartTheme();
+
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
       {/* Top Banner & Quick Launcher */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950 border border-slate-800/80 p-6 rounded-2xl shadow-xl relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex items-center space-x-2.5 text-cyan-400 font-mono text-xs mb-1.5 font-bold uppercase tracking-wider">
-            <Radio className="w-4 h-4 text-cyan-400" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface border border-border p-6 rounded-xl shadow-xs transition-colors">
+        <div>
+          <div className="flex items-center space-x-2 text-primary font-mono text-xs mb-1.5 font-semibold uppercase tracking-wider">
+            <Radio className="w-3.5 h-3.5 text-primary" />
             <span>SECURITY OPERATIONS CENTER (SOC) PLATFORM</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 text-[11px] font-semibold">LIVE TELEMETRY</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+            <span className="text-success text-[11px] font-semibold">LIVE SENSOR</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 font-sans tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground font-sans tracking-tight">
             Security Operations & Email Forensics
           </h1>
-          <p className="text-xs md:text-sm text-slate-400 mt-1 max-w-2xl font-mono">
+          <p className="text-xs md:text-sm text-foreground-muted mt-1 max-w-2xl font-mono">
             Automated RFC-822 header ingestion, SMTP relay reconstruction, intent heuristics, and forensic telemetry attribution.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 relative z-10">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
+            type="button"
             onClick={() => fetchDashboardData(true)}
             disabled={loading || refreshing}
-            className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-mono transition-all cursor-pointer disabled:opacity-50"
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-surface hover:bg-surface-secondary text-foreground-muted hover:text-foreground border border-border text-xs font-mono transition-colors btn-press cursor-pointer disabled:opacity-50"
             title="Refresh dashboard telemetry"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-primary ${refreshing ? 'animate-spin' : ''}`} />
             <span>{refreshing ? 'SYNCING...' : 'SYNC'}</span>
           </button>
           <button
+            type="button"
             onClick={() => navigate('/analyze')}
-            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-mono font-bold text-xs tracking-wide transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-mono font-semibold text-xs tracking-wide transition-colors btn-press cursor-pointer"
           >
-            <Zap className="w-4 h-4" />
+            <Zap className="w-3.5 h-3.5" />
             <span>ANALYZE SUSPICIOUS EML</span>
           </button>
           <button
+            type="button"
             onClick={() => navigate('/cases')}
-            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-mono font-semibold transition-all cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-surface hover:bg-surface-secondary text-foreground border border-border text-xs font-mono font-medium transition-colors btn-press cursor-pointer"
           >
-            <FolderLock className="w-4 h-4 text-cyan-400" />
+            <FolderLock className="w-3.5 h-3.5 text-foreground-muted" />
             <span>INVESTIGATIONS</span>
           </button>
         </div>
@@ -168,128 +229,129 @@ export const Dashboard: React.FC = () => {
 
       {/* Error Banner */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-950/50 border border-red-800/80 text-red-300 flex items-center justify-between text-xs font-mono">
+        <div className="p-3.5 rounded-lg bg-danger-surface border border-danger-border text-danger flex items-center justify-between text-xs font-mono">
           <div className="flex items-center space-x-2">
-            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-danger flex-shrink-0" />
             <span>Failed to connect to forensic telemetry service: {error}</span>
           </div>
           <button
+            type="button"
             onClick={() => fetchDashboardData(true)}
-            className="px-3 py-1 rounded bg-red-900/60 hover:bg-red-800 text-red-200 border border-red-700 text-xs cursor-pointer"
+            className="px-2.5 py-1 rounded bg-danger text-white hover:opacity-90 text-xs font-mono cursor-pointer"
           >
             Retry
           </button>
         </div>
       )}
 
-      {/* 4 Standard Summary Metric Cards - Real Backend Data */}
+      {/* 4 Summary Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Emails Analyzed */}
-        <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 relative overflow-hidden group hover:border-cyan-500/40 transition-all">
+        <div className="p-5 rounded-xl bg-surface border border-border transition-all hover:border-primary/50 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400 font-bold uppercase tracking-wider">
+            <span className="text-xs font-mono text-foreground-muted font-medium uppercase tracking-wider">
               Emails Analyzed
             </span>
-            <div className="p-2 rounded-xl bg-cyan-950/60 text-cyan-400 border border-cyan-800/50">
+            <div className="p-2 rounded-lg bg-surface-secondary text-primary border border-border">
               <Mail className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             {loading ? (
-              <div className="h-8 w-20 bg-slate-800/70 rounded animate-pulse" />
+              <div className="h-8 w-20 bg-surface-secondary rounded animate-pulse" />
             ) : (
-              <span className="text-3xl font-extrabold font-mono text-slate-100">
+              <span className="text-3xl font-bold font-mono text-foreground">
                 {(metrics?.emails_analyzed ?? 0).toLocaleString()}
               </span>
             )}
-            <span className="text-[11px] font-mono text-cyan-400/80 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
+            <span className="text-[11px] font-mono text-foreground-muted bg-surface-secondary px-2 py-0.5 rounded border border-border">
               Total Ingested
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2 font-mono">
+          <p className="text-[11px] text-foreground-muted mt-2 font-mono">
             Verified RFC-822 evidence records
           </p>
         </div>
 
         {/* Card 2: Threats Detected */}
-        <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 relative overflow-hidden group hover:border-amber-500/40 transition-all">
+        <div className="p-5 rounded-xl bg-surface border border-border transition-all hover:border-warning/50 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400 font-bold uppercase tracking-wider">
+            <span className="text-xs font-mono text-foreground-muted font-medium uppercase tracking-wider">
               Threats Detected
             </span>
-            <div className="p-2 rounded-xl bg-amber-950/60 text-amber-400 border border-amber-800/50">
+            <div className="p-2 rounded-lg bg-warning-surface text-warning border border-warning-border">
               <ShieldAlert className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             {loading ? (
-              <div className="h-8 w-20 bg-slate-800/70 rounded animate-pulse" />
+              <div className="h-8 w-20 bg-surface-secondary rounded animate-pulse" />
             ) : (
-              <span className="text-3xl font-extrabold font-mono text-slate-100">
+              <span className="text-3xl font-bold font-mono text-foreground">
                 {(metrics?.threats_detected ?? 0).toLocaleString()}
               </span>
             )}
-            <span className="text-xs font-mono font-bold text-amber-400 px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/50">
+            <span className="text-xs font-mono font-semibold text-warning px-2 py-0.5 rounded bg-warning-surface border border-warning-border">
               {metrics && metrics.emails_analyzed > 0
                 ? `${((metrics.threats_detected / metrics.emails_analyzed) * 100).toFixed(1)}% Rate`
                 : '0.0% Rate'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2 font-mono">
+          <p className="text-[11px] text-foreground-muted mt-2 font-mono">
             Phishing, BEC & lookalike domains
           </p>
         </div>
 
         {/* Card 3: Critical Emails */}
-        <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 relative overflow-hidden group hover:border-red-500/40 transition-all">
+        <div className="p-5 rounded-xl bg-surface border border-border transition-all hover:border-danger/50 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400 font-bold uppercase tracking-wider">
+            <span className="text-xs font-mono text-foreground-muted font-medium uppercase tracking-wider">
               Critical Emails
             </span>
-            <div className="p-2 rounded-xl bg-red-950/60 text-red-400 border border-red-800/50">
+            <div className="p-2 rounded-lg bg-danger-surface text-danger border border-danger-border">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             {loading ? (
-              <div className="h-8 w-20 bg-slate-800/70 rounded animate-pulse" />
+              <div className="h-8 w-20 bg-surface-secondary rounded animate-pulse" />
             ) : (
-              <span className="text-3xl font-extrabold font-mono text-slate-100">
+              <span className="text-3xl font-bold font-mono text-foreground">
                 {(metrics?.critical_emails ?? 0).toLocaleString()}
               </span>
             )}
-            <span className="text-xs font-mono font-bold text-red-400 px-2 py-0.5 rounded bg-red-950/60 border border-red-800/50">
+            <span className="text-xs font-mono font-bold text-danger px-2 py-0.5 rounded bg-danger-surface border border-danger-border">
               Score ≥ 80
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2 font-mono">
+          <p className="text-[11px] text-foreground-muted mt-2 font-mono">
             High-confidence malicious attacks
           </p>
         </div>
 
         {/* Card 4: Open Cases */}
-        <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 relative overflow-hidden group hover:border-purple-500/40 transition-all">
+        <div className="p-5 rounded-xl bg-surface border border-border transition-all hover:border-primary/50 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400 font-bold uppercase tracking-wider">
+            <span className="text-xs font-mono text-foreground-muted font-medium uppercase tracking-wider">
               Open Cases
             </span>
-            <div className="p-2 rounded-xl bg-purple-950/60 text-purple-400 border border-purple-800/50">
+            <div className="p-2 rounded-lg bg-surface-secondary text-primary border border-border">
               <FolderLock className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             {loading ? (
-              <div className="h-8 w-20 bg-slate-800/70 rounded animate-pulse" />
+              <div className="h-8 w-20 bg-surface-secondary rounded animate-pulse" />
             ) : (
-              <span className="text-3xl font-extrabold font-mono text-slate-100">
+              <span className="text-3xl font-bold font-mono text-foreground">
                 {(metrics?.open_cases ?? 0).toLocaleString()}
               </span>
             )}
-            <span className="text-xs font-mono font-bold text-purple-300 px-2 py-0.5 rounded bg-purple-950/60 border border-purple-800/50">
+            <span className="text-xs font-mono font-medium text-foreground px-2 py-0.5 rounded bg-surface-secondary border border-border">
               Active
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2 font-mono">
+          <p className="text-[11px] text-foreground-muted mt-2 font-mono">
             Investigations currently in progress
           </p>
         </div>
@@ -298,58 +360,60 @@ export const Dashboard: React.FC = () => {
       {/* Main Forensic Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Analysis Trend Chart */}
-        <div className="lg:col-span-2 bg-slate-950/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 flex flex-col justify-between shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-bold text-slate-100 font-sans flex items-center space-x-2">
-                <Activity className="w-4 h-4 text-cyan-400" />
+              <h2 className="text-sm font-bold text-foreground font-sans flex items-center space-x-2">
+                <Activity className="w-4 h-4 text-primary" />
                 <span>Recent Analysis Trend</span>
               </h2>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">
+              <p className="text-xs text-foreground-muted font-mono mt-0.5">
                 Ingested email volume and detected threat activity over time
               </p>
             </div>
-            <span className="text-[11px] font-mono text-cyan-400 font-semibold px-2.5 py-1 rounded bg-cyan-950/60 border border-cyan-800/50">
+            <span className="text-[10px] font-mono text-foreground-muted font-medium px-2 py-0.5 rounded bg-surface-secondary border border-border">
               LAST 30 DAYS
             </span>
           </div>
 
           <div className="h-64 w-full">
             {loading ? (
-              <div className="h-full w-full bg-slate-900/40 rounded-xl animate-pulse flex items-center justify-center">
-                <span className="text-xs font-mono text-slate-500">Loading analysis timeline...</span>
+              <div className="h-full w-full bg-surface-secondary/40 rounded-lg animate-pulse flex items-center justify-center">
+                <span className="text-xs font-mono text-foreground-muted">Loading analysis timeline...</span>
               </div>
             ) : summary?.analysis_trend && summary.analysis_trend.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={summary.analysis_trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="trendTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                      <stop offset="5%" stopColor={chartTheme.totalFill} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={chartTheme.totalFill} stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="trendThreats" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.5} />
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                      <stop offset="5%" stopColor={chartTheme.threatsFill} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={chartTheme.threatsFill} stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="date" stroke="#64748b" tick={{ fontSize: 11, fontFamily: 'monospace' }} />
-                  <YAxis stroke="#64748b" tick={{ fontSize: 11, fontFamily: 'monospace' }} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                  <XAxis dataKey="date" stroke={chartTheme.text} tick={{ fontSize: 10, fontFamily: 'monospace' }} />
+                  <YAxis stroke={chartTheme.text} tick={{ fontSize: 10, fontFamily: 'monospace' }} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#090d16',
-                      borderColor: '#1e293b',
-                      borderRadius: '0.75rem',
-                      fontSize: '12px',
-                      color: '#f8fafc',
-                      fontFamily: 'monospace'
+                      backgroundColor: chartTheme.tooltipBg,
+                      borderColor: chartTheme.tooltipBorder,
+                      borderRadius: '0.5rem',
+                      fontSize: '11px',
+                      color: chartTheme.tooltipText,
+                      fontFamily: 'monospace',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="total"
                     name="Emails Analyzed"
-                    stroke="#06b6d4"
+                    stroke={chartTheme.totalStroke}
+                    strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#trendTotal)"
                   />
@@ -357,17 +421,18 @@ export const Dashboard: React.FC = () => {
                     type="monotone"
                     dataKey="threats"
                     name="Threats Detected"
-                    stroke="#ef4444"
+                    stroke={chartTheme.threatsStroke}
+                    strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#trendThreats)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full w-full rounded-xl border border-dashed border-slate-800 flex flex-col items-center justify-center p-6 text-center">
-                <FileSearch className="w-8 h-8 text-slate-600 mb-2" />
-                <span className="text-xs font-mono text-slate-400 font-semibold">No Trend Telemetry Available</span>
-                <span className="text-[11px] font-mono text-slate-500 mt-1 max-w-sm">
+              <div className="h-full w-full rounded-lg border border-dashed border-border flex flex-col items-center justify-center p-6 text-center">
+                <FileSearch className="w-8 h-8 text-foreground-muted mb-2 opacity-50" />
+                <span className="text-xs font-mono text-foreground font-medium">No Trend Telemetry Available</span>
+                <span className="text-[11px] font-mono text-foreground-muted mt-1 max-w-sm">
                   Ingested emails will automatically populate the temporal analysis curve.
                 </span>
               </div>
@@ -376,35 +441,35 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Threat Severity Distribution Chart */}
-        <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+        <div className="bg-surface border border-border rounded-xl p-5 flex flex-col justify-between shadow-xs">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-bold text-slate-100 font-sans flex items-center space-x-2">
-                <ShieldAlert className="w-4 h-4 text-amber-400" />
-                <span>Threat Severity Distribution</span>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-bold text-foreground font-sans flex items-center space-x-2">
+                <ShieldAlert className="w-4 h-4 text-warning" />
+                <span>Severity Distribution</span>
               </h2>
             </div>
-            <p className="text-xs text-slate-400 font-mono mb-4">
+            <p className="text-xs text-foreground-muted font-mono mb-4">
               Categorized risk posture across analyzed emails
             </p>
 
             {loading ? (
-              <div className="h-56 bg-slate-900/40 rounded-xl animate-pulse" />
+              <div className="h-56 bg-surface-secondary/40 rounded-lg animate-pulse" />
             ) : summary?.severity_distribution && summary.severity_distribution.length > 0 ? (
               <div className="space-y-3">
                 <div className="h-44 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={summary.severity_distribution} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                      <XAxis dataKey="severity" stroke="#64748b" tick={{ fontSize: 10, fontFamily: 'monospace' }} />
-                      <YAxis stroke="#64748b" tick={{ fontSize: 10, fontFamily: 'monospace' }} allowDecimals={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
+                      <XAxis dataKey="severity" stroke={chartTheme.text} tick={{ fontSize: 10, fontFamily: 'monospace' }} />
+                      <YAxis stroke={chartTheme.text} tick={{ fontSize: 10, fontFamily: 'monospace' }} allowDecimals={false} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#090d16',
-                          borderColor: '#1e293b',
-                          borderRadius: '0.75rem',
-                          fontSize: '12px',
-                          color: '#f8fafc',
+                          backgroundColor: chartTheme.tooltipBg,
+                          borderColor: chartTheme.tooltipBorder,
+                          borderRadius: '0.5rem',
+                          fontSize: '11px',
+                          color: chartTheme.tooltipText,
                           fontFamily: 'monospace'
                         }}
                       />
@@ -412,7 +477,7 @@ export const Dashboard: React.FC = () => {
                         {summary.severity_distribution.map((entry) => (
                           <Cell
                             key={entry.severity}
-                            fill={SEVERITY_CONFIG[entry.severity.toLowerCase()]?.color || '#38bdf8'}
+                            fill={SEVERITY_CONFIG[entry.severity.toLowerCase()]?.color || chartTheme.totalStroke}
                           />
                         ))}
                       </Bar>
@@ -420,20 +485,20 @@ export const Dashboard: React.FC = () => {
                   </ResponsiveContainer>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-900 text-xs font-mono">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border text-xs font-mono">
                   {summary.severity_distribution.map((item) => (
-                    <div key={item.severity} className="flex items-center justify-between bg-slate-900/50 p-2 rounded-lg border border-slate-800/60">
-                      <span className="capitalize text-slate-300">{item.severity}</span>
-                      <span className="font-bold text-slate-100">{item.count}</span>
+                    <div key={item.severity} className="flex items-center justify-between bg-surface-secondary p-2 rounded-md border border-border">
+                      <span className="capitalize text-foreground-muted">{item.severity}</span>
+                      <span className="font-semibold text-foreground">{item.count}</span>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="h-56 rounded-xl border border-dashed border-slate-800 flex flex-col items-center justify-center p-6 text-center">
-                <CheckCircle2 className="w-8 h-8 text-slate-600 mb-2" />
-                <span className="text-xs font-mono text-slate-400 font-semibold">No Severity Telemetry</span>
-                <span className="text-[11px] font-mono text-slate-500 mt-1">
+              <div className="h-56 rounded-lg border border-dashed border-border flex flex-col items-center justify-center p-6 text-center">
+                <CheckCircle2 className="w-8 h-8 text-foreground-muted mb-2 opacity-50" />
+                <span className="text-xs font-mono text-foreground font-medium">No Severity Telemetry</span>
+                <span className="text-[11px] font-mono text-foreground-muted mt-1">
                   Evaluated risk scores will be categorized here.
                 </span>
               </div>
@@ -445,45 +510,45 @@ export const Dashboard: React.FC = () => {
       {/* Secondary Forensic Indicators Grid: Domains, Countries, Authentication */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Top Suspicious Domains */}
-        <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+        <div className="bg-surface border border-border rounded-xl p-5 flex flex-col justify-between shadow-xs">
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <Globe className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-sm font-bold text-slate-100 font-sans">
+                <Globe className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground font-sans">
                   Top Suspicious Domains
                 </h3>
               </div>
-              <span className="text-[10px] font-mono text-slate-500">OBSERVED</span>
+              <span className="text-[10px] font-mono text-foreground-muted">OBSERVED</span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mb-4">
+            <p className="text-xs text-foreground-muted font-mono mb-4">
               Lookalike & extracted hostnames from emails
             </p>
 
             {loading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-8 bg-slate-900/50 rounded animate-pulse" />
+                  <div key={i} className="h-8 bg-surface-secondary/50 rounded animate-pulse" />
                 ))}
               </div>
             ) : summary?.top_suspicious_domains && summary.top_suspicious_domains.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {summary.top_suspicious_domains.map((item) => (
                   <div
                     key={item.domain}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs font-mono"
+                    className="flex items-center justify-between p-2 rounded-lg bg-surface-secondary border border-border text-xs font-mono"
                   >
-                    <span className="text-cyan-300 font-semibold truncate max-w-[200px]" title={item.domain}>
+                    <span className="text-foreground font-medium truncate max-w-[200px]" title={item.domain}>
                       {item.domain}
                     </span>
-                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] font-bold border border-slate-700">
+                    <span className="px-2 py-0.5 rounded bg-surface text-foreground-muted text-[11px] font-medium border border-border">
                       {item.count} {item.count === 1 ? 'hit' : 'hits'}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-6 rounded-xl border border-dashed border-slate-800 text-center text-xs font-mono text-slate-500">
+              <div className="p-6 rounded-lg border border-dashed border-border text-center text-xs font-mono text-foreground-muted">
                 No suspicious domains observed yet.
               </div>
             )}
@@ -491,45 +556,45 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Top Observed Infrastructure Countries */}
-        <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+        <div className="bg-surface border border-border rounded-xl p-5 flex flex-col justify-between shadow-xs">
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <Server className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-sm font-bold text-slate-100 font-sans">
+                <Server className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground font-sans">
                   Infrastructure Countries
                 </h3>
               </div>
-              <span className="text-[10px] font-mono text-slate-500">RELAY HOPS</span>
+              <span className="text-[10px] font-mono text-foreground-muted">RELAY HOPS</span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mb-4">
+            <p className="text-xs text-foreground-muted font-mono mb-4">
               Originating IP servers detected across hops
             </p>
 
             {loading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-8 bg-slate-900/50 rounded animate-pulse" />
+                  <div key={i} className="h-8 bg-surface-secondary/50 rounded animate-pulse" />
                 ))}
               </div>
             ) : summary?.top_countries && summary.top_countries.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {summary.top_countries.map((item) => (
                   <div
                     key={item.country}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs font-mono"
+                    className="flex items-center justify-between p-2 rounded-lg bg-surface-secondary border border-border text-xs font-mono"
                   >
-                    <span className="text-slate-200 font-semibold truncate">
+                    <span className="text-foreground font-medium truncate">
                       {item.country}
                     </span>
-                    <span className="px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-300 text-[11px] font-bold border border-cyan-800/60">
+                    <span className="px-2 py-0.5 rounded bg-primary-subtle text-primary text-[11px] font-semibold border border-primary/20">
                       {item.count} {item.count === 1 ? 'node' : 'nodes'}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-6 rounded-xl border border-dashed border-slate-800 text-center text-xs font-mono text-slate-500">
+              <div className="p-6 rounded-lg border border-dashed border-border text-center text-xs font-mono text-foreground-muted">
                 No infrastructure nodes detected yet.
               </div>
             )}
@@ -537,64 +602,64 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Authentication Failure Breakdown */}
-        <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+        <div className="bg-surface border border-border rounded-xl p-5 flex flex-col justify-between shadow-xs">
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <ShieldX className="w-4 h-4 text-red-400" />
-                <h3 className="text-sm font-bold text-slate-100 font-sans">
+                <ShieldX className="w-4 h-4 text-danger" />
+                <h3 className="text-sm font-bold text-foreground font-sans">
                   Authentication Failures
                 </h3>
               </div>
-              <span className="text-[10px] font-mono text-slate-500">PROTOCOL CHECKS</span>
+              <span className="text-[10px] font-mono text-foreground-muted">PROTOCOL CHECKS</span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mb-4">
+            <p className="text-xs text-foreground-muted font-mono mb-4">
               SPF, DKIM, and DMARC verification results
             </p>
 
             {loading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-8 bg-slate-900/50 rounded animate-pulse" />
+                  <div key={i} className="h-8 bg-surface-secondary/50 rounded animate-pulse" />
                 ))}
               </div>
             ) : summary?.auth_failures && summary.auth_failures.total_evaluated > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {/* SPF Failures */}
-                <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between text-xs font-mono">
+                <div className="p-2 rounded-lg bg-surface-secondary border border-border flex items-center justify-between text-xs font-mono">
                   <div className="flex items-center space-x-2">
-                    <span className="px-1.5 py-0.5 rounded bg-red-950 text-red-400 text-[10px] font-bold border border-red-800">
+                    <span className="px-1.5 py-0.5 rounded bg-danger-surface text-danger text-[10px] font-bold border border-danger-border">
                       SPF
                     </span>
-                    <span className="text-slate-300">Sender Policy Failures</span>
+                    <span className="text-foreground">Sender Policy Failures</span>
                   </div>
-                  <span className="font-bold text-red-400">{summary.auth_failures.spf_failures}</span>
+                  <span className="font-bold text-danger">{summary.auth_failures.spf_failures}</span>
                 </div>
 
                 {/* DKIM Failures */}
-                <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between text-xs font-mono">
+                <div className="p-2 rounded-lg bg-surface-secondary border border-border flex items-center justify-between text-xs font-mono">
                   <div className="flex items-center space-x-2">
-                    <span className="px-1.5 py-0.5 rounded bg-amber-950 text-amber-400 text-[10px] font-bold border border-amber-800">
+                    <span className="px-1.5 py-0.5 rounded bg-warning-surface text-warning text-[10px] font-bold border border-warning-border">
                       DKIM
                     </span>
-                    <span className="text-slate-300">Signature Failures</span>
+                    <span className="text-foreground">Signature Failures</span>
                   </div>
-                  <span className="font-bold text-amber-400">{summary.auth_failures.dkim_failures}</span>
+                  <span className="font-bold text-warning">{summary.auth_failures.dkim_failures}</span>
                 </div>
 
                 {/* DMARC Failures */}
-                <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between text-xs font-mono">
+                <div className="p-2 rounded-lg bg-surface-secondary border border-border flex items-center justify-between text-xs font-mono">
                   <div className="flex items-center space-x-2">
-                    <span className="px-1.5 py-0.5 rounded bg-rose-950 text-rose-400 text-[10px] font-bold border border-rose-800">
+                    <span className="px-1.5 py-0.5 rounded bg-danger-surface text-danger text-[10px] font-bold border border-danger-border">
                       DMARC
                     </span>
-                    <span className="text-slate-300">Alignment Failures</span>
+                    <span className="text-foreground">Alignment Failures</span>
                   </div>
-                  <span className="font-bold text-rose-400">{summary.auth_failures.dmarc_failures}</span>
+                  <span className="font-bold text-danger">{summary.auth_failures.dmarc_failures}</span>
                 </div>
               </div>
             ) : (
-              <div className="p-6 rounded-xl border border-dashed border-slate-800 text-center text-xs font-mono text-slate-500">
+              <div className="p-6 rounded-lg border border-dashed border-border text-center text-xs font-mono text-foreground-muted">
                 No authentication checks recorded yet.
               </div>
             )}
@@ -603,24 +668,25 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Recent Investigations Table */}
-      <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-slate-800 pb-4">
+      <div className="bg-surface border border-border rounded-xl p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-border pb-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-100 font-sans flex items-center space-x-2">
-              <FolderLock className="w-5 h-5 text-cyan-400" />
+            <h2 className="text-base font-bold text-foreground font-sans flex items-center space-x-2">
+              <FolderLock className="w-4 h-4 text-primary" />
               <span>Recent Investigations</span>
             </h2>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">
+            <p className="text-xs text-foreground-muted font-mono mt-0.5">
               Active forensic case tracking and evidentiary custody
             </p>
           </div>
           <div className="flex items-center space-x-3">
             <button
+              type="button"
               onClick={() => navigate('/cases')}
-              className="text-xs font-mono text-cyan-400 hover:text-cyan-300 font-bold flex items-center space-x-1 cursor-pointer"
+              className="text-xs font-mono text-primary hover:text-primary-hover font-semibold flex items-center space-x-1 cursor-pointer"
             >
               <span>SEE ALL INVESTIGATIONS</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -628,21 +694,21 @@ export const Dashboard: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider">
-                <th className="py-3 px-3">Case</th>
-                <th className="py-3 px-3">Severity</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3 text-center">Emails</th>
-                <th className="py-3 px-3">Updated</th>
-                <th className="py-3 px-3 text-right">Action</th>
+              <tr className="border-b border-border text-foreground-muted uppercase tracking-wider">
+                <th className="py-2.5 px-3">Case</th>
+                <th className="py-2.5 px-3">Severity</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3 text-center">Emails</th>
+                <th className="py-2.5 px-3">Updated</th>
+                <th className="py-2.5 px-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-900">
+            <tbody className="divide-y divide-border/60">
               {loading ? (
                 [1, 2, 3].map((i) => (
                   <tr key={i}>
                     <td colSpan={6} className="py-3 px-3">
-                      <div className="h-6 bg-slate-900/60 rounded animate-pulse" />
+                      <div className="h-6 bg-surface-secondary rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
@@ -654,40 +720,41 @@ export const Dashboard: React.FC = () => {
                     <tr
                       key={c.id}
                       onClick={() => navigate('/cases')}
-                      className="hover:bg-slate-900/60 transition-colors cursor-pointer"
+                      className="hover:bg-surface-secondary/50 transition-colors cursor-pointer"
                     >
-                      <td className="py-3.5 px-3 max-w-[320px]">
-                        <div className="font-semibold text-slate-200 truncate">{c.title}</div>
-                        <div className="text-[11px] text-cyan-400 font-mono">{c.case_number}</div>
+                      <td className="py-3 px-3 max-w-[320px]">
+                        <div className="font-semibold text-foreground truncate">{c.title}</div>
+                        <div className="text-[11px] text-primary font-mono">{c.case_number}</div>
                       </td>
-                      <td className="py-3.5 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[11px] ${sevStyle.badge}`}>
+                      <td className="py-3 px-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] border ${sevStyle.badge}`}>
                           {sevStyle.label}
                         </span>
                       </td>
-                      <td className="py-3.5 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[11px] ${statStyle.badge}`}>
+                      <td className="py-3 px-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] border ${statStyle.badge}`}>
                           {statStyle.label}
                         </span>
                       </td>
-                      <td className="py-3.5 px-3 text-center">
-                        <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">
+                      <td className="py-3 px-3 text-center">
+                        <span className="px-2 py-0.5 rounded bg-surface-secondary text-foreground-muted border border-border">
                           {c.emails_count} {c.emails_count === 1 ? 'email' : 'emails'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-3 text-slate-400">
+                      <td className="py-3 px-3 text-foreground-muted">
                         {formatRelativeTime(c.updated_at)}
                       </td>
-                      <td className="py-3.5 px-3 text-right">
+                      <td className="py-3 px-3 text-right">
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate('/cases');
                           }}
-                          className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-700 text-xs font-semibold inline-flex items-center space-x-1 cursor-pointer"
+                          className="px-2.5 py-1 rounded bg-surface-secondary hover:bg-surface text-foreground border border-border text-xs font-semibold inline-flex items-center space-x-1 cursor-pointer btn-press"
                         >
                           <span>OPEN</span>
-                          <ArrowUpRight className="w-3.5 h-3.5" />
+                          <ArrowUpRight className="w-3 h-3" />
                         </button>
                       </td>
                     </tr>
@@ -695,13 +762,14 @@ export const Dashboard: React.FC = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500 font-mono">
+                  <td colSpan={6} className="py-8 text-center text-foreground-muted font-mono">
                     <div className="flex flex-col items-center justify-center space-y-2">
-                      <FolderLock className="w-6 h-6 text-slate-600" />
+                      <FolderLock className="w-6 h-6 text-foreground-muted opacity-50" />
                       <span>No active investigation cases recorded.</span>
                       <button
+                        type="button"
                         onClick={() => navigate('/cases')}
-                        className="mt-2 inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800 text-xs hover:bg-cyan-900 transition-all cursor-pointer"
+                        className="mt-2 inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium transition-colors btn-press cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>CREATE FIRST CASE</span>
@@ -716,44 +784,45 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Recent Email Analyses Table */}
-      <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-slate-800 pb-4">
+      <div className="bg-surface border border-border rounded-xl p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-border pb-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-100 font-sans flex items-center space-x-2">
-              <Mail className="w-5 h-5 text-cyan-400" />
+            <h2 className="text-base font-bold text-foreground font-sans flex items-center space-x-2">
+              <Mail className="w-4 h-4 text-primary" />
               <span>Recent Email Analyses</span>
             </h2>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">
+            <p className="text-xs text-foreground-muted font-mono mt-0.5">
               Live suspicious emails processed by Fraudulent Email Detection Engine
             </p>
           </div>
           <button
+            type="button"
             onClick={() => navigate('/analyze')}
-            className="text-xs font-mono text-cyan-400 hover:text-cyan-300 font-bold flex items-center space-x-1 self-start sm:self-auto cursor-pointer"
+            className="text-xs font-mono text-primary hover:text-primary-hover font-semibold flex items-center space-x-1 self-start sm:self-auto cursor-pointer"
           >
             <span>INGEST NEW EMAIL</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider">
-                <th className="py-3 px-3">Subject</th>
-                <th className="py-3 px-3">Sender</th>
-                <th className="py-3 px-3 text-center">Threat Score</th>
-                <th className="py-3 px-3">Severity</th>
-                <th className="py-3 px-3">Timestamp</th>
-                <th className="py-3 px-3 text-right">Action</th>
+              <tr className="border-b border-border text-foreground-muted uppercase tracking-wider">
+                <th className="py-2.5 px-3">Subject</th>
+                <th className="py-2.5 px-3">Sender</th>
+                <th className="py-2.5 px-3 text-center">Threat Score</th>
+                <th className="py-2.5 px-3">Severity</th>
+                <th className="py-2.5 px-3">Timestamp</th>
+                <th className="py-2.5 px-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-900">
+            <tbody className="divide-y divide-border/60">
               {loading ? (
                 [1, 2, 3].map((i) => (
                   <tr key={i}>
                     <td colSpan={6} className="py-3 px-3">
-                      <div className="h-6 bg-slate-900/60 rounded animate-pulse" />
+                      <div className="h-6 bg-surface-secondary rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
@@ -762,49 +831,50 @@ export const Dashboard: React.FC = () => {
                   const sevStyle = SEVERITY_CONFIG[email.severity?.toLowerCase()] || SEVERITY_CONFIG.low;
                   const score = email.threat_score ?? 0;
                   const scoreColor =
-                    score >= 80 ? 'text-red-400 bg-red-950/60 border-red-800' :
-                    score >= 50 ? 'text-amber-400 bg-amber-950/60 border-amber-800' :
-                    score >= 25 ? 'text-yellow-300 bg-yellow-950/60 border-yellow-800' :
-                    'text-emerald-400 bg-emerald-950/60 border-emerald-800';
+                    score >= 80 ? 'text-danger bg-danger-surface border-danger-border' :
+                    score >= 50 ? 'text-warning bg-warning-surface border-warning-border' :
+                    score >= 25 ? 'text-warning/80 bg-warning-surface/50 border-warning-border/50' :
+                    'text-success bg-success-surface border-success-border';
 
                   return (
                     <tr
                       key={email.id}
                       onClick={() => navigate(`/analysis/${email.id}`)}
-                      className="hover:bg-slate-900/60 transition-colors cursor-pointer"
+                      className="hover:bg-surface-secondary/50 transition-colors cursor-pointer"
                     >
-                      <td className="py-3.5 px-3 max-w-[280px]">
-                        <div className="font-semibold text-slate-200 truncate">{email.subject}</div>
+                      <td className="py-3 px-3 max-w-[280px]">
+                        <div className="font-semibold text-foreground truncate">{email.subject}</div>
                         {email.evidence_id && (
-                          <div className="text-[10px] text-cyan-400 font-mono">{email.evidence_id}</div>
+                          <div className="text-[10px] text-primary font-mono">{email.evidence_id}</div>
                         )}
                       </td>
-                      <td className="py-3.5 px-3 max-w-[240px]">
-                        <div className="text-slate-300 truncate">{email.sender}</div>
+                      <td className="py-3 px-3 max-w-[240px]">
+                        <div className="text-foreground-muted truncate">{email.sender}</div>
                       </td>
-                      <td className="py-3.5 px-3 text-center">
+                      <td className="py-3 px-3 text-center">
                         <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold border ${scoreColor}`}>
                           {score.toFixed(0)} / 100
                         </span>
                       </td>
-                      <td className="py-3.5 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[11px] ${sevStyle.badge}`}>
+                      <td className="py-3 px-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] border ${sevStyle.badge}`}>
                           {sevStyle.label}
                         </span>
                       </td>
-                      <td className="py-3.5 px-3 text-slate-400">
+                      <td className="py-3 px-3 text-foreground-muted">
                         {formatTimestamp(email.timestamp)}
                       </td>
-                      <td className="py-3.5 px-3 text-right">
+                      <td className="py-3 px-3 text-right">
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/analysis/${email.id}`);
                           }}
-                          className="px-3 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-800 text-xs font-semibold inline-flex items-center space-x-1 cursor-pointer"
+                          className="px-2.5 py-1 rounded bg-primary-subtle text-primary hover:bg-primary/20 border border-primary/25 text-xs font-semibold inline-flex items-center space-x-1 cursor-pointer btn-press"
                         >
                           <span>INSPECT</span>
-                          <ArrowUpRight className="w-3.5 h-3.5" />
+                          <ArrowUpRight className="w-3 h-3" />
                         </button>
                       </td>
                     </tr>
@@ -812,13 +882,14 @@ export const Dashboard: React.FC = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500 font-mono">
+                  <td colSpan={6} className="py-8 text-center text-foreground-muted font-mono">
                     <div className="flex flex-col items-center justify-center space-y-2">
-                      <Mail className="w-6 h-6 text-slate-600" />
+                      <Mail className="w-6 h-6 text-foreground-muted opacity-50" />
                       <span>No parsed email analyses recorded yet.</span>
                       <button
+                        type="button"
                         onClick={() => navigate('/analyze')}
-                        className="mt-2 inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800 text-xs hover:bg-cyan-900 transition-all cursor-pointer"
+                        className="mt-2 inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium transition-colors btn-press cursor-pointer"
                       >
                         <Zap className="w-3.5 h-3.5" />
                         <span>INGEST SUSPICIOUS EML</span>

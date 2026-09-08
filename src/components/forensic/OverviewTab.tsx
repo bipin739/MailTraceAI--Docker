@@ -77,10 +77,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
       <IPIntelligenceSection email={email} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Section A: Sender Information */}
-        <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4 backdrop-blur-xl shadow-lg">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-            <User className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
+        <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+          <div className="flex items-center space-x-2 pb-2 border-b border-border">
+            <User className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
               A. Sender Information
             </h3>
           </div>
@@ -96,10 +96,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
         </div>
 
         {/* Section B: Message Information */}
-        <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4 backdrop-blur-xl shadow-lg">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-            <Info className="w-4 h-4 text-blue-400" />
-            <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
+        <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+          <div className="flex items-center space-x-2 pb-2 border-b border-border">
+            <Info className="w-4 h-4 text-info" />
+            <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
               B. Message Information
             </h3>
           </div>
@@ -115,31 +115,31 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Section C: Email Structure Summary */}
-        <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4 backdrop-blur-xl shadow-lg">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-            <Layers className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
+        <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+          <div className="flex items-center space-x-2 pb-2 border-b border-border">
+            <Layers className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
               C. Email Structure
             </h3>
           </div>
           <div className="grid grid-cols-3 gap-3 pt-1">
-            <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-center">
-              <span className="text-2xl font-bold font-mono text-cyan-400">{receivedHopsCount}</span>
-              <p className="text-[11px] font-mono text-slate-400 mt-1 uppercase tracking-wider">
+            <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border text-center">
+              <span className="text-2xl font-bold font-mono text-primary">{receivedHopsCount}</span>
+              <p className="text-[11px] font-mono text-foreground-muted mt-1 uppercase tracking-wider">
                 Received Hops
               </p>
             </div>
 
-            <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-center">
-              <span className="text-2xl font-bold font-mono text-blue-400">{urlsCount}</span>
-              <p className="text-[11px] font-mono text-slate-400 mt-1 uppercase tracking-wider">
+            <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border text-center">
+              <span className="text-2xl font-bold font-mono text-info">{urlsCount}</span>
+              <p className="text-[11px] font-mono text-foreground-muted mt-1 uppercase tracking-wider">
                 URLs Detected
               </p>
             </div>
 
-            <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-center">
-              <span className="text-2xl font-bold font-mono text-emerald-400">{attachmentsCount}</span>
-              <p className="text-[11px] font-mono text-slate-400 mt-1 uppercase tracking-wider">
+            <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border text-center">
+              <span className="text-2xl font-bold font-mono text-success">{attachmentsCount}</span>
+              <p className="text-[11px] font-mono text-foreground-muted mt-1 uppercase tracking-wider">
                 Attachments
               </p>
             </div>
@@ -147,32 +147,32 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
         </div>
 
         {/* Section D: Quick Indicator Summary */}
-        <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4 backdrop-blur-xl shadow-lg">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-800/80">
-            <Activity className="w-4 h-4 text-purple-400" />
-            <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider">
+        <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+          <div className="flex items-center space-x-2 pb-2 border-b border-border">
+            <Activity className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
               D. Quick Indicator Summary
             </h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-            <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-center">
-              <span className="text-xl font-bold font-mono text-slate-200">{ipsCount}</span>
-              <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase tracking-wider">IPs</p>
+            <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border text-center">
+              <span className="text-xl font-bold font-mono text-foreground">{ipsCount}</span>
+              <p className="text-[10px] font-mono text-foreground-muted mt-1 uppercase tracking-wider">IPs</p>
             </div>
 
-            <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-center">
-              <span className="text-xl font-bold font-mono text-slate-200">{domainsCount}</span>
-              <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase tracking-wider">Domains</p>
+            <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border text-center">
+              <span className="text-xl font-bold font-mono text-foreground">{domainsCount}</span>
+              <p className="text-[10px] font-mono text-foreground-muted mt-1 uppercase tracking-wider">Domains</p>
             </div>
 
-            <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-center">
-              <span className="text-xl font-bold font-mono text-slate-200">{urlsCount}</span>
-              <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase tracking-wider">URLs</p>
+            <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border text-center">
+              <span className="text-xl font-bold font-mono text-foreground">{urlsCount}</span>
+              <p className="text-[10px] font-mono text-foreground-muted mt-1 uppercase tracking-wider">URLs</p>
             </div>
 
-            <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-center">
-              <span className="text-xl font-bold font-mono text-slate-200">{emailsCount}</span>
-              <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase tracking-wider">Emails</p>
+            <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border text-center">
+              <span className="text-xl font-bold font-mono text-foreground">{emailsCount}</span>
+              <p className="text-[10px] font-mono text-foreground-muted mt-1 uppercase tracking-wider">Emails</p>
             </div>
           </div>
         </div>

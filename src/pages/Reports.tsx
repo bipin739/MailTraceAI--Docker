@@ -140,53 +140,55 @@ export const Reports: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950/80 p-6 rounded-2xl border border-slate-800 backdrop-blur-xl shadow-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface p-6 rounded-xl border border-border shadow-xs">
         <div>
-          <div className="flex items-center space-x-2 text-cyan-400 font-mono text-xs mb-1 font-bold uppercase tracking-wider">
-            <FileText className="w-4 h-4 text-cyan-400" />
+          <div className="flex items-center space-x-2 text-primary font-mono text-xs mb-1 font-semibold uppercase tracking-wider">
+            <FileText className="w-3.5 h-3.5 text-primary" />
             <span>FORENSIC EVIDENCE & REPORTING CENTER</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-100 font-sans tracking-tight">
+          <h1 className="text-xl font-bold text-foreground font-sans tracking-tight">
             Forensic Incident Reports
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">
+          <p className="text-xs text-foreground-muted font-mono mt-1">
             Structured evidentiary PDF report generation formatted for legal compliance, cyber incident response, and law enforcement submittals.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             id="generate-sample-report-btn"
+            type="button"
             onClick={handleGenerateSampleReport}
             disabled={isGeneratingSample}
-            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 hover:border-cyan-400 text-xs font-mono font-semibold transition-all disabled:opacity-50"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-surface-secondary hover:bg-surface border border-border text-foreground text-xs font-mono font-medium transition-colors btn-press disabled:opacity-50 cursor-pointer"
           >
             {isGeneratingSample ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
                 <span>Generating...</span>
               </>
             ) : (
               <>
-                <RefreshCw className="w-4 h-4 text-cyan-400" />
+                <RefreshCw className="w-3.5 h-3.5 text-primary" />
                 <span>Generate Sample PDF</span>
               </>
             )}
           </button>
           <button
             id="print-evidence-dossier-btn"
+            type="button"
             onClick={handlePrint}
-            className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-mono font-extrabold text-xs tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+            className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-mono font-semibold text-xs tracking-wider transition-colors btn-press cursor-pointer"
           >
-            <Printer className="w-4 h-4" />
+            <Printer className="w-3.5 h-3.5" />
             <span>PRINT DOSSIER</span>
           </button>
         </div>
       </div>
 
       {successToast && (
-        <div className="p-4 rounded-xl bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs font-mono flex items-center space-x-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <div className="p-3.5 rounded-lg bg-success-surface border border-success-border text-success text-xs font-mono flex items-center space-x-2 animate-in fade-in">
+          <ShieldCheck className="w-4 h-4 text-success" />
           <span>{successToast}</span>
         </div>
       )}
@@ -194,15 +196,16 @@ export const Reports: React.FC = () => {
       {/* Reports Grid & Viewer Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Reports List */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+            <h3 className="text-xs font-mono font-semibold text-foreground-muted uppercase tracking-wider">
               {hasLiveReports ? `GENERATED REPORTS (${backendReports.length})` : `SAMPLE DOSSIERS (${MOCK_REPORTS.length})`}
             </h3>
             {hasLiveReports && (
               <button
+                type="button"
                 onClick={fetchReports}
-                className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center space-x-1"
+                className="text-xs font-mono text-primary hover:text-primary-hover flex items-center space-x-1 cursor-pointer"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Refresh</span>
@@ -211,12 +214,12 @@ export const Reports: React.FC = () => {
           </div>
 
           {loadingReports ? (
-            <div className="p-8 text-center bg-slate-950/40 rounded-xl border border-slate-800">
-              <Loader2 className="w-5 h-5 animate-spin mx-auto text-cyan-400 mb-2" />
-              <p className="text-xs text-slate-400 font-mono">Loading reports catalog...</p>
+            <div className="p-8 text-center bg-surface-secondary/40 rounded-xl border border-border">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto text-primary mb-2" />
+              <p className="text-xs text-foreground-muted font-mono">Loading reports catalog...</p>
             </div>
           ) : hasLiveReports ? (
-            <div className="space-y-2.5 max-h-[680px] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-[680px] overflow-y-auto pr-1">
               {backendReports.map(rep => {
                 const isSelected = selectedBackendReport?.id === rep.id;
                 const sizeKb = rep.file_size_bytes ? `${Math.round(rep.file_size_bytes / 1024)} KB` : '';
@@ -227,60 +230,64 @@ export const Reports: React.FC = () => {
                       setSelectedBackendReport(rep);
                       setSelectedMockReport(MOCK_REPORTS[0]);
                     }}
-                    className={`p-4 rounded-xl border text-xs font-mono cursor-pointer transition-all ${
+                    className={`p-3.5 rounded-xl border text-xs font-mono cursor-pointer transition-all ${
                       isSelected
-                        ? 'bg-cyan-950/40 border-cyan-500/80 shadow-[0_0_15px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/40'
-                        : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'
+                        ? 'bg-primary-subtle border-primary/40 shadow-xs'
+                        : 'bg-surface border-border hover:bg-surface-secondary/50'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-cyan-400 font-bold">{rep.report_number}</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`font-semibold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                        {rep.report_number}
+                      </span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                        rep.severity === 'critical' ? 'bg-rose-950/80 text-rose-300 border-rose-800' :
-                        rep.severity === 'high' ? 'bg-orange-950/80 text-orange-300 border-orange-800' :
-                        'bg-emerald-950/80 text-emerald-300 border-emerald-800'
+                        rep.severity === 'critical' ? 'bg-danger-surface text-danger border-danger-border' :
+                        rep.severity === 'high' ? 'bg-warning-surface text-warning border-warning-border' :
+                        'bg-success-surface text-success border-success-border'
                       }`}>
                         {rep.severity || 'low'}
                       </span>
                     </div>
-                    <div className="text-slate-200 font-bold font-sans line-clamp-2">
+                    <div className="text-foreground font-semibold font-sans line-clamp-2">
                       {rep.title}
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-2 flex items-center justify-between">
+                    <div className="text-[11px] text-foreground-muted mt-2 flex items-center justify-between">
                       <span className="flex items-center space-x-1">
-                        <Clock className="w-3 h-3 text-slate-500" />
+                        <Clock className="w-3 h-3 text-foreground-muted" />
                         <span>{new Date(rep.created_at).toLocaleDateString()}</span>
                       </span>
-                      <span className="text-cyan-400/80 font-bold">{sizeKb}</span>
+                      <span className="text-primary font-semibold">{sizeKb}</span>
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {MOCK_REPORTS.map(rep => {
                 const isSelected = selectedMockReport.id === rep.id && !selectedBackendReport;
                 return (
                   <div
                     key={rep.id}
                     onClick={() => setSelectedMockReport(rep)}
-                    className={`p-4 rounded-xl border text-xs font-mono cursor-pointer transition-all ${
+                    className={`p-3.5 rounded-xl border text-xs font-mono cursor-pointer transition-all ${
                       isSelected
-                        ? 'bg-cyan-950/40 border-cyan-500/80 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-                        : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'
+                        ? 'bg-primary-subtle border-primary/40 shadow-xs'
+                        : 'bg-surface border-border hover:bg-surface-secondary/50'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-cyan-400 font-bold">{rep.reportNumber}</span>
-                      <span className="px-2 py-0.5 rounded bg-slate-900 text-emerald-400 text-[10px] border border-slate-800">
+                      <span className={`font-semibold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                        {rep.reportNumber}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-success-surface text-success text-[10px] border border-success-border font-medium">
                         {rep.status}
                       </span>
                     </div>
-                    <div className="text-slate-200 font-bold font-sans mt-1 line-clamp-2">
+                    <div className="text-foreground font-semibold font-sans mt-1 line-clamp-2">
                       {rep.title}
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-2 flex justify-between">
+                    <div className="text-[11px] text-foreground-muted mt-2 flex justify-between">
                       <span>Type: {rep.type}</span>
                       <span>{rep.createdAt}</span>
                     </div>
@@ -292,20 +299,20 @@ export const Reports: React.FC = () => {
         </div>
 
         {/* Official Printable Report Document View */}
-        <div className="lg:col-span-2 bg-slate-950/90 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl space-y-6 print:bg-white print:text-black print:p-0">
+        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-6 md:p-8 space-y-6 print:bg-white print:text-black print:p-0 shadow-xs">
           {/* Document Header & Action */}
-          <div className="border-b-2 border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="border-b border-border pb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-              <div className="flex items-center space-x-2 text-cyan-400 font-mono text-xs font-bold uppercase tracking-widest">
-                <ShieldCheck className="w-5 h-5 text-cyan-400" />
+              <div className="flex items-center space-x-2 text-primary font-mono text-xs font-semibold uppercase tracking-widest">
+                <ShieldCheck className="w-4 h-4 text-primary" />
                 <span>MAILTRACE AI // OFFICIAL FORENSIC EVIDENCE DOSSIER</span>
               </div>
-              <h2 className="text-xl font-extrabold text-slate-100 font-sans mt-2">
+              <h2 className="text-xl font-bold text-foreground font-sans mt-2">
                 {selectedBackendReport ? selectedBackendReport.title : selectedMockReport.title}
               </h2>
-              <div className="text-xs font-mono text-slate-400 mt-1">
+              <div className="text-xs font-mono text-foreground-muted mt-1">
                 Ref No:{' '}
-                <strong className="text-slate-200">
+                <strong className="text-foreground">
                   {selectedBackendReport ? selectedBackendReport.report_number : selectedMockReport.reportNumber}
                 </strong>{' '}
                 | Created:{' '}
@@ -319,6 +326,7 @@ export const Reports: React.FC = () => {
               {selectedBackendReport ? (
                 <button
                   id="download-selected-pdf-btn"
+                  type="button"
                   onClick={() =>
                     handleDownloadPDF(
                       selectedBackendReport.id,
@@ -326,7 +334,7 @@ export const Reports: React.FC = () => {
                     )
                   }
                   disabled={isDownloading}
-                  className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-mono text-xs font-bold transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)] disabled:opacity-50"
+                  className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-mono text-xs font-semibold transition-colors btn-press disabled:opacity-50 cursor-pointer"
                 >
                   {isDownloading ? (
                     <>
@@ -341,7 +349,7 @@ export const Reports: React.FC = () => {
                   )}
                 </button>
               ) : (
-                <span className="px-3 py-1 rounded bg-emerald-950 text-emerald-300 font-bold border border-emerald-800 text-xs font-mono">
+                <span className="px-2.5 py-1 rounded bg-success-surface text-success font-semibold border border-success-border text-xs font-mono">
                   {selectedMockReport.status}
                 </span>
               )}
@@ -350,10 +358,10 @@ export const Reports: React.FC = () => {
 
           {/* Executive Summary */}
           <div className="space-y-2">
-            <h4 className="text-xs font-mono font-bold text-cyan-400 uppercase">
+            <h4 className="text-xs font-mono font-semibold text-primary uppercase">
               1. EXECUTIVE FORENSIC SUMMARY
             </h4>
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-mono text-slate-300 leading-relaxed">
+            <div className="p-3.5 rounded-lg bg-surface-secondary border border-border text-xs font-mono text-foreground leading-relaxed">
               {selectedBackendReport
                 ? selectedBackendReport.summary ||
                   `Forensic examination conducted by ${selectedBackendReport.analyst_name || 'SOC Lead Analyst'} with threat score ${selectedBackendReport.threat_score ?? 0}/100.`
@@ -363,33 +371,33 @@ export const Reports: React.FC = () => {
 
           {/* Technical Evidence & Indicators of Compromise */}
           <div className="space-y-2">
-            <h4 className="text-xs font-mono font-bold text-cyan-400 uppercase">
+            <h4 className="text-xs font-mono font-semibold text-primary uppercase">
               2. CORRELATED TECHNICAL EVIDENCE & CHAIN OF CUSTODY
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-              <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="text-slate-400 block text-[10px]">Evidence Identifier:</span>
-                <span className="text-cyan-400 font-bold">
+              <div className="p-3 rounded-lg bg-surface-secondary border border-border">
+                <span className="text-foreground-muted block text-[10px]">Evidence Identifier:</span>
+                <span className="text-primary font-bold">
                   {selectedBackendReport?.evidence_id || 'EVD-2026-001'}
                 </span>
               </div>
 
-              <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="text-slate-400 block text-[10px]">Threat Score & Severity:</span>
-                <span className="text-rose-400 font-bold">
+              <div className="p-3 rounded-lg bg-surface-secondary border border-border">
+                <span className="text-foreground-muted block text-[10px]">Threat Score & Severity:</span>
+                <span className="text-danger font-bold">
                   {selectedBackendReport
                     ? `${selectedBackendReport.threat_score ?? 0}/100 (${(selectedBackendReport.severity || 'low').toUpperCase()})`
                     : '88/100 (HIGH)'}
                 </span>
               </div>
 
-              <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="text-slate-400 block text-[10px]">Case Linkage:</span>
-                <span className="text-slate-200 font-bold">
+              <div className="p-3 rounded-lg bg-surface-secondary border border-border">
+                <span className="text-foreground-muted block text-[10px]">Case Linkage:</span>
+                <span className="text-foreground font-semibold">
                   {selectedBackendReport?.case_id ? (
                     <span className="flex items-center space-x-1">
-                      <Briefcase className="w-3.5 h-3.5 text-cyan-400" />
+                      <Briefcase className="w-3.5 h-3.5 text-primary" />
                       <span>{selectedBackendReport.case_id}</span>
                     </span>
                   ) : (
@@ -398,9 +406,9 @@ export const Reports: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="text-slate-400 block text-[10px]">Assigned Lead Analyst:</span>
-                <span className="text-slate-200 font-bold">
+              <div className="p-3 rounded-lg bg-surface-secondary border border-border">
+                <span className="text-foreground-muted block text-[10px]">Assigned Lead Analyst:</span>
+                <span className="text-foreground font-semibold">
                   {selectedBackendReport?.analyst_name || selectedMockReport.analystName}
                 </span>
               </div>
@@ -408,19 +416,19 @@ export const Reports: React.FC = () => {
           </div>
 
           {/* Cryptographic Digital Signature & Verification */}
-          <div className="pt-4 border-t border-slate-800 space-y-2">
-            <h4 className="text-xs font-mono font-bold text-cyan-400 uppercase flex items-center space-x-1.5">
-              <Lock className="w-4 h-4" />
+          <div className="pt-4 border-t border-border space-y-2">
+            <h4 className="text-xs font-mono font-semibold text-primary uppercase flex items-center space-x-1.5">
+              <Lock className="w-3.5 h-3.5" />
               <span>3. EVIDENTIARY INTEGRITY & CRYPTOGRAPHIC SIGNATURE</span>
             </h4>
-            <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] font-mono text-slate-300 break-all">
+            <div className="p-3 rounded-lg bg-surface-secondary border border-border text-[11px] font-mono text-foreground-muted break-all">
               {selectedBackendReport?.email_sha256
                 ? `SHA256:${selectedBackendReport.email_sha256}`
                 : selectedMockReport.digitalSignature}
             </div>
-            <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 pt-1">
+            <div className="flex justify-between items-center text-[10px] font-mono text-foreground-muted pt-1">
               <span>Status: SHA-256 Chain of Custody Verified</span>
-              <span className="text-emerald-400 font-bold">VALID DIGITAL SEAL</span>
+              <span className="text-success font-semibold">VALID DIGITAL SEAL</span>
             </div>
           </div>
         </div>
@@ -428,4 +436,3 @@ export const Reports: React.FC = () => {
     </div>
   );
 };
-

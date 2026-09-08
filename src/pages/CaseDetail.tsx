@@ -35,17 +35,17 @@ import type { CampaignCorrelationResponse } from '../types/correlation';
 import { RelatedInvestigationsCard } from '../components/correlation/RelatedInvestigationsCard';
 
 const STATUS_CONFIG: Record<CaseStatus, { label: string; badge: string }> = {
-  open: { label: 'Open', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/40' },
-  investigating: { label: 'Investigating', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
-  escalated: { label: 'Escalated', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse' },
-  resolved: { label: 'Resolved', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
+  open: { label: 'Open', badge: 'bg-info/10 text-info border-info/30' },
+  investigating: { label: 'Investigating', badge: 'bg-warning/10 text-warning border-warning/30' },
+  escalated: { label: 'Escalated', badge: 'bg-danger/10 text-danger border-danger/30' },
+  resolved: { label: 'Resolved', badge: 'bg-success/10 text-success border-success/30' },
 };
 
 const SEVERITY_CONFIG: Record<CaseSeverity, { label: string; badge: string }> = {
-  low: { label: 'Low', badge: 'bg-slate-500/20 text-slate-300 border-slate-500/40' },
-  medium: { label: 'Medium', badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40' },
-  high: { label: 'High', badge: 'bg-orange-500/20 text-orange-300 border-orange-500/40' },
-  critical: { label: 'Critical', badge: 'bg-red-500/20 text-red-300 border-red-500/40 font-bold' },
+  low: { label: 'Low', badge: 'bg-surface-secondary text-foreground-muted border-border' },
+  medium: { label: 'Medium', badge: 'bg-warning/10 text-warning border-warning/30' },
+  high: { label: 'High', badge: 'bg-warning/15 text-warning border-warning/40 font-medium' },
+  critical: { label: 'Critical', badge: 'bg-danger/10 text-danger border-danger/30 font-semibold' },
 };
 
 export const CaseDetail: React.FC = () => {
@@ -262,23 +262,23 @@ export const CaseDetail: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin" />
-        <p className="text-sm font-mono text-slate-300">Loading case intelligence workspace...</p>
+        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-sm font-mono text-foreground-muted">Loading case intelligence workspace...</p>
       </div>
     );
   }
 
   if (error || !caseData) {
     return (
-      <div className="max-w-xl mx-auto my-12 p-8 bg-slate-950/90 rounded-2xl border border-red-900/50 backdrop-blur-xl text-center space-y-4 shadow-2xl">
-        <div className="p-3 bg-red-950/50 rounded-full w-12 h-12 mx-auto flex items-center justify-center border border-red-800/50">
-          <AlertCircle className="w-6 h-6 text-red-400" />
+      <div className="max-w-xl mx-auto my-12 p-8 bg-surface rounded-2xl border border-danger/30 text-center space-y-4 shadow-sm">
+        <div className="p-3 bg-danger/10 rounded-full w-12 h-12 mx-auto flex items-center justify-center border border-danger/20">
+          <AlertCircle className="w-6 h-6 text-danger" />
         </div>
-        <h2 className="text-lg font-bold text-slate-100 font-mono">Case Not Found</h2>
-        <p className="text-xs font-mono text-slate-400">{error || 'Unable to locate investigation case.'}</p>
+        <h2 className="text-lg font-bold text-foreground font-mono">Case Not Found</h2>
+        <p className="text-xs font-mono text-foreground-muted">{error || 'Unable to locate investigation case.'}</p>
         <button
           onClick={() => navigate('/cases')}
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-800/60 font-mono text-xs font-bold transition-all"
+          className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-surface-secondary hover:bg-surface text-primary border border-border font-mono text-xs font-semibold transition-all btn-press"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Return to Cases</span>
@@ -291,11 +291,11 @@ export const CaseDetail: React.FC = () => {
   const severityConfig = SEVERITY_CONFIG[caseData.severity] || SEVERITY_CONFIG.medium;
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-6 pb-16 page-enter">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-950/90 border border-emerald-500/50 text-emerald-200 text-xs font-mono shadow-2xl animate-in slide-in-from-top-3">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="fixed top-5 right-5 z-50 flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-surface border border-success/30 text-success text-xs font-mono shadow-lg animate-in slide-in-from-top-3">
+          <CheckCircle2 className="w-4 h-4" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -304,47 +304,47 @@ export const CaseDetail: React.FC = () => {
       <div className="space-y-4">
         <button
           onClick={() => navigate('/cases')}
-          className="inline-flex items-center space-x-1.5 text-xs font-mono text-slate-400 hover:text-cyan-400 transition-colors"
+          className="inline-flex items-center space-x-1.5 text-xs font-mono text-foreground-muted hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Cases</span>
         </button>
 
-        <div className="p-6 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl shadow-2xl space-y-4">
+        <div className="p-6 rounded-2xl bg-surface border border-border shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 font-mono text-xs font-bold text-cyan-400 flex items-center space-x-1.5">
+                <span className="px-3 py-1 rounded-lg bg-surface-secondary border border-border font-mono text-xs font-bold text-primary flex items-center space-x-1.5">
                   <span>{caseData.case_number}</span>
                   <button
                     onClick={() => copyToClipboard(caseData.case_number)}
-                    className="hover:text-white p-0.5"
+                    className="hover:text-foreground p-0.5"
                     title="Copy Case Number"
                   >
                     {copiedText === caseData.case_number ? (
-                      <Check className="w-3 h-3 text-emerald-400" />
+                      <Check className="w-3 h-3 text-success" />
                     ) : (
-                      <Copy className="w-3 h-3 text-slate-500" />
+                      <Copy className="w-3 h-3 text-foreground-subtle" />
                     )}
                   </button>
                 </span>
 
-                <span className="text-xs font-mono text-slate-500 flex items-center space-x-1">
+                <span className="text-xs font-mono text-foreground-muted flex items-center space-x-1">
                   <Clock className="w-3.5 h-3.5" />
                   <span>Created: {new Date(caseData.created_at).toLocaleString()}</span>
                 </span>
               </div>
 
-              <h1 className="text-xl sm:text-2xl font-bold font-mono text-slate-100">{caseData.title}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold font-mono text-foreground">{caseData.title}</h1>
               {caseData.description && (
-                <p className="text-xs font-mono text-slate-300 max-w-3xl leading-relaxed">{caseData.description}</p>
+                <p className="text-xs font-mono text-foreground-muted max-w-3xl leading-relaxed">{caseData.description}</p>
               )}
             </div>
 
             {/* Status & Severity Controls */}
-            <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+            <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-surface-secondary/70 border border-border">
               <div className="space-y-1">
-                <label className="text-[10px] font-mono uppercase text-slate-400 tracking-wider">Status</label>
+                <label className="text-[10px] font-mono uppercase text-foreground-subtle tracking-wider">Status</label>
                 <select
                   value={caseData.status}
                   onChange={e => handleStatusChange(e.target.value as CaseStatus)}
@@ -358,7 +358,7 @@ export const CaseDetail: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-mono uppercase text-slate-400 tracking-wider">Severity</label>
+                <label className="text-[10px] font-mono uppercase text-foreground-subtle tracking-wider">Severity</label>
                 <select
                   value={caseData.severity}
                   onChange={e => handleSeverityChange(e.target.value as CaseSeverity)}
@@ -371,23 +371,23 @@ export const CaseDetail: React.FC = () => {
                 </select>
               </div>
 
-              <div className="pt-3 sm:pt-0 border-t sm:border-t-0 sm:border-l border-slate-800 sm:pl-3">
+              <div className="pt-3 sm:pt-0 border-t sm:border-t-0 sm:border-l border-border sm:pl-3">
                 <button
                   id="export-case-dossier-btn"
                   type="button"
                   onClick={handleDownloadDossier}
                   disabled={isDownloadingDossier}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/50 border border-cyan-500/60 text-cyan-300 hover:bg-cyan-900/60 hover:border-cyan-400 font-mono text-xs font-bold transition-all shadow-[0_0_12px_rgba(6,182,212,0.2)] disabled:opacity-50"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-secondary border border-border text-foreground font-mono text-xs font-semibold transition-all btn-press disabled:opacity-50"
                   title="Generate and download complete case investigation PDF dossier"
                 >
                   {isDownloadingDossier ? (
                     <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-primary" />
                       <span>Generating PDF...</span>
                     </>
                   ) : (
                     <>
-                      <Download className="w-3.5 h-3.5 text-cyan-400" />
+                      <Download className="w-3.5 h-3.5 text-primary" />
                       <span>Export Dossier PDF</span>
                     </>
                   )}
@@ -399,7 +399,7 @@ export const CaseDetail: React.FC = () => {
       </div>
 
       {/* 2. CASE NAVIGATION TABS */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-950/80 rounded-xl border border-slate-800 backdrop-blur-xl">
+      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-surface rounded-xl border border-border shadow-xs">
         {[
           { id: 'emails' as const, label: 'Linked Emails', icon: <Mail className="w-4 h-4" />, count: caseData.emails.length },
           { id: 'indicators' as const, label: 'Aggregated Indicators', icon: <Target className="w-4 h-4" />, count: (caseData.aggregated_indicators.domains.length + caseData.aggregated_indicators.ips.length + caseData.aggregated_indicators.urls.length) },
@@ -413,16 +413,16 @@ export const CaseDetail: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg text-xs font-mono font-bold transition-all ${
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-mono font-medium transition-all ${
                 isActive
-                  ? 'bg-gradient-to-r from-cyan-600/30 to-blue-600/30 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.15)]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-transparent'
               }`}
             >
               {tab.icon}
               <span>{tab.label}</span>
               <span className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] ${
-                isActive ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400/40' : 'bg-slate-800 text-slate-400'
+                isActive ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-surface-secondary text-foreground-subtle'
               }`}>
                 {tab.count}
               </span>
@@ -437,25 +437,25 @@ export const CaseDetail: React.FC = () => {
       {activeTab === 'emails' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold font-mono text-slate-200">
+            <h3 className="text-sm font-bold font-mono text-foreground">
               Emails Associated with Case ({caseData.emails.length})
             </h3>
             <button
               onClick={() => navigate('/analyze')}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-400 text-xs font-mono font-bold transition-colors"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-secondary border border-border text-foreground text-xs font-mono font-semibold transition-colors btn-press"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 text-primary" />
               <span>Analyze & Add Another Email</span>
             </button>
           </div>
 
           {caseData.emails.length === 0 ? (
-            <div className="p-8 text-center rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-3">
-              <Mail className="w-8 h-8 text-slate-600 mx-auto" />
-              <p className="text-xs font-mono text-slate-400">No emails attached to this case yet.</p>
+            <div className="p-8 text-center rounded-2xl bg-surface border border-border space-y-3">
+              <Mail className="w-8 h-8 text-foreground-subtle mx-auto" />
+              <p className="text-xs font-mono text-foreground-muted">No emails attached to this case yet.</p>
               <button
                 onClick={() => navigate('/analyze')}
-                className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-mono text-xs font-bold transition-all shadow-md"
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-mono text-xs font-semibold transition-all btn-press"
               >
                 Analyze Email & Link to Case
               </button>
@@ -465,23 +465,23 @@ export const CaseDetail: React.FC = () => {
               {caseData.emails.map(email => (
                 <div
                   key={email.id}
-                  className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  className="p-4 rounded-2xl bg-surface border border-border hover:border-primary/40 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-bold font-mono text-slate-100">{email.subject}</span>
+                      <span className="text-sm font-bold font-mono text-foreground">{email.subject}</span>
                       {email.threat_score !== undefined && (
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
-                          (email.threat_score || 0) >= 70 ? 'bg-red-500/20 text-red-300 border border-red-500/40' : 'bg-slate-800 text-slate-300'
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase ${
+                          (email.threat_score || 0) >= 70 ? 'bg-danger/10 text-danger border border-danger/30' : 'bg-surface-secondary text-foreground-muted border border-border'
                         }`}>
                           Score: {email.threat_score}/100
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-slate-400">
-                      <span>Sender: <strong className="text-slate-200">{email.sender}</strong></span>
+                    <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-foreground-muted">
+                      <span>Sender: <strong className="text-foreground">{email.sender}</strong></span>
                       <span>·</span>
-                      <span>Email ID: <code className="text-cyan-400">{email.email_id}</code></span>
+                      <span>Email ID: <code className="text-primary">{email.email_id}</code></span>
                       <span>·</span>
                       <span>Attached: {new Date(email.added_at).toLocaleString()}</span>
                     </div>
@@ -490,14 +490,14 @@ export const CaseDetail: React.FC = () => {
                   <div className="flex items-center space-x-2 self-end md:self-center">
                     <Link
                       to={`/analysis/${email.email_id}`}
-                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-cyan-800/50 text-cyan-400 text-xs font-mono font-bold transition-colors"
+                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-secondary hover:bg-surface border border-border text-foreground text-xs font-mono font-medium transition-colors btn-press"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Inspect Forensic Evidence</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-primary" />
+                      <span>Inspect Evidence</span>
                     </Link>
                     <button
                       onClick={() => handleRemoveEmail(email.email_id)}
-                      className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/50 border border-slate-800 hover:border-red-800/60 text-slate-400 hover:text-red-400 transition-colors"
+                      className="p-1.5 rounded-lg bg-surface-secondary hover:bg-danger/10 border border-border hover:border-danger/30 text-foreground-subtle hover:text-danger transition-colors btn-press"
                       title="Detach from Case"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -513,31 +513,31 @@ export const CaseDetail: React.FC = () => {
       {/* TAB 2: AGGREGATED INDICATORS */}
       {activeTab === 'indicators' && (
         <div className="space-y-5">
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-1">
-            <h3 className="text-sm font-bold font-mono text-slate-200">Aggregated Investigation Indicators</h3>
-            <p className="text-xs font-mono text-slate-400">
+          <div className="p-4 rounded-2xl bg-surface border border-border space-y-1">
+            <h3 className="text-sm font-bold font-mono text-foreground">Aggregated Investigation Indicators</h3>
+            <p className="text-xs font-mono text-foreground-muted">
               Deduplicated IoCs extracted across all emails linked to this incident.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Domains */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+            <div className="p-4 rounded-2xl bg-surface border border-border space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-purple-400 text-xs font-mono font-bold">
+                <div className="flex items-center space-x-2 text-primary text-xs font-mono font-bold">
                   <Globe className="w-4 h-4" />
                   <span>Domains ({caseData.aggregated_indicators.domains.length})</span>
                 </div>
               </div>
               <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
                 {caseData.aggregated_indicators.domains.length === 0 ? (
-                  <p className="text-xs font-mono text-slate-500 italic">No domains extracted.</p>
+                  <p className="text-xs font-mono text-foreground-subtle italic">No domains extracted.</p>
                 ) : (
                   caseData.aggregated_indicators.domains.map(dom => (
-                    <div key={dom} className="flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border border-slate-800 font-mono text-xs text-slate-200">
+                    <div key={dom} className="flex items-center justify-between p-2 rounded-lg bg-surface-secondary border border-border font-mono text-xs text-foreground">
                       <span className="truncate">{dom}</span>
-                      <button onClick={() => copyToClipboard(dom)} className="text-slate-400 hover:text-cyan-400 p-1">
-                        {copiedText === dom ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <button onClick={() => copyToClipboard(dom)} className="text-foreground-muted hover:text-foreground p-1">
+                        {copiedText === dom ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
                       </button>
                     </div>
                   ))
@@ -546,22 +546,22 @@ export const CaseDetail: React.FC = () => {
             </div>
 
             {/* IPs */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+            <div className="p-4 rounded-2xl bg-surface border border-border space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-emerald-400 text-xs font-mono font-bold">
+                <div className="flex items-center space-x-2 text-primary text-xs font-mono font-bold">
                   <Server className="w-4 h-4" />
                   <span>IP Addresses ({caseData.aggregated_indicators.ips.length})</span>
                 </div>
               </div>
               <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
                 {caseData.aggregated_indicators.ips.length === 0 ? (
-                  <p className="text-xs font-mono text-slate-500 italic">No IPs extracted.</p>
+                  <p className="text-xs font-mono text-foreground-subtle italic">No IPs extracted.</p>
                 ) : (
                   caseData.aggregated_indicators.ips.map(ip => (
-                    <div key={ip} className="flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border border-slate-800 font-mono text-xs text-slate-200">
+                    <div key={ip} className="flex items-center justify-between p-2 rounded-lg bg-surface-secondary border border-border font-mono text-xs text-foreground">
                       <span className="truncate">{ip}</span>
-                      <button onClick={() => copyToClipboard(ip)} className="text-slate-400 hover:text-cyan-400 p-1">
-                        {copiedText === ip ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <button onClick={() => copyToClipboard(ip)} className="text-foreground-muted hover:text-foreground p-1">
+                        {copiedText === ip ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
                       </button>
                     </div>
                   ))
@@ -570,24 +570,24 @@ export const CaseDetail: React.FC = () => {
             </div>
 
             {/* URLs (Strictly Defanged / Non-Clickable) */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3 md:col-span-2">
+            <div className="p-4 rounded-2xl bg-surface border border-border space-y-3 md:col-span-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-rose-400 text-xs font-mono font-bold">
+                <div className="flex items-center space-x-2 text-danger text-xs font-mono font-bold">
                   <LinkIcon className="w-4 h-4" />
                   <span>Extracted URLs (Defanged Security Mode) ({caseData.aggregated_indicators.urls.length})</span>
                 </div>
               </div>
               <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
                 {caseData.aggregated_indicators.urls.length === 0 ? (
-                  <p className="text-xs font-mono text-slate-500 italic">No URLs extracted.</p>
+                  <p className="text-xs font-mono text-foreground-subtle italic">No URLs extracted.</p>
                 ) : (
                   caseData.aggregated_indicators.urls.map(u => {
                     const defanged = u.replace(/http:\/\//gi, 'hxxp://').replace(/https:\/\//gi, 'hxxps://').replace(/\./g, '[.]');
                     return (
-                      <div key={u} className="flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border border-slate-800 font-mono text-xs text-rose-200">
+                      <div key={u} className="flex items-center justify-between p-2 rounded-lg bg-surface-secondary border border-border font-mono text-xs text-foreground">
                         <code className="truncate max-w-2xl select-all">{defanged}</code>
-                        <button onClick={() => copyToClipboard(defanged)} className="text-slate-400 hover:text-cyan-400 p-1 flex-shrink-0" title="Copy Defanged URL">
-                          {copiedText === defanged ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <button onClick={() => copyToClipboard(defanged)} className="text-foreground-muted hover:text-foreground p-1 flex-shrink-0" title="Copy Defanged URL">
+                          {copiedText === defanged ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
                         </button>
                       </div>
                     );
@@ -603,12 +603,12 @@ export const CaseDetail: React.FC = () => {
       {activeTab === 'findings' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold font-mono text-slate-200">
+            <h3 className="text-sm font-bold font-mono text-foreground">
               Documented Forensic Findings ({caseData.findings.length})
             </h3>
             <button
               onClick={() => setShowFindingModal(true)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-xs font-mono font-bold transition-all shadow-md"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-mono font-semibold transition-all btn-press"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Finding</span>
@@ -616,29 +616,29 @@ export const CaseDetail: React.FC = () => {
           </div>
 
           {caseData.findings.length === 0 ? (
-            <div className="p-8 text-center rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
-              <ShieldAlert className="w-8 h-8 text-slate-600 mx-auto" />
-              <p className="text-xs font-mono text-slate-400">No forensic findings logged for this case yet.</p>
+            <div className="p-8 text-center rounded-2xl bg-surface border border-border space-y-2">
+              <ShieldAlert className="w-8 h-8 text-foreground-subtle mx-auto" />
+              <p className="text-xs font-mono text-foreground-muted">No forensic findings logged for this case yet.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
               {caseData.findings.map(finding => {
                 const sevConfig = SEVERITY_CONFIG[finding.severity as CaseSeverity] || SEVERITY_CONFIG.medium;
                 return (
-                  <div key={finding.id} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-2">
+                  <div key={finding.id} className="p-4 rounded-2xl bg-surface border border-border space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 border border-slate-800 text-cyan-400 uppercase font-bold">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-surface-secondary border border-border text-primary uppercase font-bold">
                           {finding.finding_type}
                         </span>
-                        <h4 className="text-sm font-bold font-mono text-slate-100">{finding.title}</h4>
+                        <h4 className="text-sm font-bold font-mono text-foreground">{finding.title}</h4>
                       </div>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-mono border uppercase ${sevConfig.badge}`}>
                         {sevConfig.label}
                       </span>
                     </div>
-                    <p className="text-xs font-mono text-slate-300 leading-relaxed">{finding.description}</p>
-                    <div className="text-[10px] font-mono text-slate-500 pt-1">
+                    <p className="text-xs font-mono text-foreground-muted leading-relaxed">{finding.description}</p>
+                    <div className="text-[10px] font-mono text-foreground-subtle pt-1">
                       Logged on {new Date(finding.created_at).toLocaleString()}
                     </div>
                   </div>
@@ -653,9 +653,9 @@ export const CaseDetail: React.FC = () => {
       {activeTab === 'notes' && (
         <div className="space-y-6">
           {/* Add Note Form */}
-          <form onSubmit={handleAddNote} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
-            <h4 className="text-xs font-bold font-mono text-slate-200 flex items-center space-x-1.5">
-              <FileText className="w-4 h-4 text-cyan-400" />
+          <form onSubmit={handleAddNote} className="p-4 rounded-2xl bg-surface border border-border space-y-3">
+            <h4 className="text-xs font-bold font-mono text-foreground flex items-center space-x-1.5">
+              <FileText className="w-4 h-4 text-primary" />
               <span>Add Analyst Observation or Task Note</span>
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -665,7 +665,7 @@ export const CaseDetail: React.FC = () => {
                   placeholder="Analyst Name"
                   value={noteAuthor}
                   onChange={e => setNoteAuthor(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                 />
               </div>
               <div className="sm:col-span-3 flex space-x-2">
@@ -674,13 +674,13 @@ export const CaseDetail: React.FC = () => {
                   placeholder="Record evidentiary observation, action taken, or pivot notes..."
                   value={noteText}
                   onChange={e => setNoteText(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500"
+                  className="flex-1 px-3 py-2 rounded-xl bg-surface-secondary border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                   required
                 />
                 <button
                   type="submit"
                   disabled={submittingNote || !noteText.trim()}
-                  className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-mono text-xs font-bold transition-all disabled:opacity-50 flex-shrink-0"
+                  className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-mono text-xs font-semibold transition-all btn-press disabled:opacity-50 flex-shrink-0"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>{submittingNote ? 'Saving...' : 'Add Note'}</span>
@@ -692,15 +692,15 @@ export const CaseDetail: React.FC = () => {
           {/* Notes List */}
           <div className="space-y-3">
             {caseData.notes.length === 0 ? (
-              <p className="text-xs font-mono text-slate-500 text-center py-6 italic">No notes recorded yet.</p>
+              <p className="text-xs font-mono text-foreground-subtle text-center py-6 italic">No notes recorded yet.</p>
             ) : (
               caseData.notes.map(note => (
-                <div key={note.id} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-1.5">
+                <div key={note.id} className="p-4 rounded-2xl bg-surface border border-border space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-cyan-400 font-bold">{note.author}</span>
-                    <span className="text-slate-500 text-[10px]">{new Date(note.created_at).toLocaleString()}</span>
+                    <span className="text-primary font-bold">{note.author}</span>
+                    <span className="text-foreground-subtle text-[10px]">{new Date(note.created_at).toLocaleString()}</span>
                   </div>
-                  <p className="text-xs font-mono text-slate-200 leading-relaxed whitespace-pre-wrap">{note.note_text}</p>
+                  <p className="text-xs font-mono text-foreground leading-relaxed whitespace-pre-wrap">{note.note_text}</p>
                 </div>
               ))
             )}
@@ -711,23 +711,23 @@ export const CaseDetail: React.FC = () => {
       {/* TAB 5: AUDIT TIMELINE */}
       {activeTab === 'timeline' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-1">
-            <h3 className="text-sm font-bold font-mono text-slate-200">Investigation Audit Trail</h3>
-            <p className="text-xs font-mono text-slate-400">
+          <div className="p-4 rounded-2xl bg-surface border border-border space-y-1">
+            <h3 className="text-sm font-bold font-mono text-foreground">Investigation Audit Trail</h3>
+            <p className="text-xs font-mono text-foreground-muted">
               Immutable chronological record of all incident transitions and analyst actions.
             </p>
           </div>
 
-          <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+          <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
             {caseData.audit_logs.map(entry => (
               <div key={entry.id} className="relative space-y-1">
-                <div className="absolute -left-6 top-1.5 w-2.5 h-2.5 rounded-full bg-cyan-400 border border-slate-950 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
-                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs font-mono space-y-1">
+                <div className="absolute -left-6 top-1.5 w-2.5 h-2.5 rounded-full bg-primary border-2 border-surface" />
+                <div className="p-3 rounded-xl bg-surface border border-border text-xs font-mono space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-cyan-400 uppercase tracking-wider text-[11px]">{entry.action}</span>
-                    <span className="text-slate-500 text-[10px]">{new Date(entry.timestamp).toLocaleString()}</span>
+                    <span className="font-bold text-primary uppercase tracking-wider text-[11px]">{entry.action}</span>
+                    <span className="text-foreground-subtle text-[10px]">{new Date(entry.timestamp).toLocaleString()}</span>
                   </div>
-                  <p className="text-slate-300 text-[11px]">{entry.details}</p>
+                  <p className="text-foreground-muted text-[11px]">{entry.details}</p>
                 </div>
               </div>
             ))}
@@ -746,25 +746,25 @@ export const CaseDetail: React.FC = () => {
 
       {/* ADD FINDING MODAL */}
       {showFindingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-sm font-bold font-mono text-slate-100 flex items-center space-x-2">
-                <ShieldAlert className="w-4 h-4 text-cyan-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl bg-surface border border-border shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="text-sm font-bold font-mono text-foreground flex items-center space-x-2">
+                <ShieldAlert className="w-4 h-4 text-primary" />
                 <span>Add Forensic Finding</span>
               </h3>
-              <button onClick={() => setShowFindingModal(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setShowFindingModal(false)} className="text-foreground-muted hover:text-foreground">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleAddFinding} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-mono text-slate-300">Finding Category</label>
+                <label className="text-xs font-mono text-foreground-muted">Finding Category</label>
                 <select
                   value={findingType}
                   onChange={e => setFindingType(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-100 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                 >
                   <option value="lookalike_domain">Lookalike Domain / Typosquatting</option>
                   <option value="credential_harvesting">Credential Harvesting</option>
@@ -776,34 +776,34 @@ export const CaseDetail: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono text-slate-300">Title</label>
+                <label className="text-xs font-mono text-foreground-muted">Title</label>
                 <input
                   type="text"
                   placeholder="e.g. Brand homograph impersonating microsoft.com"
                   value={findingTitle}
                   onChange={e => setFindingTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-100 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono text-slate-300">Description</label>
+                <label className="text-xs font-mono text-foreground-muted">Description</label>
                 <textarea
                   rows={3}
                   placeholder="Technical details, observed evidence, or impact analysis..."
                   value={findingDescription}
                   onChange={e => setFindingDescription(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-100 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono text-slate-300">Severity</label>
+                <label className="text-xs font-mono text-foreground-muted">Severity</label>
                 <select
                   value={findingSeverity}
                   onChange={e => setFindingSeverity(e.target.value as CaseSeverity)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-100 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                 >
                   <option value="critical">Critical</option>
                   <option value="high">High</option>
@@ -816,14 +816,14 @@ export const CaseDetail: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowFindingModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-xs"
+                  className="px-4 py-2 rounded-xl bg-surface-secondary hover:bg-surface text-foreground-muted font-mono text-xs border border-border"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingFinding || !findingTitle.trim()}
-                  className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-mono text-xs font-bold transition-all disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-mono text-xs font-semibold transition-all btn-press disabled:opacity-50"
                 >
                   {submittingFinding ? 'Saving...' : 'Record Finding'}
                 </button>

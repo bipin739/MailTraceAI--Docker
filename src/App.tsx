@@ -1,4 +1,6 @@
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState } from 'react';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Navbar } from './components/layout/Navbar';
 import { Dashboard } from './pages/Dashboard';
@@ -10,18 +12,28 @@ import { ThreatIntelligence } from './pages/ThreatIntelligence';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 
-export function App() {
+function AppContent() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const location = useLocation();
+
   return (
-    <Router>
-      <div className="min-h-screen bg-[#080c14] text-slate-100 flex">
-        {/* Collapsible Sidebar */}
-        <Sidebar />
+    <div className="min-h-screen bg-background text-foreground flex transition-colors duration-200">
+      {/* Collapsible Sidebar */}
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
 
-        {/* Main Content Workspace Area */}
-        <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 pl-64">
-          <Navbar />
+      {/* Main Content Workspace Area */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-250 ${
+          sidebarCollapsed ? 'pl-20' : 'pl-64'
+        }`}
+      >
+        <Navbar />
 
-          <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
+          <div key={location.pathname} className="page-enter">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/analyze" element={<AnalyzeEmail />} />
@@ -33,10 +45,20 @@ export function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
-    </Router>
+    </div>
+  );
+}
+
+export function App() {
+  return (
+    <ThemeProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </ThemeProvider>
   );
 }
 

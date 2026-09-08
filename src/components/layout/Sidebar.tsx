@@ -11,11 +11,25 @@ import {
   ChevronRight,
   ShieldCheck,
   Radio,
-  Zap
+  Zap,
+  Palette
 } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
-export const Sidebar: React.FC = () => {
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarProps {
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({
+  collapsed: externalCollapsed,
+  onToggleCollapse: externalToggle
+}) => {
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+  const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
+  const toggleCollapse = externalToggle || (() => setInternalCollapsed(!internalCollapsed));
+
+  const { themeMeta } = useTheme();
 
   const navItems = [
     {
@@ -64,57 +78,59 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed top-0 left-0 bottom-0 z-40 bg-slate-950/95 border-r border-slate-800/90 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between ${
-        collapsed ? 'w-20' : 'w-64'
+      className={`fixed top-0 left-0 bottom-0 z-40 bg-sidebar-bg border-r border-sidebar-border transition-all duration-250 flex flex-col justify-between ${
+        isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
       {/* Top Header Logo */}
       <div>
-        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/80">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-sidebar-border">
           <div className="flex items-center space-x-3 overflow-hidden">
             <div className="relative flex-shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-                <ShieldCheck className="w-6 h-6" />
+              <div className="w-9 h-9 rounded-lg bg-surface border border-border flex items-center justify-center text-primary shadow-xs">
+                <ShieldCheck className="w-5 h-5" />
               </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-slate-950 animate-pulse" />
+              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success ring-2 ring-sidebar-bg" />
             </div>
 
-            {!collapsed && (
-              <div className="flex flex-col">
-                <span className="font-mono font-extrabold text-base tracking-wider bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-400 bg-clip-text text-transparent">
+            {!isCollapsed && (
+              <div className="flex flex-col min-w-0">
+                <span className="font-sans font-bold text-sm tracking-tight text-foreground truncate">
                   MailTrace AI
                 </span>
-                <span className="text-[10px] font-mono text-slate-400 tracking-widest uppercase">
-                  SOC Forensics v2.4
+                <span className="text-[10px] font-mono text-foreground-muted tracking-wider uppercase truncate">
+                  Forensic Suite
                 </span>
               </div>
             )}
           </div>
 
           <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-all"
-            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            type="button"
+            onClick={toggleCollapse}
+            className="p-1.5 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-transparent hover:border-border transition-colors cursor-pointer"
+            title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >
-            {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
         {/* Live Status Indicator Pill */}
-        {!collapsed && (
-          <div className="mx-3 mt-4 mb-2 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+        {!isCollapsed && (
+          <div className="mx-3 mt-3 mb-1 p-2.5 rounded-lg bg-surface-secondary/70 border border-border flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-              <span className="text-xs font-mono text-slate-300">SOC Sensor Active</span>
+              <Radio className="w-3.5 h-3.5 text-success animate-pulse" />
+              <span className="text-xs font-mono text-foreground-muted">Sensor Telemetry</span>
             </div>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+            <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-surface border border-border text-foreground">
               ONLINE
             </span>
           </div>
         )}
 
         {/* Navigation Items */}
-        <nav className="p-3 space-y-1.5 mt-2">
+        <nav className="p-3 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -122,20 +138,21 @@ export const Sidebar: React.FC = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+                  `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
                     isActive
-                      ? 'bg-gradient-to-r from-cyan-950/80 to-blue-950/40 text-cyan-300 border border-cyan-700/60 shadow-[0_0_15px_rgba(6,182,212,0.15)] font-semibold'
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/60 border border-transparent'
+                      ? 'bg-primary-subtle text-primary border border-primary/25 font-semibold'
+                      : 'text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-transparent'
                   }`
                 }
+                title={isCollapsed ? item.name : undefined}
               >
-                <div className="flex items-center space-x-3">
-                  <Icon className="w-5 h-5 flex-shrink-0 group-hover:text-cyan-400 transition-colors" />
-                  {!collapsed && <span className="truncate">{item.name}</span>}
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <Icon className="w-4 h-4 flex-shrink-0 group-hover:text-primary transition-colors" />
+                  {!isCollapsed && <span className="truncate">{item.name}</span>}
                 </div>
 
-                {!collapsed && item.badge && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800/80 font-bold">
+                {!isCollapsed && item.badge && (
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-surface border border-border text-foreground-muted font-medium">
                     {item.badge}
                   </span>
                 )}
@@ -146,29 +163,41 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Bottom Profile / Quick Action Card */}
-      <div className="p-3 border-t border-slate-800/80">
-        {!collapsed ? (
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-            <div className="flex items-center space-x-3 mb-2">
-              <div className="w-8 h-8 rounded-full bg-slate-800 border border-cyan-500/40 flex items-center justify-center text-xs font-mono font-bold text-cyan-300">
-                AM
+      <div className="p-3 border-t border-sidebar-border space-y-2">
+        {!isCollapsed ? (
+          <div className="p-3 rounded-lg bg-surface-secondary/50 border border-border space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-md bg-surface border border-border flex items-center justify-center text-[11px] font-mono font-semibold text-primary">
+                  AM
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-medium text-foreground truncate">Alex Mercer</span>
+                  <span className="text-[10px] font-mono text-foreground-muted truncate">SOC Analyst</span>
+                </div>
               </div>
-              <div className="flex flex-col truncate">
-                <span className="text-xs font-semibold text-slate-200 truncate">Alex Mercer</span>
-                <span className="text-[10px] font-mono text-cyan-400 truncate">Lead SOC Analyst</span>
+
+              {/* Theme Tag */}
+              <div
+                className="flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-foreground-muted bg-surface border border-border"
+                title={`Active Theme: ${themeMeta.name}`}
+              >
+                <Palette className="w-3 h-3 text-primary" />
+                <span className="capitalize">{themeMeta.id}</span>
               </div>
             </div>
+
             <NavLink
               to="/analyze"
-              className="w-full flex items-center justify-center space-x-1.5 py-1.5 text-xs font-mono font-bold rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 transition-all shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+              className="w-full flex items-center justify-center space-x-1.5 py-1.5 text-xs font-mono font-medium rounded-md bg-primary hover:bg-primary-hover text-primary-foreground transition-colors btn-press cursor-pointer"
             >
               <Zap className="w-3.5 h-3.5" />
               <span>SCAN RAW EMAIL</span>
             </NavLink>
           </div>
         ) : (
-          <div className="flex justify-center">
-            <div className="w-9 h-9 rounded-full bg-slate-800 border border-cyan-500/40 flex items-center justify-center text-xs font-mono font-bold text-cyan-300">
+          <div className="flex flex-col items-center space-y-2">
+            <div className="w-8 h-8 rounded-md bg-surface border border-border flex items-center justify-center text-xs font-mono font-medium text-primary">
               AM
             </div>
           </div>

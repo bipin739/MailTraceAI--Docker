@@ -251,7 +251,7 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
     <div
       id="add-to-case-modal-overlay"
       onClick={onClose}
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-to-case-title"
@@ -259,19 +259,19 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
       <div
         id="add-to-case-modal-card"
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] my-auto"
+        className="relative w-full max-w-xl bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] my-auto"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/80 shrink-0">
+        <div className="flex items-center justify-between p-5 border-b border-border bg-surface shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="add-to-case-title" className="text-base font-bold text-slate-100">
+              <h2 id="add-to-case-title" className="text-base font-bold text-foreground">
                 Add Evidence to Investigation Case
               </h2>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className="text-xs text-foreground-muted font-mono">
                 Link email indicators and findings to a SOC case
               </p>
             </div>
@@ -281,7 +281,7 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+            className="p-1.5 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-secondary transition-colors focus:outline-none"
           >
             <X className="w-5 h-5" />
           </button>
@@ -290,25 +290,25 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
         {/* Content Body */}
         <div className="p-6 overflow-y-auto space-y-5 flex-1 min-h-0">
           {/* Email Preview Snippet */}
-          <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between gap-4">
+          <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border flex items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider block">
+              <span className="text-[10px] font-mono text-primary uppercase tracking-wider block">
                 Email Subject
               </span>
-              <p className="text-xs font-semibold text-slate-200 truncate mt-0.5">
+              <p className="text-xs font-semibold text-foreground truncate mt-0.5">
                 {email.subject || '(No Subject)'}
               </p>
-              <p className="text-[11px] font-mono text-slate-400 truncate">
+              <p className="text-[11px] font-mono text-foreground-muted truncate">
                 From: {email.from || 'unknown'}
               </p>
             </div>
             {email.threat_score && (
               <div className="shrink-0 text-right">
-                <span className="text-[10px] font-mono text-slate-400 uppercase block">Threat Score</span>
+                <span className="text-[10px] font-mono text-foreground-subtle uppercase block">Threat Score</span>
                 <span className={`text-xs font-mono font-bold ${
-                  email.threat_score.score >= 80 ? 'text-rose-400' :
-                  email.threat_score.score >= 60 ? 'text-orange-400' :
-                  email.threat_score.score >= 30 ? 'text-amber-400' : 'text-emerald-400'
+                  email.threat_score.score >= 80 ? 'text-danger' :
+                  email.threat_score.score >= 60 ? 'text-warning' :
+                  email.threat_score.score >= 30 ? 'text-warning' : 'text-success'
                 }`}>
                   {email.threat_score.score}/100 ({email.threat_score.severity})
                 </span>
@@ -318,22 +318,22 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
 
           {/* Success View */}
           {successInfo ? (
-            <div className="p-6 text-center space-y-4 bg-emerald-950/20 border border-emerald-800/50 rounded-xl">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
+            <div className="p-6 text-center space-y-4 bg-success/10 border border-success/30 rounded-xl">
+              <div className="w-12 h-12 rounded-full bg-success/20 border border-success/30 flex items-center justify-center mx-auto text-success">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-bold text-emerald-300">Email Linked Successfully</h3>
-                <p className="text-xs text-slate-300">
+                <h3 className="text-base font-bold text-success">Email Linked Successfully</h3>
+                <p className="text-xs text-foreground-muted">
                   Forensic evidence and indicators have been added to{' '}
-                  <span className="font-mono font-bold text-white">{successInfo.caseNumber}</span>.
+                  <span className="font-mono font-bold text-foreground">{successInfo.caseNumber}</span>.
                 </p>
               </div>
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200"
+                  className="px-4 py-2 text-xs font-medium rounded-xl bg-surface-secondary hover:bg-surface border border-border text-foreground btn-press"
                 >
                   Close
                 </button>
@@ -343,7 +343,7 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                     onClose();
                     navigate(`/cases/${successInfo.caseId}`);
                   }}
-                  className="flex items-center space-x-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-all"
+                  className="flex items-center space-x-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground transition-all btn-press shadow-xs"
                 >
                   <span>Open Case Workspace</span>
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -353,14 +353,14 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
           ) : (
             <>
               {/* Tab Selector */}
-              <div className="flex rounded-xl bg-slate-950/70 p-1 border border-slate-800">
+              <div className="flex rounded-xl bg-surface-secondary/70 p-1 border border-border">
                 <button
                   type="button"
                   onClick={() => { setActiveTab('existing'); setError(null); }}
                   className={`flex-1 flex items-center justify-center space-x-2 py-2 text-xs font-medium rounded-lg transition-all ${
                     activeTab === 'existing'
-                      ? 'bg-slate-800 text-cyan-400 shadow-sm border border-slate-700/60 font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-surface text-primary shadow-xs border border-border font-semibold'
+                      : 'text-foreground-muted hover:text-foreground'
                   }`}
                 >
                   <Briefcase className="w-3.5 h-3.5" />
@@ -371,8 +371,8 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                   onClick={() => { setActiveTab('new'); setError(null); }}
                   className={`flex-1 flex items-center justify-center space-x-2 py-2 text-xs font-medium rounded-lg transition-all ${
                     activeTab === 'new'
-                      ? 'bg-slate-800 text-cyan-400 shadow-sm border border-slate-700/60 font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-surface text-primary shadow-xs border border-border font-semibold'
+                      : 'text-foreground-muted hover:text-foreground'
                   }`}
                 >
                   <FolderPlus className="w-3.5 h-3.5" />
@@ -381,8 +381,8 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
               </div>
 
               {error && (
-                <div className="p-3 bg-rose-950/40 border border-rose-800/60 rounded-xl flex items-start space-x-2 text-xs text-rose-300">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                <div className="p-3 bg-danger/10 border border-danger/30 rounded-xl flex items-start space-x-2 text-xs text-danger">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-danger" />
                   <span>{error}</span>
                 </div>
               )}
@@ -391,17 +391,17 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
               {activeTab === 'existing' && (
                 <form onSubmit={handleAttachExisting} className="space-y-4">
                   {loadingCases ? (
-                    <div className="flex items-center justify-center py-8 text-slate-400 space-x-2 text-xs">
-                      <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                    <div className="flex items-center justify-center py-8 text-foreground-muted space-x-2 text-xs font-mono">
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
                       <span>Loading investigation cases...</span>
                     </div>
                   ) : cases.length === 0 ? (
-                    <div className="p-6 text-center space-y-3 bg-slate-950/40 rounded-xl border border-slate-800">
-                      <p className="text-xs text-slate-400">No active cases found.</p>
+                    <div className="p-6 text-center space-y-3 bg-surface-secondary/40 rounded-xl border border-border">
+                      <p className="text-xs text-foreground-muted">No active cases found.</p>
                       <button
                         type="button"
                         onClick={() => setActiveTab('new')}
-                        className="px-3 py-1.5 bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 rounded-lg text-xs hover:bg-cyan-600/30 font-medium"
+                        className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs hover:bg-primary/20 font-medium btn-press"
                       >
                         Create your first case
                       </button>
@@ -415,7 +415,7 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                           value={filterQuery}
                           onChange={e => setFilterQuery(e.target.value)}
                           placeholder="Filter cases by title or ID..."
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
+                          className="w-full px-3 py-2 bg-surface-secondary border border-border rounded-xl text-xs text-foreground placeholder-foreground-subtle focus:outline-none focus:border-primary font-mono"
                         />
                       )}
 
@@ -429,28 +429,28 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                               onClick={() => setSelectedCaseId(c.id)}
                               className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
                                 isSelected
-                                  ? 'bg-cyan-950/20 border-cyan-500/60 shadow-[0_0_12px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/40'
-                                  : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700'
+                                  ? 'bg-surface border-primary text-foreground ring-1 ring-primary/40 shadow-xs'
+                                  : 'bg-surface-secondary/40 border-border hover:border-border-hover text-foreground'
                               }`}
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center space-x-2">
-                                  <span className="font-mono text-[11px] font-bold text-cyan-400">{c.case_number}</span>
+                                  <span className="font-mono text-[11px] font-bold text-primary">{c.case_number}</span>
                                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono uppercase font-semibold ${
-                                    c.severity === 'critical' ? 'bg-rose-950/60 text-rose-400' :
-                                    c.severity === 'high' ? 'bg-orange-950/60 text-orange-400' :
-                                    c.severity === 'medium' ? 'bg-amber-950/60 text-amber-400' :
-                                    'bg-emerald-950/60 text-emerald-400'
+                                    c.severity === 'critical' ? 'bg-danger/10 text-danger border border-danger/30' :
+                                    c.severity === 'high' ? 'bg-warning/15 text-warning border border-warning/30' :
+                                    c.severity === 'medium' ? 'bg-warning/10 text-warning border border-warning/20' :
+                                    'bg-surface text-foreground-muted border border-border'
                                   }`}>
                                     {c.severity}
                                   </span>
-                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase text-slate-400 bg-slate-800">
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase text-foreground-subtle bg-surface border border-border">
                                     {c.status}
                                   </span>
                                 </div>
-                                <p className="text-xs font-medium text-slate-200 truncate mt-1">{c.title}</p>
+                                <p className="text-xs font-medium text-foreground truncate mt-1">{c.title}</p>
                               </div>
-                              <div className="shrink-0 text-right text-[11px] font-mono text-slate-500">
+                              <div className="shrink-0 text-right text-[11px] font-mono text-foreground-subtle">
                                 {c.email_count} email{c.email_count === 1 ? '' : 's'}
                               </div>
                             </div>
@@ -462,14 +462,14 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                         <button
                           type="button"
                           onClick={onClose}
-                          className="px-4 py-2 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                          className="px-4 py-2 text-xs font-medium rounded-xl bg-surface-secondary hover:bg-surface border border-border text-foreground-muted transition-colors btn-press"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           disabled={submitting || !selectedCaseId}
-                          className="flex items-center space-x-2 px-4 py-2 text-xs font-semibold rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.2)] transition-all"
+                          className="flex items-center space-x-2 px-4 py-2 text-xs font-semibold rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground shadow-xs transition-all btn-press"
                         >
                           {submitting ? (
                             <>
@@ -493,8 +493,8 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
               {activeTab === 'new' && (
                 <form onSubmit={handleCreateAndAttach} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-slate-300 uppercase tracking-wider block">
-                      Case Title <span className="text-rose-400">*</span>
+                    <label className="text-xs font-mono text-foreground-muted uppercase tracking-wider block">
+                      Case Title <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -502,12 +502,12 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                       value={newTitle}
                       onChange={e => setNewTitle(e.target.value)}
                       placeholder="e.g. Credential Harvester Campaign Q3"
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-3.5 py-2.5 bg-surface-secondary border border-border rounded-xl text-xs text-foreground placeholder-foreground-subtle focus:outline-none focus:border-primary font-mono"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-slate-300 uppercase tracking-wider block">
+                    <label className="text-xs font-mono text-foreground-muted uppercase tracking-wider block">
                       Initial Severity
                     </label>
                     <div className="grid grid-cols-4 gap-2">
@@ -518,11 +518,11 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                           onClick={() => setNewSeverity(sev)}
                           className={`py-2 px-2 rounded-xl text-xs font-mono uppercase font-bold border transition-all ${
                             newSeverity === sev
-                              ? sev === 'critical' ? 'bg-rose-950/80 border-rose-600 text-rose-300 shadow-[0_0_10px_rgba(225,29,72,0.25)]' :
-                                sev === 'high' ? 'bg-orange-950/80 border-orange-600 text-orange-300 shadow-[0_0_10px_rgba(234,88,12,0.25)]' :
-                                sev === 'medium' ? 'bg-amber-950/80 border-amber-600 text-amber-300 shadow-[0_0_10px_rgba(217,119,6,0.25)]' :
-                                'bg-emerald-950/80 border-emerald-600 text-emerald-300'
-                              : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                              ? sev === 'critical' ? 'bg-danger/15 border-danger/40 text-danger' :
+                                sev === 'high' ? 'bg-warning/20 border-warning/40 text-warning' :
+                                sev === 'medium' ? 'bg-warning/10 border-warning/30 text-warning' :
+                                'bg-surface text-foreground border-border'
+                              : 'bg-surface-secondary/60 border-border text-foreground-muted hover:text-foreground'
                           }`}
                         >
                           {sev}
@@ -532,7 +532,7 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-slate-300 uppercase tracking-wider block">
+                    <label className="text-xs font-mono text-foreground-muted uppercase tracking-wider block">
                       Description / Context
                     </label>
                     <textarea
@@ -540,7 +540,7 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                       value={newDescription}
                       onChange={e => setNewDescription(e.target.value)}
                       placeholder="Context on how this phishing campaign was discovered..."
-                      className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-3.5 py-2 bg-surface-secondary border border-border rounded-xl text-xs text-foreground placeholder-foreground-subtle focus:outline-none focus:border-primary font-mono"
                     />
                   </div>
 
@@ -548,14 +548,14 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
                     <button
                       type="button"
                       onClick={onClose}
-                      className="px-4 py-2 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                      className="px-4 py-2 text-xs font-medium rounded-xl bg-surface-secondary hover:bg-surface border border-border text-foreground-muted transition-colors btn-press"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="flex items-center space-x-2 px-4 py-2 text-xs font-semibold rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.2)] transition-all"
+                      className="flex items-center space-x-2 px-4 py-2 text-xs font-semibold rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground shadow-xs transition-all btn-press"
                     >
                       {submitting ? (
                         <>

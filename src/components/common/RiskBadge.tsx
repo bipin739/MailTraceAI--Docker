@@ -19,33 +19,33 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
     switch (severity) {
       case 'CRITICAL':
         return {
-          bg: 'bg-red-950/80 text-red-400 border-red-800/80 glow-red',
-          icon: <ShieldAlert className="w-3.5 h-3.5" />,
+          classes: 'bg-danger-surface text-danger border-danger-border',
+          icon: <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />,
           label: 'CRITICAL THREAT'
         };
       case 'HIGH':
         return {
-          bg: 'bg-amber-950/80 text-amber-400 border-amber-800/80 glow-amber',
-          icon: <AlertTriangle className="w-3.5 h-3.5" />,
+          classes: 'bg-warning-surface text-warning border-warning-border',
+          icon: <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />,
           label: 'HIGH RISK'
         };
       case 'MEDIUM':
         return {
-          bg: 'bg-yellow-950/80 text-yellow-300 border-yellow-800/80',
-          icon: <AlertOctagon className="w-3.5 h-3.5" />,
+          classes: 'bg-warning-surface/60 text-warning border-warning-border/80',
+          icon: <AlertOctagon className="w-3.5 h-3.5 flex-shrink-0" />,
           label: 'SUSPICIOUS'
         };
       case 'LOW':
         return {
-          bg: 'bg-blue-950/80 text-blue-300 border-blue-800/80',
-          icon: <Info className="w-3.5 h-3.5" />,
+          classes: 'bg-info-surface text-info border-info-border',
+          icon: <Info className="w-3.5 h-3.5 flex-shrink-0" />,
           label: 'LOW RISK'
         };
       case 'LEGITIMATE':
       default:
         return {
-          bg: 'bg-emerald-950/80 text-emerald-400 border-emerald-800/80',
-          icon: <ShieldCheck className="w-3.5 h-3.5" />,
+          classes: 'bg-success-surface text-success border-success-border',
+          icon: <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />,
           label: 'VERIFIED LEGITIMATE'
         };
     }
@@ -53,17 +53,19 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
 
   const style = getBadgeStyle();
   const sizeClasses = {
-    sm: 'text-xs px-2 py-0.5 space-x-1',
-    md: 'text-xs px-2.5 py-1 space-x-1.5 font-semibold',
-    lg: 'text-sm px-3.5 py-1.5 space-x-2 font-bold tracking-wide'
+    sm: 'text-[11px] px-2 py-0.5 space-x-1',
+    md: 'text-xs px-2.5 py-1 space-x-1.5 font-medium',
+    lg: 'text-xs px-3 py-1.5 space-x-2 font-semibold tracking-wide'
   }[size];
 
   return (
-    <span className={`inline-flex items-center rounded-full border backdrop-blur-md ${style.bg} ${sizeClasses}`}>
+    <span
+      className={`inline-flex items-center rounded-md border font-mono transition-colors ${style.classes} ${sizeClasses}`}
+    >
       {style.icon}
       <span>{style.label}</span>
       {showScore && score !== undefined && (
-        <span className="ml-1 px-1.5 py-0.2 rounded-full bg-black/40 text-[10px] font-mono">
+        <span className="ml-1 px-1.5 py-0.2 rounded bg-surface/80 border border-border text-[10px] font-mono text-foreground font-semibold">
           {score}%
         </span>
       )}
