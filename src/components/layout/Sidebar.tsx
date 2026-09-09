@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="h-16 px-4 flex items-center justify-between border-b border-sidebar-border">
           <div className="flex items-center space-x-3 overflow-hidden">
             <div className="relative flex-shrink-0">
-              <div className="w-9 h-9 rounded-lg bg-surface border border-border flex items-center justify-center text-primary shadow-xs">
+              <div className="w-9 h-9 rounded-control bg-surface border border-border flex items-center justify-center text-primary shadow-xs">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success ring-2 ring-sidebar-bg" />
@@ -108,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             type="button"
             onClick={toggleCollapse}
-            className="p-1.5 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-transparent hover:border-border transition-colors cursor-pointer"
+            className="p-1.5 rounded-control text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-transparent hover:border-border transition-colors cursor-pointer"
             title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >
@@ -118,12 +118,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Live Status Indicator Pill */}
         {!isCollapsed && (
-          <div className="mx-3 mt-3 mb-1 p-2.5 rounded-lg bg-surface-secondary/70 border border-border flex items-center justify-between">
+          <div className="mx-3 mt-3 mb-1 p-2.5 rounded-control bg-surface-secondary/70 border border-border flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Radio className="w-3.5 h-3.5 text-success animate-pulse" />
               <span className="text-xs font-mono text-foreground-muted">Sensor Telemetry</span>
             </div>
-            <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-surface border border-border text-foreground">
+            <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-badge bg-surface border border-border text-foreground">
               ONLINE
             </span>
           </div>
@@ -138,7 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
+                  `flex items-center justify-between px-3 py-2 rounded-control text-xs font-medium transition-all group ${
                     isActive
                       ? 'bg-primary-subtle text-primary border border-primary/25 font-semibold'
                       : 'text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-transparent'
@@ -152,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
 
                 {!isCollapsed && item.badge && (
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-surface border border-border text-foreground-muted font-medium">
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-badge bg-surface border border-border text-foreground-muted font-medium">
                     {item.badge}
                   </span>
                 )}
@@ -165,10 +165,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Bottom Profile / Quick Action Card */}
       <div className="p-3 border-t border-sidebar-border space-y-2">
         {!isCollapsed ? (
-          <div className="p-3 rounded-lg bg-surface-secondary/50 border border-border space-y-2.5">
+          <div className="p-3 rounded-card bg-surface-secondary/50 border border-border space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-md bg-surface border border-border flex items-center justify-center text-[11px] font-mono font-semibold text-primary">
+                <div className="w-7 h-7 rounded-control bg-surface border border-border flex items-center justify-center text-[11px] font-mono font-semibold text-primary">
                   AM
                 </div>
                 <div className="flex flex-col min-w-0">
@@ -179,7 +179,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               {/* Theme Tag */}
               <div
-                className="flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-foreground-muted bg-surface border border-border"
+                className="flex items-center space-x-1 px-1.5 py-0.5 rounded-badge text-[10px] font-mono text-foreground-muted bg-surface border border-border"
                 title={`Active Theme: ${themeMeta.name}`}
               >
                 <Palette className="w-3 h-3 text-primary" />
@@ -189,7 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <NavLink
               to="/analyze"
-              className="w-full flex items-center justify-center space-x-1.5 py-1.5 text-xs font-mono font-medium rounded-md bg-primary hover:bg-primary-hover text-primary-foreground transition-colors btn-press cursor-pointer"
+              className="w-full flex items-center justify-center space-x-1.5 py-1.5 text-xs font-mono font-medium rounded-control bg-primary hover:bg-primary-hover text-primary-foreground transition-colors btn-press cursor-pointer"
             >
               <Zap className="w-3.5 h-3.5" />
               <span>SCAN RAW EMAIL</span>
@@ -197,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         ) : (
           <div className="flex flex-col items-center space-y-2">
-            <div className="w-8 h-8 rounded-md bg-surface border border-border flex items-center justify-center text-xs font-mono font-medium text-primary">
+            <div className="w-8 h-8 rounded-control bg-surface border border-border flex items-center justify-center text-xs font-mono font-medium text-primary">
               AM
             </div>
           </div>

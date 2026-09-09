@@ -60,12 +60,12 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center rounded-md border font-mono transition-colors ${style.classes} ${sizeClasses}`}
+      className={`inline-flex items-center rounded-badge border font-mono transition-colors ${style.classes} ${sizeClasses}`}
     >
       {style.icon}
       <span>{style.label}</span>
       {showScore && score !== undefined && (
-        <span className="ml-1 px-1.5 py-0.2 rounded bg-surface/80 border border-border text-[10px] font-mono text-foreground font-semibold">
+        <span className="ml-1 px-1.5 py-0.2 rounded-badge bg-surface/80 border border-border text-[10px] font-mono text-foreground font-semibold">
           {score}%
         </span>
       )}

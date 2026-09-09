@@ -18,6 +18,7 @@ import {
   FileSearch,
   Plus
 } from 'lucide-react';
+import { Button, Skeleton, Badge } from '../components/ui';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -181,7 +182,7 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
       {/* Top Banner & Quick Launcher */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface border border-border p-6 rounded-xl shadow-xs transition-colors">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface border border-border p-6 rounded-card shadow-card transition-colors">
         <div>
           <div className="flex items-center space-x-2 text-primary font-mono text-xs mb-1.5 font-semibold uppercase tracking-wider">
             <Radio className="w-3.5 h-3.5 text-primary" />
@@ -198,75 +199,79 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => fetchDashboardData(true)}
             disabled={loading || refreshing}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-surface hover:bg-surface-secondary text-foreground-muted hover:text-foreground border border-border text-xs font-mono transition-colors btn-press cursor-pointer disabled:opacity-50"
+            isLoading={refreshing}
+            leftIcon={!refreshing ? <RefreshCw className="w-3.5 h-3.5 text-primary" /> : undefined}
+            className="font-mono text-xs"
             title="Refresh dashboard telemetry"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-primary ${refreshing ? 'animate-spin' : ''}`} />
-            <span>{refreshing ? 'SYNCING...' : 'SYNC'}</span>
-          </button>
-          <button
-            type="button"
+            {refreshing ? 'SYNCING...' : 'SYNC'}
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => navigate('/analyze')}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-mono font-semibold text-xs tracking-wide transition-colors btn-press cursor-pointer"
+            leftIcon={<Zap className="w-3.5 h-3.5" />}
+            className="font-mono font-semibold tracking-wide text-xs"
           >
-            <Zap className="w-3.5 h-3.5" />
-            <span>ANALYZE SUSPICIOUS EML</span>
-          </button>
-          <button
-            type="button"
+            ANALYZE SUSPICIOUS EML
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => navigate('/cases')}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-surface hover:bg-surface-secondary text-foreground border border-border text-xs font-mono font-medium transition-colors btn-press cursor-pointer"
+            leftIcon={<FolderLock className="w-3.5 h-3.5 text-foreground-muted" />}
+            className="font-mono text-xs"
           >
-            <FolderLock className="w-3.5 h-3.5 text-foreground-muted" />
-            <span>INVESTIGATIONS</span>
-          </button>
+            INVESTIGATIONS
+          </Button>
         </div>
       </div>
 
       {/* Error Banner */}
       {error && (
-        <div className="p-3.5 rounded-lg bg-danger-surface border border-danger-border text-danger flex items-center justify-between text-xs font-mono">
+        <div className="p-3.5 rounded-control bg-danger-surface border border-danger-border text-danger flex items-center justify-between text-xs font-mono">
           <div className="flex items-center space-x-2">
             <AlertTriangle className="w-4 h-4 text-danger flex-shrink-0" />
             <span>Failed to connect to forensic telemetry service: {error}</span>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="danger"
+            size="xs"
             onClick={() => fetchDashboardData(true)}
-            className="px-2.5 py-1 rounded bg-danger text-white hover:opacity-90 text-xs font-mono cursor-pointer"
           >
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
       {/* 4 Summary Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Emails Analyzed */}
-        <div className="p-5 rounded-xl bg-surface border border-border transition-all hover:border-primary/50 shadow-xs">
+        <div className="p-5 rounded-card bg-surface border border-border transition-all hover:border-primary/50 shadow-card">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-foreground-muted font-medium uppercase tracking-wider">
               Emails Analyzed
             </span>
-            <div className="p-2 rounded-lg bg-surface-secondary text-primary border border-border">
+            <div className="p-2 rounded-control bg-surface-secondary text-primary border border-border">
               <Mail className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             {loading ? (
-              <div className="h-8 w-20 bg-surface-secondary rounded animate-pulse" />
+              <Skeleton width={80} height={32} />
             ) : (
               <span className="text-3xl font-bold font-mono text-foreground">
                 {(metrics?.emails_analyzed ?? 0).toLocaleString()}
               </span>
             )}
-            <span className="text-[11px] font-mono text-foreground-muted bg-surface-secondary px-2 py-0.5 rounded border border-border">
+            <Badge size="xs" variant="neutral">
               Total Ingested
-            </span>
+            </Badge>
           </div>
           <p className="text-[11px] text-foreground-muted mt-2 font-mono">
             Verified RFC-822 evidence records
@@ -274,28 +279,28 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Card 2: Threats Detected */}
-        <div className="p-5 rounded-xl bg-surface border border-border transition-all hover:border-warning/50 shadow-xs">
+        <div className="p-5 rounded-card bg-surface border border-border transition-all hover:border-warning/50 shadow-card">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-foreground-muted font-medium uppercase tracking-wider">
               Threats Detected
             </span>
-            <div className="p-2 rounded-lg bg-warning-surface text-warning border border-warning-border">
+            <div className="p-2 rounded-control bg-warning-surface text-warning border border-warning-border">
               <ShieldAlert className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             {loading ? (
-              <div className="h-8 w-20 bg-surface-secondary rounded animate-pulse" />
+              <Skeleton width={80} height={32} />
             ) : (
               <span className="text-3xl font-bold font-mono text-foreground">
                 {(metrics?.threats_detected ?? 0).toLocaleString()}
               </span>
             )}
-            <span className="text-xs font-mono font-semibold text-warning px-2 py-0.5 rounded bg-warning-surface border border-warning-border">
+            <Badge size="xs" variant="warning">
               {metrics && metrics.emails_analyzed > 0
                 ? `${((metrics.threats_detected / metrics.emails_analyzed) * 100).toFixed(1)}% Rate`
                 : '0.0% Rate'}
-            </span>
+            </Badge>
           </div>
           <p className="text-[11px] text-foreground-muted mt-2 font-mono">
             Phishing, BEC & lookalike domains
@@ -303,26 +308,26 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Card 3: Critical Emails */}
-        <div className="p-5 rounded-xl bg-surface border border-border transition-all hover:border-danger/50 shadow-xs">
+        <div className="p-5 rounded-card bg-surface border border-border transition-all hover:border-danger/50 shadow-card">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-foreground-muted font-medium uppercase tracking-wider">
               Critical Emails
             </span>
-            <div className="p-2 rounded-lg bg-danger-surface text-danger border border-danger-border">
+            <div className="p-2 rounded-control bg-danger-surface text-danger border border-danger-border">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             {loading ? (
-              <div className="h-8 w-20 bg-surface-secondary rounded animate-pulse" />
+              <Skeleton width={80} height={32} />
             ) : (
               <span className="text-3xl font-bold font-mono text-foreground">
                 {(metrics?.critical_emails ?? 0).toLocaleString()}
               </span>
             )}
-            <span className="text-xs font-mono font-bold text-danger px-2 py-0.5 rounded bg-danger-surface border border-danger-border">
+            <Badge size="xs" variant="danger">
               Score ≥ 80
-            </span>
+            </Badge>
           </div>
           <p className="text-[11px] text-foreground-muted mt-2 font-mono">
             High-confidence malicious attacks
@@ -330,26 +335,26 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Card 4: Open Cases */}
-        <div className="p-5 rounded-xl bg-surface border border-border transition-all hover:border-primary/50 shadow-xs">
+        <div className="p-5 rounded-card bg-surface border border-border transition-all hover:border-primary/50 shadow-card">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-foreground-muted font-medium uppercase tracking-wider">
               Open Cases
             </span>
-            <div className="p-2 rounded-lg bg-surface-secondary text-primary border border-border">
+            <div className="p-2 rounded-control bg-surface-secondary text-primary border border-border">
               <FolderLock className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             {loading ? (
-              <div className="h-8 w-20 bg-surface-secondary rounded animate-pulse" />
+              <Skeleton width={80} height={32} />
             ) : (
               <span className="text-3xl font-bold font-mono text-foreground">
                 {(metrics?.open_cases ?? 0).toLocaleString()}
               </span>
             )}
-            <span className="text-xs font-mono font-medium text-foreground px-2 py-0.5 rounded bg-surface-secondary border border-border">
+            <Badge size="xs" variant="neutral">
               Active
-            </span>
+            </Badge>
           </div>
           <p className="text-[11px] text-foreground-muted mt-2 font-mono">
             Investigations currently in progress
