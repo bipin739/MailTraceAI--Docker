@@ -3,6 +3,7 @@ import cytoscape from 'cytoscape';
 import type { Core, EventObject } from 'cytoscape';
 import type { EmailAnalysis } from '../../types/forensic';
 import type { GraphNode, GraphEdge, NodeType, InvestigationGraphData } from '../../types/graph';
+import { useTheme } from '../../context/ThemeContext';
 import {
   ZoomIn,
   ZoomOut,
@@ -32,15 +33,15 @@ interface InvestigationGraphTabProps {
 }
 
 const NODE_TYPE_COLORS: Record<NodeType, { bg: string; border: string; text: string; lightBg: string }> = {
-  'Email': { bg: '#d97706', border: '#f59e0b', text: '#fef3c7', lightBg: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
-  'Email Address': { bg: '#0891b2', border: '#06b6d4', text: '#cffafe', lightBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' },
-  'Domain': { bg: '#7c3aed', border: '#8b5cf6', text: '#ede9fe', lightBg: 'bg-purple-500/20 text-purple-300 border-purple-500/40' },
-  'URL': { bg: '#e11d48', border: '#f43f5e', text: '#ffe4e6', lightBg: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
-  'IP': { bg: '#059669', border: '#10b981', text: '#d1fae5', lightBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
-  'ASN': { bg: '#2563eb', border: '#3b82f6', text: '#dbeafe', lightBg: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
-  'Attachment': { bg: '#ea580c', border: '#f97316', text: '#ffedd5', lightBg: 'bg-orange-500/20 text-orange-300 border-orange-500/40' },
-  'Case': { bg: '#4f46e5', border: '#6366f1', text: '#e0e7ff', lightBg: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' },
-  'Campaign': { bg: '#db2777', border: '#ec4899', text: '#fce7f3', lightBg: 'bg-pink-500/20 text-pink-300 border-pink-500/40' },
+  'Email': { bg: '#d97706', border: '#f59e0b', text: '#fef3c7', lightBg: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30' },
+  'Email Address': { bg: '#0891b2', border: '#06b6d4', text: '#cffafe', lightBg: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/30' },
+  'Domain': { bg: '#7c3aed', border: '#8b5cf6', text: '#ede9fe', lightBg: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30' },
+  'URL': { bg: '#e11d48', border: '#f43f5e', text: '#ffe4e6', lightBg: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30' },
+  'IP': { bg: '#059669', border: '#10b981', text: '#d1fae5', lightBg: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30' },
+  'ASN': { bg: '#2563eb', border: '#3b82f6', text: '#dbeafe', lightBg: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30' },
+  'Attachment': { bg: '#ea580c', border: '#f97316', text: '#ffedd5', lightBg: 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30' },
+  'Case': { bg: '#4f46e5', border: '#6366f1', text: '#e0e7ff', lightBg: 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30' },
+  'Campaign': { bg: '#db2777', border: '#ec4899', text: '#fce7f3', lightBg: 'bg-pink-500/15 text-pink-700 dark:text-pink-300 border-pink-500/30' },
 };
 
 const getNodeIcon = (type: NodeType) => {
@@ -59,6 +60,7 @@ const getNodeIcon = (type: NodeType) => {
 };
 
 export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ email }) => {
+  const { isDark } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
 
@@ -227,6 +229,14 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
       }))
     ];
 
+    const nodeTextColor = isDark ? '#f1f5f9' : '#0f172a';
+    const nodeTextBg = isDark ? '#020617' : '#ffffff';
+    const nodeTextBorder = isDark ? '#1e293b' : '#cbd5e1';
+    const edgeLineColor = isDark ? '#334155' : '#cbd5e1';
+    const edgeArrowColor = isDark ? '#64748b' : '#94a3b8';
+    const edgeTextColor = isDark ? '#94a3b8' : '#475569';
+    const edgeTextBg = isDark ? '#020617' : '#ffffff';
+
     const cy = cytoscape({
       container: containerRef.current,
       elements: cyElements,
@@ -240,17 +250,17 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
             'width': 'data(size)',
             'height': 'data(size)',
             'label': 'data(label)',
-            'color': '#f1f5f9',
+            'color': nodeTextColor,
             'font-family': 'monospace',
             'font-size': '11px',
             'font-weight': 'bold',
             'text-valign': 'bottom',
             'text-margin-y': 6,
-            'text-background-color': '#020617',
-            'text-background-opacity': 0.85,
+            'text-background-color': nodeTextBg,
+            'text-background-opacity': 0.88,
             'text-background-padding': '3px',
             'text-background-shape': 'roundrectangle',
-            'text-border-color': '#1e293b',
+            'text-border-color': nodeTextBorder,
             'text-border-width': 1,
             'text-border-opacity': 0.8,
             'text-max-width': '120px',
@@ -261,17 +271,17 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
           selector: 'edge',
           style: {
             'width': 2,
-            'line-color': '#334155',
-            'target-arrow-color': '#64748b',
+            'line-color': edgeLineColor,
+            'target-arrow-color': edgeArrowColor,
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
             'arrow-scale': 0.9,
             'label': 'data(label)',
             'font-family': 'monospace',
             'font-size': '8px',
-            'color': '#94a3b8',
+            'color': edgeTextColor,
             'text-rotation': 'autorotate',
-            'text-background-color': '#020617',
+            'text-background-color': edgeTextBg,
             'text-background-opacity': 0.9,
             'text-background-padding': '2px',
             'text-background-shape': 'roundrectangle',
@@ -281,28 +291,28 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
         {
           selector: ':selected',
           style: {
-            'border-color': '#38bdf8',
+            'border-color': '#06b6d4',
             'border-width': 4,
-            'underlay-color': '#0284c7',
+            'underlay-color': '#06b6d4',
             'underlay-padding': 6,
-            'underlay-opacity': 0.4
+            'underlay-opacity': 0.35
           }
         },
         {
           selector: '.highlighted-node',
           style: {
-            'border-color': '#38bdf8',
+            'border-color': '#06b6d4',
             'border-width': 4,
-            'underlay-color': '#38bdf8',
+            'underlay-color': '#06b6d4',
             'underlay-padding': 6,
-            'underlay-opacity': 0.4
+            'underlay-opacity': 0.35
           }
         },
         {
           selector: '.highlighted-edge',
           style: {
-            'line-color': '#38bdf8',
-            'target-arrow-color': '#38bdf8',
+            'line-color': '#06b6d4',
+            'target-arrow-color': '#06b6d4',
             'width': 3.5
           }
         },
@@ -347,7 +357,7 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
       cy.destroy();
       cyRef.current = null;
     };
-  }, [filteredData, layoutName]);
+  }, [filteredData, layoutName, isDark]);
 
   function getLayoutConfig(name: string) {
     switch (name) {
@@ -470,9 +480,9 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] space-y-4 rounded-2xl border border-slate-800 bg-slate-950/80 backdrop-blur-xl">
-        <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin" />
-        <p className="text-sm font-mono text-slate-300">Reconstructing investigation relationship graph...</p>
+      <div className="flex flex-col items-center justify-center min-h-[500px] space-y-4 rounded-card border border-border bg-surface shadow-sm">
+        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-sm font-mono text-foreground-muted">Reconstructing investigation relationship graph...</p>
       </div>
     );
   }
@@ -480,31 +490,31 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
   return (
     <div className="space-y-4">
       {/* 1. CONTROLS & FILTER BAR */}
-      <div className="p-4 rounded-2xl border border-slate-800/80 bg-slate-950/80 backdrop-blur-xl shadow-xl space-y-3">
+      <div className="p-4 rounded-card border border-border bg-surface shadow-sm space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+            <div className="p-1.5 rounded-control bg-primary/10 border border-primary/20 text-primary">
               <Share2 className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold font-mono text-slate-100 flex items-center space-x-2">
+              <h3 className="text-sm font-bold font-mono text-foreground flex items-center space-x-2">
                 <span>Investigation Relationship Graph</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 border border-slate-700">
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-surface-secondary text-foreground-muted border border-border">
                   {filteredData.nodes.length} Nodes · {filteredData.edges.length} Edges
                 </span>
               </h3>
-              <p className="text-[11px] font-mono text-slate-400">
+              <p className="text-[11px] font-mono text-foreground-muted">
                 Visualizing multi-entity forensic relationships with force-directed physics.
               </p>
             </div>
           </div>
 
           {/* Canvas Viewport Controls */}
-          <div className="flex items-center space-x-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+          <div className="flex items-center space-x-1.5 bg-surface-secondary p-1.5 rounded-control border border-border">
             <select
               value={layoutName}
               onChange={e => setLayoutName(e.target.value as any)}
-              className="bg-slate-950 text-slate-300 font-mono text-xs px-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-cyan-500 mr-2"
+              className="bg-surface text-foreground font-mono text-xs px-2.5 py-1.5 rounded-control border border-border focus:outline-none focus:border-primary mr-2 cursor-pointer"
               title="Graph Layout"
             >
               <option value="cose">Force-Directed (COSE)</option>
@@ -514,29 +524,33 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
             </select>
 
             <button
+              type="button"
               onClick={handleZoomIn}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              className="p-1.5 rounded-control bg-surface hover:bg-surface-secondary text-foreground-muted hover:text-foreground border border-border transition-colors cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
             <button
+              type="button"
               onClick={handleZoomOut}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              className="p-1.5 rounded-control bg-surface hover:bg-surface-secondary text-foreground-muted hover:text-foreground border border-border transition-colors cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
             <button
+              type="button"
               onClick={handleFit}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              className="p-1.5 rounded-control bg-surface hover:bg-surface-secondary text-foreground-muted hover:text-foreground border border-border transition-colors cursor-pointer"
               title="Fit to Screen"
             >
               <Maximize2 className="w-3.5 h-3.5" />
             </button>
             <button
+              type="button"
               onClick={handleReset}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              className="p-1.5 rounded-control bg-surface hover:bg-surface-secondary text-foreground-muted hover:text-foreground border border-border transition-colors cursor-pointer"
               title="Reset Layout & View"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -545,8 +559,8 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
         </div>
 
         {/* Node Type Filter Chips */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-800/60">
-          <span className="text-[11px] font-mono text-slate-400 mr-1 flex items-center space-x-1">
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border">
+          <span className="text-[11px] font-mono text-foreground-muted mr-1 flex items-center space-x-1">
             <Layers className="w-3 h-3" />
             <span>Filter Entity Types:</span>
           </span>
@@ -559,16 +573,17 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
             return (
               <button
                 key={type}
+                type="button"
                 onClick={() => toggleType(type)}
-                className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all border ${
+                className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-control text-[11px] font-mono transition-all border cursor-pointer ${
                   isSelected
-                    ? `${colors.lightBg} shadow-[0_0_8px_rgba(0,0,0,0.2)]`
-                    : 'bg-slate-900/60 text-slate-500 border-slate-800/80 hover:bg-slate-900 hover:text-slate-400'
+                    ? `${colors.lightBg} shadow-xs font-semibold`
+                    : 'bg-surface-secondary/60 text-foreground-subtle border-border hover:bg-surface-secondary hover:text-foreground-muted'
                 }`}
               >
                 {getNodeIcon(type)}
                 <span>{type}</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${isSelected ? 'bg-slate-950/60' : 'bg-slate-800/60'}`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${isSelected ? 'bg-surface/70' : 'bg-surface-secondary'}`}>
                   {count}
                 </span>
               </button>
@@ -576,26 +591,27 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
           })}
 
           <div className="ml-auto flex items-center space-x-2 text-[10px] font-mono">
-            <button onClick={selectAllTypes} className="text-cyan-400 hover:underline">Select All</button>
-            <span className="text-slate-600">|</span>
-            <button onClick={clearAllTypes} className="text-slate-400 hover:underline">Reset</button>
+            <button type="button" onClick={selectAllTypes} className="text-primary hover:underline cursor-pointer">Select All</button>
+            <span className="text-foreground-subtle">|</span>
+            <button type="button" onClick={clearAllTypes} className="text-foreground-muted hover:underline cursor-pointer">Reset</button>
           </div>
         </div>
       </div>
 
       {/* 2. MAIN GRAPH CANVAS & SIDE PANEL */}
-      <div className="relative w-full h-[620px] rounded-2xl border border-slate-800/80 bg-slate-950/90 backdrop-blur-xl shadow-2xl overflow-hidden">
+      <div className="relative w-full h-[620px] rounded-card border border-border bg-surface-secondary/20 shadow-sm overflow-hidden">
         {/* Cytoscape Canvas Container */}
         <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
         {/* Empty State Overlay */}
         {filteredData.nodes.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md text-center space-y-3">
-            <AlertTriangle className="w-8 h-8 text-amber-400" />
-            <p className="text-sm font-mono text-slate-200">No nodes match the selected entity filters.</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-surface/85 backdrop-blur-md text-center space-y-3">
+            <AlertTriangle className="w-8 h-8 text-warning" />
+            <p className="text-sm font-mono text-foreground">No nodes match the selected entity filters.</p>
             <button
+              type="button"
               onClick={selectAllTypes}
-              className="px-3 py-1.5 rounded-lg bg-cyan-600/30 border border-cyan-500 text-cyan-300 font-mono text-xs"
+              className="px-3 py-1.5 rounded-control bg-primary/10 border border-primary text-primary font-mono text-xs cursor-pointer"
             >
               Reset Filters
             </button>
@@ -603,7 +619,7 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
         )}
 
         {/* Legend Overlay (Bottom Left) */}
-        <div className="absolute bottom-3 left-3 bg-slate-950/90 border border-slate-800/80 rounded-xl p-2.5 backdrop-blur-md pointer-events-auto shadow-lg flex flex-wrap gap-2 max-w-sm text-[10px] font-mono text-slate-300">
+        <div className="absolute bottom-3 left-3 bg-surface/95 border border-border rounded-control p-2.5 backdrop-blur-md pointer-events-auto shadow-md flex flex-wrap gap-2 max-w-sm text-[10px] font-mono text-foreground-muted">
           <div className="flex items-center space-x-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /><span>Email</span></div>
           <div className="flex items-center space-x-1"><span className="w-2.5 h-2.5 rounded-full bg-cyan-500" /><span>Address</span></div>
           <div className="flex items-center space-x-1"><span className="w-2.5 h-2.5 rounded-full bg-purple-500" /><span>Domain</span></div>
@@ -615,21 +631,22 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
 
         {/* 3. ENTITY INFORMATION SIDE PANEL (Right Drawer) */}
         {selectedNode && (
-          <div className="absolute top-0 right-0 w-84 sm:w-96 h-full bg-slate-950/95 border-l border-slate-800 backdrop-blur-2xl shadow-2xl p-5 overflow-y-auto space-y-4 z-20 animate-in slide-in-from-right duration-200">
+          <div className="absolute top-0 right-0 w-84 sm:w-96 h-full bg-surface/95 border-l border-border backdrop-blur-md shadow-xl p-5 overflow-y-auto space-y-4 z-20 animate-in slide-in-from-right duration-200">
             {/* Header */}
-            <div className="flex items-start justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-start justify-between pb-3 border-b border-border">
               <div className="flex items-center space-x-2">
-                <span className={`p-1.5 rounded-lg border text-xs font-mono font-bold flex items-center space-x-1 ${NODE_TYPE_COLORS[selectedNode.type]?.lightBg}`}>
+                <span className={`p-1.5 rounded-control border text-xs font-mono font-bold flex items-center space-x-1 ${NODE_TYPE_COLORS[selectedNode.type]?.lightBg}`}>
                   {getNodeIcon(selectedNode.type)}
                   <span>{selectedNode.type}</span>
                 </span>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   setSelectedNode(null);
                   cyRef.current?.elements().removeClass('highlighted-node highlighted-edge dimmed');
                 }}
-                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded-control hover:bg-surface-secondary text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
                 title="Close"
               >
                 <X className="w-4 h-4" />
@@ -638,38 +655,39 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
 
             {/* Label / Identifier */}
             <div className="space-y-1">
-              <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Entity Identifier</label>
-              <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs text-slate-200 break-all flex items-start justify-between gap-2">
+              <label className="text-[10px] font-mono text-foreground-muted uppercase tracking-wider">Entity Identifier</label>
+              <div className="p-2.5 rounded-control bg-surface-secondary border border-border font-mono text-xs text-foreground break-all flex items-start justify-between gap-2">
                 <span>{selectedNode.label}</span>
                 <button
+                  type="button"
                   onClick={() => copyToClipboard(selectedNode.label)}
-                  className="text-slate-400 hover:text-cyan-400 p-1 flex-shrink-0"
+                  className="text-foreground-muted hover:text-primary p-1 flex-shrink-0 cursor-pointer"
                   title="Copy"
                 >
-                  {copiedText === selectedNode.label ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedText === selectedNode.label ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <div className="text-[10px] font-mono text-slate-500">ID: {selectedNode.id}</div>
+              <div className="text-[10px] font-mono text-foreground-subtle">ID: {selectedNode.id}</div>
             </div>
 
             {/* Security Notice for URLs (Strictly Non-Clickable) */}
             {selectedNode.type === 'URL' && (
-              <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-800/40 space-y-2">
-                <div className="flex items-center space-x-1.5 text-rose-400 text-xs font-mono font-bold">
+              <div className="p-3 rounded-control bg-danger-surface border border-danger-border space-y-2">
+                <div className="flex items-center space-x-1.5 text-danger text-xs font-mono font-bold">
                   <ShieldAlert className="w-4 h-4" />
                   <span>Defanged Security Mode</span>
                 </div>
-                <p className="text-[11px] font-mono text-rose-300/80">
+                <p className="text-[11px] font-mono text-danger/80">
                   URLs are defanged to prevent accidental execution or browser navigation.
                 </p>
-                <div className="p-2 rounded-lg bg-black/40 border border-rose-900/40 font-mono text-[11px] text-rose-200 break-all select-all">
+                <div className="p-2 rounded-control bg-surface border border-danger-border/50 font-mono text-[11px] text-danger break-all select-all">
                   <code>{defangUrl(selectedNode.metadata?.url || selectedNode.label)}</code>
                 </div>
                 {selectedNode.metadata?.suspicion_level && (
                   <div className="flex items-center justify-between text-xs font-mono pt-1">
-                    <span className="text-slate-400">Suspicion Level:</span>
+                    <span className="text-foreground-muted">Suspicion Level:</span>
                     <span className={`px-2 py-0.5 rounded font-bold uppercase text-[10px] ${
-                      selectedNode.metadata.suspicion_level === 'high' ? 'bg-red-500/20 text-red-300 border border-red-500/40' : 'bg-slate-800 text-slate-300'
+                      selectedNode.metadata.suspicion_level === 'high' ? 'bg-danger/20 text-danger border border-danger/40' : 'bg-surface-secondary text-foreground-muted'
                     }`}>
                       {selectedNode.metadata.suspicion_level}
                     </span>
@@ -681,22 +699,22 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
             {/* Entity Specific Metadata Cards */}
             {selectedNode.type === 'Domain' && (
               <div className="space-y-2 text-xs font-mono">
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
-                  <div className="flex justify-between"><span className="text-slate-400">Domain:</span><span className="text-slate-200 font-bold">{selectedNode.metadata?.domain || selectedNode.label}</span></div>
+                <div className="p-3 rounded-control bg-surface-secondary border border-border space-y-1.5">
+                  <div className="flex justify-between"><span className="text-foreground-muted">Domain:</span><span className="text-foreground font-bold">{selectedNode.metadata?.domain || selectedNode.label}</span></div>
                   {selectedNode.metadata?.registrar && (
-                    <div className="flex justify-between"><span className="text-slate-400">Registrar:</span><span className="text-slate-300">{selectedNode.metadata.registrar}</span></div>
+                    <div className="flex justify-between"><span className="text-foreground-muted">Registrar:</span><span className="text-foreground">{selectedNode.metadata.registrar}</span></div>
                   )}
                   {typeof selectedNode.metadata?.domain_age_days === 'number' && (
-                    <div className="flex justify-between"><span className="text-slate-400">Domain Age:</span><span className="text-slate-300">{selectedNode.metadata.domain_age_days} days</span></div>
+                    <div className="flex justify-between"><span className="text-foreground-muted">Domain Age:</span><span className="text-foreground">{selectedNode.metadata.domain_age_days} days</span></div>
                   )}
                   {selectedNode.metadata?.newly_registered && (
-                    <div className="p-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] text-center font-bold">
+                    <div className="p-1.5 rounded-control bg-warning-surface border border-warning-border text-warning text-[10px] text-center font-bold">
                       Newly Registered Domain (&lt; 30 days)
                     </div>
                   )}
                   {selectedNode.metadata?.is_lookalike && (
-                    <div className="p-2 rounded-lg bg-purple-950/40 border border-purple-800/60 space-y-1 text-purple-200 text-[11px]">
-                      <div className="font-bold flex items-center space-x-1 text-purple-300">
+                    <div className="p-2 rounded-control bg-danger-surface border border-danger-border space-y-1 text-danger text-[11px]">
+                      <div className="font-bold flex items-center space-x-1 text-danger">
                         <AlertTriangle className="w-3.5 h-3.5" />
                         <span>Impersonation Finding</span>
                       </div>
@@ -709,19 +727,19 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
             )}
 
             {selectedNode.type === 'IP' && (
-              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 text-xs font-mono">
-                <div className="flex justify-between"><span className="text-slate-400">IP Address:</span><span className="text-emerald-300 font-bold">{selectedNode.metadata?.ip || selectedNode.label}</span></div>
+              <div className="p-3 rounded-control bg-surface-secondary border border-border space-y-1.5 text-xs font-mono">
+                <div className="flex justify-between"><span className="text-foreground-muted">IP Address:</span><span className="text-success font-bold">{selectedNode.metadata?.ip || selectedNode.label}</span></div>
                 {selectedNode.metadata?.country && (
-                  <div className="flex justify-between"><span className="text-slate-400">Country:</span><span className="text-slate-300">{selectedNode.metadata.country}</span></div>
+                  <div className="flex justify-between"><span className="text-foreground-muted">Country:</span><span className="text-foreground">{selectedNode.metadata.country}</span></div>
                 )}
                 {selectedNode.metadata?.asn && (
-                  <div className="flex justify-between"><span className="text-slate-400">ASN:</span><span className="text-blue-300 font-bold">{selectedNode.metadata.asn}</span></div>
+                  <div className="flex justify-between"><span className="text-foreground-muted">ASN:</span><span className="text-primary font-bold">{selectedNode.metadata.asn}</span></div>
                 )}
                 {selectedNode.metadata?.org && (
-                  <div className="flex justify-between"><span className="text-slate-400">Organization:</span><span className="text-slate-300">{selectedNode.metadata.org}</span></div>
+                  <div className="flex justify-between"><span className="text-foreground-muted">Organization:</span><span className="text-foreground">{selectedNode.metadata.org}</span></div>
                 )}
                 {selectedNode.metadata?.is_proxy_vpn_tor && (
-                  <div className="p-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] text-center font-bold">
+                  <div className="p-1 rounded-control bg-danger-surface text-danger border border-danger-border text-[10px] text-center font-bold">
                     VPN / Proxy / Tor Infrastructure
                   </div>
                 )}
@@ -729,24 +747,24 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
             )}
 
             {selectedNode.type === 'Attachment' && (
-              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 text-xs font-mono">
-                <div className="flex justify-between"><span className="text-slate-400">Filename:</span><span className="text-slate-200 font-bold">{selectedNode.metadata?.filename || selectedNode.label}</span></div>
+              <div className="p-3 rounded-control bg-surface-secondary border border-border space-y-1.5 text-xs font-mono">
+                <div className="flex justify-between"><span className="text-foreground-muted">Filename:</span><span className="text-foreground font-bold">{selectedNode.metadata?.filename || selectedNode.label}</span></div>
                 {selectedNode.metadata?.mime_type && (
-                  <div className="flex justify-between"><span className="text-slate-400">MIME:</span><span className="text-slate-300">{selectedNode.metadata.mime_type}</span></div>
+                  <div className="flex justify-between"><span className="text-foreground-muted">MIME:</span><span className="text-foreground">{selectedNode.metadata.mime_type}</span></div>
                 )}
                 {selectedNode.metadata?.size_bytes !== undefined && (
-                  <div className="flex justify-between"><span className="text-slate-400">Size:</span><span className="text-slate-300">{Math.round(selectedNode.metadata.size_bytes / 1024)} KB</span></div>
+                  <div className="flex justify-between"><span className="text-foreground-muted">Size:</span><span className="text-foreground">{Math.round(selectedNode.metadata.size_bytes / 1024)} KB</span></div>
                 )}
                 {selectedNode.metadata?.sha256 && (
                   <div className="space-y-1 pt-1">
-                    <span className="text-slate-400 text-[10px]">SHA-256:</span>
-                    <div className="p-1.5 rounded bg-black/40 border border-slate-800 text-[10px] break-all select-all text-slate-300">
+                    <span className="text-foreground-muted text-[10px]">SHA-256:</span>
+                    <div className="p-1.5 rounded-control bg-surface border border-border text-[10px] break-all select-all text-foreground">
                       {selectedNode.metadata.sha256}
                     </div>
                   </div>
                 )}
                 {selectedNode.metadata?.is_dangerous_extension && (
-                  <div className="p-1.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] text-center font-bold">
+                  <div className="p-1.5 rounded-control bg-danger-surface text-danger border border-danger-border text-[10px] text-center font-bold">
                     Executable / High-Risk File Extension
                   </div>
                 )}
@@ -754,24 +772,24 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
             )}
 
             {selectedNode.type === 'Email' && (
-              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 text-xs font-mono">
-                <div className="flex justify-between"><span className="text-slate-400">Subject:</span><span className="text-slate-200 font-bold truncate max-w-[200px]">{selectedNode.metadata?.subject}</span></div>
+              <div className="p-3 rounded-control bg-surface-secondary border border-border space-y-1.5 text-xs font-mono">
+                <div className="flex justify-between"><span className="text-foreground-muted">Subject:</span><span className="text-foreground font-bold truncate max-w-[200px]">{selectedNode.metadata?.subject}</span></div>
                 {selectedNode.metadata?.threat_score !== undefined && (
-                  <div className="flex justify-between"><span className="text-slate-400">Threat Score:</span><span className="text-amber-400 font-bold">{selectedNode.metadata.threat_score}/100</span></div>
+                  <div className="flex justify-between"><span className="text-foreground-muted">Threat Score:</span><span className="text-warning font-bold">{selectedNode.metadata.threat_score}/100</span></div>
                 )}
                 {selectedNode.metadata?.severity && (
-                  <div className="flex justify-between"><span className="text-slate-400">Severity:</span><span className="uppercase text-slate-300">{selectedNode.metadata.severity}</span></div>
+                  <div className="flex justify-between"><span className="text-foreground-muted">Severity:</span><span className="uppercase text-foreground font-semibold">{selectedNode.metadata.severity}</span></div>
                 )}
                 {selectedNode.metadata?.ml_probability !== undefined && selectedNode.metadata?.ml_probability !== null && (
-                  <div className="flex justify-between"><span className="text-slate-400">ML Phish Prob:</span><span className="text-cyan-400">{Math.round(selectedNode.metadata.ml_probability * 100)}%</span></div>
+                  <div className="flex justify-between"><span className="text-foreground-muted">ML Phish Prob:</span><span className="text-primary">{Math.round(selectedNode.metadata.ml_probability * 100)}%</span></div>
                 )}
               </div>
             )}
 
             {/* Connected Relationships List */}
-            <div className="space-y-2 pt-2 border-t border-slate-800/80">
-              <h4 className="text-[11px] font-mono text-slate-300 font-bold uppercase tracking-wider flex items-center space-x-1.5">
-                <Share2 className="w-3.5 h-3.5 text-cyan-400" />
+            <div className="space-y-2 pt-2 border-t border-border">
+              <h4 className="text-[11px] font-mono text-foreground font-bold uppercase tracking-wider flex items-center space-x-1.5">
+                <Share2 className="w-3.5 h-3.5 text-primary" />
                 <span>Connected Forensic Links ({connectedInfo.outgoing.length + connectedInfo.incoming.length})</span>
               </h4>
 
@@ -780,13 +798,13 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
                   <div
                     key={edge.id}
                     onClick={() => node && focusNodeInCanvas(node.id)}
-                    className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800/80 border border-slate-800/60 cursor-pointer transition-colors space-y-0.5 text-xs font-mono"
+                    className="p-2 rounded-control bg-surface-secondary hover:bg-surface border border-border cursor-pointer transition-colors space-y-0.5 text-xs font-mono"
                   >
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-cyan-400 font-bold">{edge.label} →</span>
-                      <span className="text-slate-500">{node?.type}</span>
+                      <span className="text-primary font-bold">{edge.label} →</span>
+                      <span className="text-foreground-subtle">{node?.type}</span>
                     </div>
-                    <div className="text-slate-300 truncate font-semibold">{node?.label}</div>
+                    <div className="text-foreground truncate font-semibold">{node?.label}</div>
                   </div>
                 ))}
 
@@ -794,18 +812,18 @@ export const InvestigationGraphTab: React.FC<InvestigationGraphTabProps> = ({ em
                   <div
                     key={edge.id}
                     onClick={() => node && focusNodeInCanvas(node.id)}
-                    className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800/80 border border-slate-800/60 cursor-pointer transition-colors space-y-0.5 text-xs font-mono"
+                    className="p-2 rounded-control bg-surface-secondary hover:bg-surface border border-border cursor-pointer transition-colors space-y-0.5 text-xs font-mono"
                   >
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-purple-400 font-bold">← {edge.label}</span>
-                      <span className="text-slate-500">{node?.type}</span>
+                      <span className="text-primary font-bold">← {edge.label}</span>
+                      <span className="text-foreground-subtle">{node?.type}</span>
                     </div>
-                    <div className="text-slate-300 truncate font-semibold">{node?.label}</div>
+                    <div className="text-foreground truncate font-semibold">{node?.label}</div>
                   </div>
                 ))}
 
                 {!connectedInfo.outgoing.length && !connectedInfo.incoming.length && (
-                  <p className="text-[11px] font-mono text-slate-500 italic">No connected links for this node.</p>
+                  <p className="text-[11px] font-mono text-foreground-muted italic">No connected links for this node.</p>
                 )}
               </div>
             </div>

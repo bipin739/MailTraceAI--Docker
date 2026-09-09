@@ -54,7 +54,7 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
   const toDisplay = Array.isArray(email.to) ? email.to.join(', ') : email.to;
 
   return (
-    <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm space-y-6">
+    <div className="bg-surface rounded-card border border-border p-6 shadow-sm space-y-6">
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div className="flex flex-wrap items-center gap-3">
@@ -90,7 +90,7 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
             type="button"
             onClick={handleGenerateReport}
             disabled={isGeneratingReport}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-secondary hover:bg-surface border border-border text-foreground font-mono text-xs font-semibold transition-all btn-press disabled:opacity-50"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-control bg-surface-secondary hover:bg-surface border border-border text-foreground font-mono text-xs font-semibold transition-all btn-press disabled:opacity-50 cursor-pointer"
             title="Generate and download official PDF forensic evidence dossier"
           >
             {isGeneratingReport ? (
@@ -114,7 +114,7 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
             id="add-to-case-button"
             type="button"
             onClick={() => setIsCaseModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-secondary border border-border text-foreground font-mono text-xs font-semibold transition-all btn-press"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-control bg-surface hover:bg-surface-secondary border border-border text-foreground font-mono text-xs font-semibold transition-all btn-press cursor-pointer"
           >
             <Briefcase className="w-3.5 h-3.5 text-primary" />
             <span>Add to Case</span>
@@ -123,13 +123,13 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
             <CopyButton
               text={email.message_id}
               label="Copy Message ID"
-              className="px-3 py-1.5 bg-surface-secondary border border-border text-foreground hover:bg-surface"
+              className="px-3 py-1.5 bg-surface-secondary border border-border text-foreground hover:bg-surface rounded-control"
             />
           )}
           <button
             type="button"
             onClick={() => navigate('/analyze')}
-            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-mono text-xs font-semibold transition-all btn-press"
+            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-control bg-primary hover:bg-primary-hover text-primary-foreground font-mono text-xs font-semibold transition-all btn-press cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Analyze Another</span>
@@ -151,7 +151,7 @@ export const EmailSummaryHeader: React.FC<EmailSummaryHeaderProps> = ({ email })
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface-secondary/50 p-4 rounded-xl border border-border">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface-secondary/50 p-4 rounded-control border border-border">
           {/* From */}
           <div className="flex items-start space-x-3 min-w-0">
             <User className="w-4 h-4 text-primary mt-0.5 shrink-0" />

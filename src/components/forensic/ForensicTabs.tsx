@@ -29,7 +29,7 @@ export const ForensicTabs: React.FC<ForensicTabsProps> = ({
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1 p-1 bg-surface-secondary/70 rounded-xl border border-border">
+    <div className="flex flex-wrap items-center gap-1 p-1 bg-surface-secondary/70 rounded-control border border-border">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -37,7 +37,7 @@ export const ForensicTabs: React.FC<ForensicTabsProps> = ({
             key={tab.id}
             type="button"
             onClick={() => onTabChange(tab.id)}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-mono transition-all cursor-pointer ${
+            className={`flex items-center space-x-2 px-3 py-2 rounded-control text-xs font-mono transition-all cursor-pointer ${
               isActive
                 ? 'bg-surface text-foreground font-semibold border border-border shadow-xs'
                 : 'text-foreground-muted hover:text-foreground hover:bg-surface/50 border border-transparent'
@@ -49,7 +49,7 @@ export const ForensicTabs: React.FC<ForensicTabsProps> = ({
             <span>{tab.label}</span>
             {typeof tab.badge === 'number' && (
               <span
-                className={`ml-1 px-1.5 py-0.2 rounded text-[10px] font-mono border ${
+                className={`ml-1 px-1.5 py-0.2 rounded-control text-[10px] font-mono border ${
                   isActive
                     ? 'bg-surface-secondary text-foreground border-border font-bold'
                     : 'bg-surface-secondary/60 text-foreground-muted border-border/60'

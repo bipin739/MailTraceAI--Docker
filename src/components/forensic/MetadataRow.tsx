@@ -27,8 +27,8 @@ export const MetadataRow: React.FC<MetadataRowProps> = ({
   const isAvailable = formattedVal !== null;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-start justify-between py-2.5 px-3 rounded-lg border border-slate-800/80 bg-slate-950/40 hover:bg-slate-900/40 transition-colors gap-2">
-      <span className="text-xs font-mono font-semibold text-slate-400 min-w-[120px] shrink-0 pt-0.5">
+    <div className="flex flex-col sm:flex-row sm:items-start justify-between py-2.5 px-3 rounded-control border border-border bg-surface-secondary/40 hover:bg-surface-secondary/70 transition-colors gap-2">
+      <span className="text-xs font-mono font-semibold text-foreground-muted min-w-[120px] shrink-0 pt-0.5">
         {label}
       </span>
 
@@ -37,9 +37,9 @@ export const MetadataRow: React.FC<MetadataRowProps> = ({
           className={`text-xs break-all ${
             isAvailable
               ? isMonospace
-                ? 'font-mono text-slate-200'
-                : 'text-slate-200 font-sans'
-              : 'text-slate-500 italic font-mono'
+                ? 'font-mono text-foreground'
+                : 'text-foreground font-sans'
+              : 'text-foreground-subtle italic font-mono'
           }`}
         >
           {displayVal}

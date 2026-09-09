@@ -24,7 +24,7 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
       <TransmissionPathSection relayAnalysis={email.relay_analysis} />
 
       {/* Important Individual Headers */}
-      <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+      <div className="bg-surface p-5 rounded-card border border-border space-y-4 shadow-xs">
         <div className="flex items-center justify-between pb-2 border-b border-border">
           <div className="flex items-center space-x-2">
             <FileCode className="w-4 h-4 text-primary" />
@@ -48,7 +48,7 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
       </div>
 
       {/* Received Hops in Original Order */}
-      <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+      <div className="bg-surface p-5 rounded-card border border-border space-y-4 shadow-xs">
         <div className="flex items-center space-x-2 pb-2 border-b border-border">
           <Route className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
@@ -65,10 +65,10 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
             {receivedHops.map((hop, index) => (
               <div
                 key={index}
-                className="p-3.5 rounded-xl border border-border bg-surface-secondary/50 space-y-2 font-mono text-xs"
+                className="p-3.5 rounded-control border border-border bg-surface-secondary/50 space-y-2 font-mono text-xs"
               >
                 <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded bg-surface border border-border text-primary font-bold text-[11px]">
+                  <span className="px-2 py-0.5 rounded-control bg-surface border border-border text-primary font-bold text-[11px]">
                     Received Hop {index + 1}
                   </span>
                   <CopyButton text={hop} iconOnly />
@@ -83,11 +83,11 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
       </div>
 
       {/* Expandable View All Headers */}
-      <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="bg-surface rounded-card border border-border overflow-hidden shadow-xs">
         <button
           type="button"
           onClick={() => setShowAllHeaders(!showAllHeaders)}
-          className="w-full flex items-center justify-between p-4 bg-surface-secondary/40 hover:bg-surface-secondary text-left transition-colors"
+          className="w-full flex items-center justify-between p-4 bg-surface-secondary/40 hover:bg-surface-secondary text-left transition-colors cursor-pointer"
         >
           <div className="flex items-center space-x-2">
             <Key className="w-4 h-4 text-primary" />
@@ -110,7 +110,7 @@ export const HeadersTab: React.FC<HeadersTabProps> = ({ email }) => {
                 label="Copy Headers"
               />
             </div>
-            <pre className="p-4 rounded-xl bg-surface-secondary/70 border border-border font-mono text-xs text-foreground whitespace-pre-wrap break-all leading-relaxed max-h-96 overflow-y-auto">
+            <pre className="p-4 rounded-control bg-surface-secondary/70 border border-border font-mono text-xs text-foreground whitespace-pre-wrap break-all leading-relaxed max-h-96 overflow-y-auto">
 {`From: ${email.from || 'N/A'}
 To: ${Array.isArray(email.to) ? email.to.join(', ') : email.to || 'N/A'}
 Cc: ${Array.isArray(email.cc) ? email.cc.join(', ') : email.cc || 'N/A'}

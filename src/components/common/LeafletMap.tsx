@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useTheme } from '../../context/ThemeContext';
 
 export interface MapLocation {
   ip: string;
@@ -19,8 +20,14 @@ interface LeafletMapProps {
 }
 
 export const LeafletMap: React.FC<LeafletMapProps> = ({ locations, height = '360px' }) => {
+  const { isDark } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+
+  const tileUrl = isDark
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -33,12 +40,13 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({ locations, height = '360
         attributionControl: true
       });
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      const tileLayer = L.tileLayer(tileUrl, {
         maxZoom: 19,
         subdomains: 'abcd',
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
       }).addTo(map);
 
+      tileLayerRef.current = tileLayer;
       mapRef.current = map;
     }
 
@@ -113,12 +121,25 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({ locations, height = '360
     } else {
       map.fitBounds(bounds, { padding: [30, 30] });
     }
-  }, [locations]);
+  }, [locations, isDark, tileUrl]);
+
+  // Update tile layer when isDark changes
+  useEffect(() => {
+    if (mapRef.current && tileLayerRef.current) {
+      mapRef.current.removeLayer(tileLayerRef.current);
+      const newLayer = L.tileLayer(tileUrl, {
+        maxZoom: 19,
+        subdomains: 'abcd',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      }).addTo(mapRef.current);
+      tileLayerRef.current = newLayer;
+    }
+  }, [isDark, tileUrl]);
 
   return (
-    <div className="relative w-full rounded-xl overflow-hidden border border-slate-700/60 shadow-lg bg-slate-950">
+    <div className="relative w-full rounded-card overflow-hidden border border-border shadow-sm bg-surface">
       <div ref={containerRef} style={{ height }} className="w-full z-0" />
-      <div className="absolute bottom-2 left-2 z-10 bg-slate-900/90 text-slate-400 text-[10px] px-2.5 py-1 rounded border border-slate-700/50 backdrop-blur-sm">
+      <div className="absolute bottom-2 left-2 z-10 bg-surface/90 text-foreground-muted text-[10px] font-mono px-2.5 py-1 rounded-control border border-border backdrop-blur-sm">
         Observed infrastructure location estimates from IP allocation.
       </div>
     </div>

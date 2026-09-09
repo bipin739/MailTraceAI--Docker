@@ -105,24 +105,24 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
   return (
     <div className="space-y-6">
       {/* Security & Forensic Limitation Notice */}
-      <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 flex items-start gap-3 backdrop-blur-sm shadow-sm">
-        <Info className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-        <div className="text-xs leading-relaxed text-slate-300">
-          <span className="font-semibold text-slate-200">Domain Intelligence Safety Notice:</span>{' '}
+      <div className="p-4 rounded-xl bg-surface-secondary/70 border border-border flex items-start gap-3 backdrop-blur-sm shadow-xs">
+        <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+        <div className="text-xs leading-relaxed text-foreground-muted">
+          <span className="font-semibold text-foreground">Domain Intelligence Safety Notice:</span>{' '}
           All domain intelligence is resolved strictly via server-side DNS queries and RDAP registration endpoints. Target domain web servers are never contacted, website content is never loaded, and remote scripts are never executed.
         </div>
       </div>
 
       {/* Lookalike Findings Banner */}
       {lookalikeCount > 0 && (
-        <div className="p-4 rounded-xl bg-red-950/40 border border-red-800/70 flex items-start gap-3 backdrop-blur-sm shadow-md">
-          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-          <div className="text-xs leading-relaxed text-slate-200 space-y-1">
+        <div className="p-4 rounded-xl bg-danger-surface border border-danger-border flex items-start gap-3 backdrop-blur-sm shadow-xs">
+          <AlertTriangle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed text-foreground space-y-1">
             <div>
-              <span className="font-bold text-red-300 uppercase tracking-wider">Potential Brand Impersonation Alert:</span>{' '}
-              Found <strong className="text-red-400 font-bold">{lookalikeCount}</strong> domain{lookalikeCount !== 1 ? 's' : ''} exhibiting deceptive similarity or brand keyword abuse (e.g. character substitution, extra hyphens, or suspicious subdomains).
+              <span className="font-bold text-danger uppercase tracking-wider">Potential Brand Impersonation Alert:</span>{' '}
+              Found <strong className="text-danger font-bold">{lookalikeCount}</strong> domain{lookalikeCount !== 1 ? 's' : ''} exhibiting deceptive similarity or brand keyword abuse (e.g. character substitution, extra hyphens, or suspicious subdomains).
             </div>
-            <div className="text-[11px] text-slate-400 italic">
+            <div className="text-[11px] text-foreground-muted italic">
               Confidence Notice: Similarity observations indicate potential lookalike indicators and do not establish malicious intent as fact.
             </div>
           </div>
@@ -130,28 +130,28 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
       )}
 
       {/* Header Bar with Filters */}
-      <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 backdrop-blur-xl shadow-lg space-y-4">
+      <div className="bg-surface p-5 rounded-card border border-border shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-lg bg-cyan-950/60 border border-cyan-800/60 text-cyan-400">
+            <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary">
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                 Domain Infrastructure & Registration Intelligence
-                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-300 font-normal">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-normal">
                   {domainList.length} Domain{domainList.length !== 1 ? 's' : ''}
                 </span>
               </h3>
-              <p className="text-xs font-mono text-slate-400">DNS record sets, authoritative registration metadata, and brand lookalike detection</p>
+              <p className="text-xs font-mono text-foreground-muted">DNS record sets, authoritative registration metadata, and brand lookalike detection</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-mono flex-wrap">
+          <div className="flex items-center gap-1.5 bg-surface-secondary p-1 rounded-control border border-border text-xs font-mono flex-wrap">
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                filter === 'all' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer ${
+                filter === 'all' ? 'bg-surface text-foreground border border-border shadow-xs' : 'text-foreground-muted hover:text-foreground'
               }`}
             >
               All ({domainList.length})
@@ -159,8 +159,8 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
             {lookalikeCount > 0 && (
               <button
                 onClick={() => setFilter('lookalike')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                  filter === 'lookalike' ? 'bg-red-600 text-white shadow-sm' : 'text-red-400 hover:text-red-300 bg-red-950/30 border border-red-900/60'
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer ${
+                  filter === 'lookalike' ? 'bg-danger text-white shadow-xs' : 'text-danger hover:bg-danger-surface border border-danger/20'
                 }`}
               >
                 Impersonation ({lookalikeCount})
@@ -168,16 +168,16 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
             )}
             <button
               onClick={() => setFilter('new')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                filter === 'new' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer ${
+                filter === 'new' ? 'bg-surface text-foreground border border-border shadow-xs' : 'text-foreground-muted hover:text-foreground'
               }`}
             >
               New &lt; 30d ({domainList.filter(d => d.newly_registered_domain).length})
             </button>
             <button
               onClick={() => setFilter('resolvable')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                filter === 'resolvable' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer ${
+                filter === 'resolvable' ? 'bg-surface text-foreground border border-border shadow-xs' : 'text-foreground-muted hover:text-foreground'
               }`}
             >
               Resolvable ({domainList.filter(d => d.is_resolvable).length})
@@ -188,9 +188,9 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
 
       {/* Domain Cards Grid */}
       {filteredDomains.length === 0 ? (
-        <div className="p-8 text-center border border-dashed border-slate-800 rounded-xl space-y-2 bg-slate-950/40">
-          <Globe className="w-8 h-8 text-slate-600 mx-auto" />
-          <p className="text-xs font-mono text-slate-400 font-semibold">
+        <div className="p-8 text-center border border-dashed border-border rounded-xl space-y-2 bg-surface-secondary/40">
+          <Globe className="w-8 h-8 text-foreground-subtle mx-auto" />
+          <p className="text-xs font-mono text-foreground-muted font-semibold">
             No domains match the selected filter.
           </p>
         </div>
@@ -210,17 +210,17 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
             return (
               <div
                 key={item.domain}
-                className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all backdrop-blur-xl shadow-lg space-y-4"
+                className="bg-surface p-5 rounded-card border border-border hover:border-primary/40 transition-all shadow-xs space-y-4"
               >
                 {/* Domain Card Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-base font-mono font-bold text-slate-100 break-all">
+                      <span className="text-base font-mono font-bold text-foreground break-all">
                         {item.domain}
                       </span>
                       {item.punycode && (
-                        <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                        <span className="text-[11px] font-mono text-foreground-muted bg-surface-secondary px-2 py-0.5 rounded border border-border">
                           Punycode: {item.punycode}
                         </span>
                       )}
@@ -229,8 +229,8 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
                           item.is_resolvable
-                            ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80'
-                            : 'bg-rose-950/80 text-rose-300 border-rose-800/80'
+                            ? 'bg-success/10 text-success border-success/30'
+                            : 'bg-danger/10 text-danger border-danger/30'
                         }`}
                       >
                         {item.is_resolvable ? (
@@ -249,7 +249,7 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                       {/* Newly Registered Domain Observation Badge */}
                       {item.newly_registered_domain && (
                         <span
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950/90 text-amber-300 border border-amber-800/90"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-warning/15 text-warning border border-warning/30"
                           title="Neutral forensic observation: Domain registered within 30 days"
                         >
                           <Clock className="w-3 h-3" />
@@ -260,10 +260,10 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                       {/* Potential Brand Impersonation Badge */}
                       {item.lookalike && (
                         <span
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-950/90 text-red-300 border border-red-800/90"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-danger/10 text-danger border border-danger/30"
                           title={`Potential ${item.lookalike.brand_name} brand impersonation`}
                         >
-                          <ShieldAlert className="w-3 h-3 text-red-400" />
+                          <ShieldAlert className="w-3 h-3 text-danger" />
                           <span>Potential {item.lookalike.brand_name} Impersonation</span>
                         </span>
                       )}
@@ -275,40 +275,40 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
 
                 {/* Brand Impersonation Finding Card */}
                 {item.lookalike && (
-                  <div className="p-4 rounded-xl bg-red-950/30 border border-red-800/60 backdrop-blur-sm space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-red-800/40 pb-2">
+                  <div className="p-4 rounded-xl bg-danger-surface border border-danger-border space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-danger-border/60 pb-2">
                       <div className="flex items-center space-x-2">
-                        <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
-                        <span className="text-xs font-mono font-bold text-red-300 uppercase tracking-wider">
+                        <ShieldAlert className="w-4 h-4 text-danger shrink-0" />
+                        <span className="text-xs font-mono font-bold text-danger uppercase tracking-wider">
                           Potential {item.lookalike.brand_name} Impersonation
                         </span>
                       </div>
-                      <div className="flex items-center space-x-1.5 text-xs font-mono bg-red-950/80 px-2.5 py-1 rounded-lg border border-red-800/60">
-                        <span className="text-slate-400 text-[11px]">Similarity:</span>
-                        <span className="text-red-400 font-bold">{Math.round(item.lookalike.similarity * 100)}%</span>
+                      <div className="flex items-center space-x-1.5 text-xs font-mono bg-surface px-2.5 py-1 rounded-lg border border-danger-border">
+                        <span className="text-foreground-muted text-[11px]">Similarity:</span>
+                        <span className="text-danger font-bold">{Math.round(item.lookalike.similarity * 100)}%</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
-                      <div className="bg-slate-950/60 p-2.5 rounded-lg border border-red-950">
-                        <span className="text-[10px] uppercase text-slate-400 font-bold block mb-0.5">Observed domain</span>
-                        <span className="text-red-300 font-semibold break-all">{item.lookalike.domain}</span>
+                      <div className="bg-surface p-2.5 rounded-lg border border-danger-border/40">
+                        <span className="text-[10px] uppercase text-foreground-muted font-bold block mb-0.5">Observed domain</span>
+                        <span className="text-danger font-semibold break-all">{item.lookalike.domain}</span>
                       </div>
-                      <div className="bg-slate-950/60 p-2.5 rounded-lg border border-red-950">
-                        <span className="text-[10px] uppercase text-slate-400 font-bold block mb-0.5">Reference domain</span>
-                        <span className="text-emerald-400 font-semibold break-all">{item.lookalike.suspected_brand}</span>
+                      <div className="bg-surface p-2.5 rounded-lg border border-danger-border/40">
+                        <span className="text-[10px] uppercase text-foreground-muted font-bold block mb-0.5">Reference domain</span>
+                        <span className="text-success font-semibold break-all">{item.lookalike.suspected_brand}</span>
                       </div>
-                      <div className="bg-slate-950/60 p-2.5 rounded-lg border border-red-950">
-                        <span className="text-[10px] uppercase text-slate-400 font-bold block mb-0.5">Similarity</span>
-                        <span className="text-amber-300 font-semibold">{Math.round(item.lookalike.similarity * 100)}%</span>
+                      <div className="bg-surface p-2.5 rounded-lg border border-danger-border/40">
+                        <span className="text-[10px] uppercase text-foreground-muted font-bold block mb-0.5">Similarity</span>
+                        <span className="text-warning font-semibold">{Math.round(item.lookalike.similarity * 100)}%</span>
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-[10px] uppercase text-slate-400 font-bold block mb-1.5">Detected techniques</span>
+                      <span className="text-[10px] uppercase text-foreground-muted font-bold block mb-1.5">Detected techniques</span>
                       <div className="flex flex-wrap gap-1.5">
                         {item.lookalike.techniques.map((tech, idx) => (
-                          <span key={idx} className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-red-900/40 text-red-200 border border-red-700/60">
+                          <span key={idx} className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-danger/10 text-danger border border-danger/30">
                             {formatTechniqueName(tech)}
                           </span>
                         ))}
@@ -316,7 +316,7 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                     </div>
 
                     {item.lookalike.details && (
-                      <p className="text-[11px] font-mono text-slate-400 italic">
+                      <p className="text-[11px] font-mono text-foreground-muted italic">
                         {item.lookalike.details}
                       </p>
                     )}
@@ -326,44 +326,44 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                 {/* Registration Metadata Overview */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
                   {/* Domain Age */}
-                  <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 space-y-1">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-cyan-400" /> Domain Age
+                  <div className="bg-surface-secondary/50 p-3 rounded-xl border border-border space-y-1">
+                    <span className="text-foreground-muted text-[10px] uppercase font-bold flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-primary" /> Domain Age
                     </span>
-                    <p className={`font-semibold ${item.domain_age_days !== undefined && item.domain_age_days !== null ? 'text-cyan-300 text-sm font-bold' : 'text-slate-400 italic'}`}>
+                    <p className={`font-semibold ${item.domain_age_days !== undefined && item.domain_age_days !== null ? 'text-primary text-sm font-bold' : 'text-foreground-muted italic'}`}>
                       {ageDisplay}
                     </p>
                   </div>
 
                   {/* Registrar */}
-                  <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 space-y-1">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
-                      <Shield className="w-3 h-3 text-blue-400" /> Registrar
+                  <div className="bg-surface-secondary/50 p-3 rounded-xl border border-border space-y-1">
+                    <span className="text-foreground-muted text-[10px] uppercase font-bold flex items-center gap-1">
+                      <Shield className="w-3 h-3 text-primary" /> Registrar
                     </span>
-                    <p className="text-slate-200 font-semibold truncate" title={item.registration.registrar || 'Unavailable'}>
+                    <p className="text-foreground font-semibold truncate" title={item.registration.registrar || 'Unavailable'}>
                       {item.registration.registrar || 'Unavailable'}
                     </p>
-                    <span className="text-[10px] text-slate-400 block">
+                    <span className="text-[10px] text-foreground-muted block">
                       Source: {item.registration.registration_source || 'unavailable'}
                     </span>
                   </div>
 
                   {/* Registration Date */}
-                  <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 space-y-1">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-emerald-400" /> Registration Date
+                  <div className="bg-surface-secondary/50 p-3 rounded-xl border border-border space-y-1">
+                    <span className="text-foreground-muted text-[10px] uppercase font-bold flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-primary" /> Registration Date
                     </span>
-                    <p className="text-slate-300 font-semibold">
+                    <p className="text-foreground font-semibold">
                       {formatDate(item.registration.registration_date)}
                     </p>
                   </div>
 
                   {/* Expiration Date */}
-                  <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 space-y-1">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-purple-400" /> Expiration Date
+                  <div className="bg-surface-secondary/50 p-3 rounded-xl border border-border space-y-1">
+                    <span className="text-foreground-muted text-[10px] uppercase font-bold flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-primary" /> Expiration Date
                     </span>
-                    <p className="text-slate-300 font-semibold">
+                    <p className="text-foreground font-semibold">
                       {formatDate(item.registration.expiration_date)}
                     </p>
                   </div>
@@ -371,10 +371,10 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
 
                 {/* Delegated Nameservers */}
                 {item.registration.nameservers && item.registration.nameservers.length > 0 && (
-                  <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-800/80 text-xs font-mono flex flex-wrap items-center gap-2">
-                    <span className="text-slate-400 text-[11px] font-bold">Nameservers:</span>
+                  <div className="p-3 rounded-xl bg-surface-secondary/30 border border-border text-xs font-mono flex flex-wrap items-center gap-2">
+                    <span className="text-foreground-muted text-[11px] font-bold">Nameservers:</span>
                     {item.registration.nameservers.map((ns, idx) => (
-                      <span key={idx} className="px-2 py-0.5 rounded bg-slate-950 text-slate-300 border border-slate-800 text-[11px]">
+                      <span key={idx} className="px-2 py-0.5 rounded bg-surface text-foreground border border-border text-[11px]">
                         {ns}
                       </span>
                     ))}
@@ -382,42 +382,42 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                 )}
 
                 {/* DNS Records Section with Tabs */}
-                <div className="bg-slate-900/50 rounded-xl border border-slate-800/80 p-4 space-y-3">
-                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800/80 pb-2">
-                    <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                      <Server className="w-3.5 h-3.5 text-cyan-400" />
+                <div className="bg-surface-secondary/40 rounded-xl border border-border p-4 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-border pb-2">
+                    <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Server className="w-3.5 h-3.5 text-primary" />
                       Resolved DNS Records
                     </span>
 
-                    <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px] font-mono">
+                    <div className="flex items-center gap-1 bg-surface p-1 rounded-control border border-border text-[11px] font-mono">
                       <button
                         onClick={() => setActiveTabForDomain(item.domain, 'A')}
-                        className={`px-2.5 py-1 rounded font-bold transition-colors ${
-                          currentTab === 'A' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                        className={`px-2.5 py-1 rounded font-bold transition-colors cursor-pointer ${
+                          currentTab === 'A' ? 'bg-surface-secondary text-foreground border border-border' : 'text-foreground-muted hover:text-foreground'
                         }`}
                       >
                         A / AAAA ({item.dns.a.length + item.dns.aaaa.length})
                       </button>
                       <button
                         onClick={() => setActiveTabForDomain(item.domain, 'MX')}
-                        className={`px-2.5 py-1 rounded font-bold transition-colors ${
-                          currentTab === 'MX' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                        className={`px-2.5 py-1 rounded font-bold transition-colors cursor-pointer ${
+                          currentTab === 'MX' ? 'bg-surface-secondary text-foreground border border-border' : 'text-foreground-muted hover:text-foreground'
                         }`}
                       >
                         MX ({item.dns.mx.length})
                       </button>
                       <button
                         onClick={() => setActiveTabForDomain(item.domain, 'NS')}
-                        className={`px-2.5 py-1 rounded font-bold transition-colors ${
-                          currentTab === 'NS' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                        className={`px-2.5 py-1 rounded font-bold transition-colors cursor-pointer ${
+                          currentTab === 'NS' ? 'bg-surface-secondary text-foreground border border-border' : 'text-foreground-muted hover:text-foreground'
                         }`}
                       >
                         NS ({item.dns.ns.length})
                       </button>
                       <button
                         onClick={() => setActiveTabForDomain(item.domain, 'TXT')}
-                        className={`px-2.5 py-1 rounded font-bold transition-colors ${
-                          currentTab === 'TXT' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                        className={`px-2.5 py-1 rounded font-bold transition-colors cursor-pointer ${
+                          currentTab === 'TXT' ? 'bg-surface-secondary text-foreground border border-border' : 'text-foreground-muted hover:text-foreground'
                         }`}
                       >
                         TXT ({item.dns.txt.length})
@@ -430,18 +430,18 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                     {currentTab === 'A' && (
                       <div className="space-y-2">
                         {!hasA ? (
-                          <p className="text-slate-500 italic text-[11px]">No A or AAAA records returned.</p>
+                          <p className="text-foreground-subtle italic text-[11px]">No A or AAAA records returned.</p>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {item.dns.a.map((ip, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-200">
-                                <span><strong className="text-cyan-400">A:</strong> {ip}</span>
+                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-surface border border-border text-foreground">
+                                <span><strong className="text-primary">A:</strong> {ip}</span>
                                 <CopyButton text={ip} iconOnly />
                               </div>
                             ))}
                             {item.dns.aaaa.map((ip, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-200">
-                                <span><strong className="text-purple-400">AAAA:</strong> {ip}</span>
+                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-surface border border-border text-foreground">
+                                <span><strong className="text-primary">AAAA:</strong> {ip}</span>
                                 <CopyButton text={ip} iconOnly />
                               </div>
                             ))}
@@ -453,12 +453,12 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                     {currentTab === 'MX' && (
                       <div className="space-y-2">
                         {!hasMx ? (
-                          <p className="text-slate-500 italic text-[11px]">No MX mail exchanger records returned.</p>
+                          <p className="text-foreground-subtle italic text-[11px]">No MX mail exchanger records returned.</p>
                         ) : (
                           <div className="space-y-1.5">
                             {item.dns.mx.map((mx, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-200">
-                                <span className="break-all"><strong className="text-blue-400">MX:</strong> {mx}</span>
+                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-surface border border-border text-foreground">
+                                <span className="break-all"><strong className="text-primary">MX:</strong> {mx}</span>
                                 <CopyButton text={mx} iconOnly />
                               </div>
                             ))}
@@ -470,12 +470,12 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                     {currentTab === 'NS' && (
                       <div className="space-y-2">
                         {!hasNs ? (
-                          <p className="text-slate-500 italic text-[11px]">No authoritative NS records returned.</p>
+                          <p className="text-foreground-subtle italic text-[11px]">No authoritative NS records returned.</p>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {item.dns.ns.map((ns, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-200">
-                                <span><strong className="text-emerald-400">NS:</strong> {ns}</span>
+                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-surface border border-border text-foreground">
+                                <span><strong className="text-primary">NS:</strong> {ns}</span>
                                 <CopyButton text={ns} iconOnly />
                               </div>
                             ))}
@@ -487,12 +487,12 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
                     {currentTab === 'TXT' && (
                       <div className="space-y-2">
                         {!hasTxt ? (
-                          <p className="text-slate-500 italic text-[11px]">No TXT records returned.</p>
+                          <p className="text-foreground-subtle italic text-[11px]">No TXT records returned.</p>
                         ) : (
                           <div className="space-y-1.5">
                             {item.dns.txt.map((txt, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 gap-2">
-                                <span className="break-all text-[11px]"><strong className="text-amber-400">TXT:</strong> {txt}</span>
+                              <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-surface border border-border text-foreground gap-2">
+                                <span className="break-all text-[11px]"><strong className="text-primary">TXT:</strong> {txt}</span>
                                 <CopyButton text={txt} iconOnly />
                               </div>
                             ))}

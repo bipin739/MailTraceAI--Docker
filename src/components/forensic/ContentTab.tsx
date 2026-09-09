@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import type { EmailAnalysis } from '../../types/forensic';
 import { CopyButton } from './CopyButton';
 import { FileText, Code, ShieldAlert, Eye, BrainCircuit, Info } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 interface ContentTabProps {
   email: EmailAnalysis;
 }
 
 export const ContentTab: React.FC<ContentTabProps> = ({ email }) => {
+  const { isDark } = useTheme();
   const [activeSubTab, setActiveSubTab] = useState<'preview' | 'source'>('preview');
 
   const plainText = email.plain_text_body || 'No plain text content detected.';
@@ -22,7 +24,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({ email }) => {
 
   // Sanitize HTML body for sandboxed preview:
   // Strictly block script, iframe, object, embed, form, event handlers, and remote image loading
-  const createSafeSandboxDoc = (html: string): string => {
+  const createSafeSandboxDoc = (html: string, isDarkMode: boolean): string => {
     let sanitized = html
       // 1. Strip dangerous tags
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
@@ -50,20 +52,14 @@ export const ContentTab: React.FC<ContentTabProps> = ({ email }) => {
 <style>
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #334155;
-    background-color: #f8fafc;
+    color: ${isDarkMode ? '#e2e8f0' : '#1e293b'};
+    background-color: ${isDarkMode ? '#0b0f17' : '#ffffff'};
     padding: 16px;
     line-height: 1.6;
     word-break: break-word;
   }
-  @media (prefers-color-scheme: dark) {
-    body {
-      color: #e2e8f0;
-      background-color: #0f1210;
-    }
-  }
   a {
-    color: #64748b !important;
+    color: ${isDarkMode ? '#38bdf8' : '#0284c7'} !important;
     text-decoration: underline !important;
     pointer-events: none !important;
     cursor: not-allowed !important;
@@ -72,10 +68,10 @@ export const ContentTab: React.FC<ContentTabProps> = ({ email }) => {
     display: inline-block;
     padding: 4px 8px;
     margin: 4px 0;
-    border: 1px dashed #94a3b8;
+    border: 1px dashed ${isDarkMode ? '#475569' : '#94a3b8'};
     border-radius: 4px;
-    background: rgba(148, 163, 184, 0.1);
-    color: #64748b;
+    background: ${isDarkMode ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.8)'};
+    color: ${isDarkMode ? '#94a3b8' : '#64748b'};
     font-size: 11px;
     font-family: monospace;
   }
@@ -93,14 +89,14 @@ ${sanitized}
   return (
     <div className="space-y-6">
       {/* Section 11: Content ML Assessment Header Banner */}
-      <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+      <div className="bg-surface p-5 rounded-card border border-border space-y-4 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-border gap-2">
           <div className="flex items-center space-x-2">
             <BrainCircuit className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-mono font-bold text-foreground uppercase tracking-wider">
               Content ML Assessment
             </h3>
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-surface-secondary border border-border text-foreground-muted">
+            <span className="px-2 py-0.5 rounded-control text-[10px] font-mono bg-surface-secondary border border-border text-foreground-muted">
               TF-IDF + Logistic Regression
             </span>
           </div>
@@ -114,7 +110,7 @@ ${sanitized}
 
         {resolvedProbability !== null ? (
           <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-surface-secondary/50 border border-border">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-control bg-surface-secondary/50 border border-border">
               <div className="flex items-baseline space-x-3">
                 <span className="text-xs font-mono text-foreground-muted">
                   Phishing probability:
@@ -148,7 +144,7 @@ ${sanitized}
                   {email.ml_assessment.top_features.map((feat, idx) => (
                     <span
                       key={idx}
-                      className="px-2 py-0.5 rounded text-[10px] font-mono bg-surface border border-border text-foreground"
+                      className="px-2 py-0.5 rounded-control text-[10px] font-mono bg-surface border border-border text-foreground"
                     >
                       {feat}
                     </span>
@@ -173,7 +169,7 @@ ${sanitized}
               </div>
             </div>
 
-            <div className="p-2.5 rounded-lg bg-surface-secondary/60 border border-border text-[11px] font-mono text-foreground-muted flex items-start space-x-2">
+            <div className="p-2.5 rounded-control bg-surface-secondary/60 border border-border text-[11px] font-mono text-foreground-muted flex items-start space-x-2">
               <Info className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
               <span>
                 <strong className="text-foreground">Model Scope:</strong> "ML content assessment" isolates lexical and language patterns in the email text alone. It serves as an auxiliary signal and is clearly distinguished from the deterministic "Overall threat score", which aggregates forensic authentication, server relays, URLs, and lookalikes with a bounded ML weighting.
@@ -181,7 +177,7 @@ ${sanitized}
             </div>
           </div>
         ) : (
-          <div className="p-3 rounded-lg bg-surface-secondary/40 border border-border text-xs font-mono text-foreground-muted flex items-center space-x-2">
+          <div className="p-3 rounded-control bg-surface-secondary/40 border border-border text-xs font-mono text-foreground-muted flex items-center space-x-2">
             <Info className="w-4 h-4 text-foreground-subtle shrink-0" />
             <span>ML Content Assessment unavailable or email body empty. Forensic inspection remains fully functional.</span>
           </div>
@@ -189,7 +185,7 @@ ${sanitized}
       </div>
 
       {/* Sub-Section 1: Plain Text Body */}
-      <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+      <div className="bg-surface p-5 rounded-card border border-border space-y-4 shadow-sm">
         <div className="flex items-center justify-between pb-2 border-b border-border">
           <div className="flex items-center space-x-2">
             <FileText className="w-4 h-4 text-primary" />
@@ -202,13 +198,13 @@ ${sanitized}
           )}
         </div>
 
-        <div className="p-4 rounded-xl bg-surface-secondary/50 border border-border font-mono text-xs text-foreground whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">
+        <div className="p-4 rounded-control bg-surface-secondary/50 border border-border font-mono text-xs text-foreground whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">
           {plainText}
         </div>
       </div>
 
       {/* Sub-Section 2: HTML Body */}
-      <div className="bg-surface p-5 rounded-2xl border border-border space-y-4 shadow-xs">
+      <div className="bg-surface p-5 rounded-card border border-border space-y-4 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-border gap-2">
           <div className="flex items-center space-x-2">
             <Code className="w-4 h-4 text-primary" />
@@ -218,11 +214,11 @@ ${sanitized}
           </div>
 
           <div className="flex items-center space-x-2">
-            <div className="flex items-center bg-surface-secondary p-1 rounded-lg border border-border text-xs font-mono">
+            <div className="flex items-center bg-surface-secondary p-1 rounded-control border border-border text-xs font-mono">
               <button
                 type="button"
                 onClick={() => setActiveSubTab('preview')}
-                className={`flex items-center space-x-1 px-3 py-1 rounded-md transition-colors ${
+                className={`flex items-center space-x-1 px-3 py-1 rounded-control transition-colors cursor-pointer ${
                   activeSubTab === 'preview'
                     ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
                     : 'text-foreground-muted hover:text-foreground'
@@ -234,7 +230,7 @@ ${sanitized}
               <button
                 type="button"
                 onClick={() => setActiveSubTab('source')}
-                className={`flex items-center space-x-1 px-3 py-1 rounded-md transition-colors ${
+                className={`flex items-center space-x-1 px-3 py-1 rounded-control transition-colors cursor-pointer ${
                   activeSubTab === 'source'
                     ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
                     : 'text-foreground-muted hover:text-foreground'
@@ -252,7 +248,7 @@ ${sanitized}
         </div>
 
         {/* Security Warning Notice */}
-        <div className="flex items-center space-x-2 p-2.5 rounded-lg bg-surface-secondary border border-border text-[11px] font-mono text-foreground-muted">
+        <div className="flex items-center space-x-2 p-2.5 rounded-control bg-surface-secondary border border-border text-[11px] font-mono text-foreground-muted">
           <ShieldAlert className="w-4 h-4 text-warning shrink-0" />
           <span>
             Security Active: HTML scripts, event handlers, and automatic remote image fetches are strictly isolated.
@@ -264,16 +260,16 @@ ${sanitized}
             No HTML body content present in this email.
           </p>
         ) : activeSubTab === 'preview' ? (
-          <div className="rounded-xl border border-border overflow-hidden bg-surface-secondary/70 min-h-[250px]">
+          <div className="rounded-control border border-border overflow-hidden bg-surface-secondary/70 min-h-[250px]">
             <iframe
               title="Safe Email HTML Preview"
-              srcDoc={createSafeSandboxDoc(htmlBody)}
+              srcDoc={createSafeSandboxDoc(htmlBody, isDark)}
               sandbox=""
               className="w-full h-80 border-0"
             />
           </div>
         ) : (
-          <pre className="p-4 rounded-xl bg-surface-secondary/70 border border-border font-mono text-xs text-foreground whitespace-pre-wrap break-all leading-relaxed max-h-96 overflow-y-auto">
+          <pre className="p-4 rounded-control bg-surface-secondary/70 border border-border font-mono text-xs text-foreground whitespace-pre-wrap break-all leading-relaxed max-h-96 overflow-y-auto">
             {htmlBody}
           </pre>
         )}

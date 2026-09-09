@@ -16,14 +16,17 @@ import {
 import type { EmailAnalysis } from '../../types/forensic';
 import type { InfrastructureMapNode } from '../../types/map';
 import { extractInfrastructureMapData } from '../../utils/mapHelper';
+import { useTheme } from '../../context/ThemeContext';
 
 interface InvestigationMapTabProps {
   email: EmailAnalysis;
 }
 
 export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email }) => {
+  const { isDark } = useTheme();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markersMapRef = useRef<Map<string, L.Marker>>(new Map());
   const routeLayerRef = useRef<L.Polyline | null>(null);
 
@@ -104,21 +107,36 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
       attributionControl: true
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    const initialTileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    const tileLayer = L.tileLayer(initialTileUrl, {
       maxZoom: 19,
       subdomains: 'abcd',
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
     }).addTo(map);
 
+    tileLayerRef.current = tileLayer;
     mapInstanceRef.current = map;
 
     return () => {
       map.remove();
       mapInstanceRef.current = null;
+      tileLayerRef.current = null;
     };
   }, []);
 
-  // Update Markers and Route on data or filter change
+  // Update tile layer whenever theme mode changes
+  useEffect(() => {
+    if (!mapInstanceRef.current || !tileLayerRef.current) return;
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    tileLayerRef.current.setUrl(tileUrl);
+  }, [isDark]);
+
+  // Update Markers and Route on data or filter or theme change
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -136,7 +154,7 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
     // 1. Draw Polyline for Observed Infrastructure Route
     if (showRoute && mapData.route_path.length >= 2) {
       const polyline = L.polyline(mapData.route_path, {
-        color: '#06b6d4', // Cyan
+        color: '#06b6d4', // Primary Cyan
         weight: 3,
         opacity: 0.85,
         dashArray: '6, 8',
@@ -145,7 +163,7 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
       }).addTo(map);
 
       polyline.bindTooltip(
-        '<div style="font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700; color: #06b6d4; background: #020617; padding: 3px 8px; border-radius: 6px; border: 1px solid #0891b2;">Observed infrastructure route</div>',
+        `<div style="font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700; color: ${isDark ? '#06b6d4' : '#0891b2'}; background: ${isDark ? '#020617' : '#ffffff'}; padding: 3px 8px; border-radius: 6px; border: 1px solid ${isDark ? '#0891b2' : '#06b6d4'};">Observed infrastructure route</div>`,
         { sticky: true, className: 'route-tooltip' }
       );
 
@@ -202,27 +220,34 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
         popupAnchor: [0, -14]
       });
 
-      // HTML Popup content
+      // HTML Popup content adapting to theme
+      const popupBg = isDark ? '#0b0f17' : '#ffffff';
+      const popupBorder = isDark ? '#1e293b' : '#e2e8f0';
+      const popupText = isDark ? '#f1f5f9' : '#0f172a';
+      const popupMuted = isDark ? '#94a3b8' : '#64748b';
+      const popupIp = isDark ? '#38bdf8' : '#0284c7';
+      const popupSubBorder = isDark ? '#1e293b' : '#f1f5f9';
+
       const popupHtml = `
-        <div style="color: #f1f5f9; background: #090d16; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; min-width: 220px; padding: 8px; border-radius: 10px; border: 1px solid #1e293b;">
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 6px; margin-bottom: 6px;">
-            <span style="font-family: ui-monospace, monospace; font-weight: 700; font-size: 13px; color: #38bdf8;">${node.ip}</span>
+        <div style="color: ${popupText}; background: ${popupBg}; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; min-width: 220px; padding: 8px; border-radius: 8px; border: 1px solid ${popupBorder}; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid ${popupSubBorder}; padding-bottom: 6px; margin-bottom: 6px;">
+            <span style="font-family: ui-monospace, monospace; font-weight: 700; font-size: 13px; color: ${popupIp};">${node.ip}</span>
             <span style="font-family: ui-monospace, monospace; font-size: 9px; text-transform: uppercase; font-weight: 700; padding: 2px 6px; border-radius: 4px; ${
-              node.is_earliest ? 'background: #4c0519; color: #f43f5e;' :
-              node.role === 'relay_node' ? 'background: #172554; color: #60a5fa;' :
-              'background: #164e63; color: #22d3ee;'
+              node.is_earliest ? 'background: rgba(225, 29, 72, 0.15); color: #e11d48; border: 1px solid rgba(225, 29, 72, 0.3);' :
+              node.role === 'relay_node' ? 'background: rgba(37, 99, 235, 0.15); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.3);' :
+              'background: rgba(8, 145, 178, 0.15); color: #0891b2; border: 1px solid rgba(8, 145, 178, 0.3);'
             }">
               ${node.role_label}
             </span>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #cbd5e1;">
-            <div><strong style="color: #94a3b8;">Location:</strong> ${[node.city, node.region, node.country].filter(Boolean).join(', ') || 'Unknown'}</div>
-            <div><strong style="color: #94a3b8;">ASN:</strong> <span style="font-family: ui-monospace, monospace; color: #38bdf8;">${node.asn || 'N/A'}</span></div>
-            <div style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><strong style="color: #94a3b8;">Org:</strong> ${node.organization || 'N/A'}</div>
+          <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: ${popupText};">
+            <div><strong style="color: ${popupMuted};">Location:</strong> ${[node.city, node.region, node.country].filter(Boolean).join(', ') || 'Unknown'}</div>
+            <div><strong style="color: ${popupMuted};">ASN:</strong> <span style="font-family: ui-monospace, monospace; color: ${popupIp};">${node.asn || 'N/A'}</span></div>
+            <div style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><strong style="color: ${popupMuted};">Org:</strong> ${node.organization || 'N/A'}</div>
           </div>
 
-          <div style="margin-top: 8px; padding-top: 4px; border-top: 1px solid #1e293b; font-family: ui-monospace, monospace; font-size: 9px; color: #64748b; display: flex; justify-content: space-between;">
+          <div style="margin-top: 8px; padding-top: 4px; border-top: 1px solid ${popupSubBorder}; font-family: ui-monospace, monospace; font-size: 9px; color: ${popupMuted}; display: flex; justify-content: space-between;">
             <span>Estimated coords:</span>
             <span>${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)}</span>
           </div>
@@ -230,7 +255,7 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
       `;
 
       const marker = L.marker([node.latitude, node.longitude], { icon: customIcon }).addTo(map);
-      marker.bindPopup(popupHtml, { className: 'dark-leaflet-popup' });
+      marker.bindPopup(popupHtml, { className: 'theme-leaflet-popup' });
 
       marker.on('click', () => {
         setSelectedNodeId(node.id);
@@ -244,24 +269,24 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
     } else {
       map.fitBounds(bounds, { padding: [40, 40] });
     }
-  }, [filteredNodes, showRoute, mapData]);
+  }, [filteredNodes, showRoute, mapData, isDark]);
 
   return (
     <div className="space-y-4">
       {/* Header Controls Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl shadow-xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-card bg-surface border border-border shadow-sm">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+          <div className="w-10 h-10 rounded-control bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
             <Globe className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+            <h2 className="text-base font-bold text-foreground flex items-center space-x-2">
               <span>Investigation Infrastructure Map</span>
-              <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-700/60">
+              <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-primary/10 text-primary border border-primary/20">
                 {mapData.total_geolocated} of {mapData.total_public_ips} Public IPs Geolocated
               </span>
             </h2>
-            <p className="text-xs text-slate-400 font-mono">
+            <p className="text-xs text-foreground-muted font-mono">
               Geographic topology of observed email transmission relays and indicators
             </p>
           </div>
@@ -270,15 +295,15 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
         {/* Route Path Toggle and Reset Controls */}
         <div className="flex flex-wrap items-center gap-3">
           {mapData.route_path.length >= 2 && (
-            <label className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300 cursor-pointer hover:border-cyan-500/40 transition-colors select-none">
+            <label className="flex items-center space-x-2 px-3 py-1.5 rounded-control bg-surface-secondary border border-border text-xs font-mono text-foreground cursor-pointer hover:border-primary/40 transition-colors select-none">
               <input
                 type="checkbox"
                 checked={showRoute}
                 onChange={e => setShowRoute(e.target.checked)}
-                className="w-3.5 h-3.5 rounded bg-slate-950 border-slate-700 text-cyan-500 focus:ring-0 cursor-pointer"
+                className="w-3.5 h-3.5 rounded bg-surface border-border text-primary focus:ring-0 cursor-pointer"
               />
               <span className="flex items-center space-x-1.5">
-                <span className="w-2 h-0.5 bg-cyan-400 inline-block" />
+                <span className="w-2 h-0.5 bg-primary inline-block" />
                 <span>Observed infrastructure route</span>
               </span>
             </label>
@@ -287,9 +312,9 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
           <button
             type="button"
             onClick={handleResetBounds}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-mono text-slate-300 transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-control bg-surface-secondary hover:bg-surface border border-border text-xs font-mono text-foreground transition-colors cursor-pointer"
           >
-            <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
+            <Maximize2 className="w-3.5 h-3.5 text-primary" />
             <span>Fit Bounds</span>
           </button>
         </div>
@@ -298,13 +323,13 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
       {/* Main Workspace: Left Map + Right Infrastructure Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* MAP CONTAINER (Left 8 cols on lg) */}
-        <div className="lg:col-span-8 bg-slate-950/80 rounded-2xl border border-slate-800 overflow-hidden shadow-xl flex flex-col relative">
+        <div className="lg:col-span-8 bg-surface rounded-card border border-border overflow-hidden shadow-sm flex flex-col relative">
           {mapData.nodes.length === 0 ? (
             <div className="h-[540px] flex flex-col items-center justify-center p-8 text-center space-y-3">
-              <Globe className="w-12 h-12 text-slate-600 animate-pulse" />
+              <Globe className="w-12 h-12 text-foreground-muted animate-pulse" />
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-slate-300">No Geolocated Public Infrastructure</h3>
-                <p className="text-xs text-slate-500 max-w-md font-mono">
+                <h3 className="text-sm font-bold text-foreground">No Geolocated Public Infrastructure</h3>
+                <p className="text-xs text-foreground-muted max-w-md font-mono">
                   All IP addresses identified in this email are private (RFC 1918), loopback, or lack public geolocation provider records.
                 </p>
               </div>
@@ -314,18 +339,18 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
               <div ref={mapContainerRef} className="w-full h-full z-0" />
 
               {/* Map Overlay Badge */}
-              <div className="absolute top-3 left-12 z-10 bg-slate-950/90 border border-slate-800 px-3 py-1.5 rounded-xl backdrop-blur-md shadow-lg flex items-center space-x-2 text-xs font-mono">
+              <div className="absolute top-3 left-12 z-10 bg-surface/95 border border-border px-3 py-1.5 rounded-control backdrop-blur-md shadow-md flex items-center space-x-3 text-xs font-mono">
                 <div className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                  <span className="text-[10px] text-slate-300">Earliest Node</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-danger" />
+                  <span className="text-[10px] text-foreground-muted">Earliest Node</span>
                 </div>
                 <div className="flex items-center space-x-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                  <span className="text-[10px] text-slate-300">Relay Node</span>
+                  <span className="text-[10px] text-foreground-muted">Relay Node</span>
                 </div>
                 <div className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
-                  <span className="text-[10px] text-slate-300">Indicator IP</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+                  <span className="text-[10px] text-foreground-muted">Indicator IP</span>
                 </div>
               </div>
             </div>
@@ -333,21 +358,21 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
         </div>
 
         {/* RIGHT INFRASTRUCTURE INSPECTOR PANEL (Right 4 cols on lg) */}
-        <div className="lg:col-span-4 bg-slate-900/90 rounded-2xl border border-slate-800 p-4 shadow-xl flex flex-col h-[540px] space-y-3.5">
+        <div className="lg:col-span-4 bg-surface rounded-card border border-border p-4 shadow-sm flex flex-col h-[540px] space-y-3.5">
           {/* Panel Header & Filter Buttons */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-1.5">
-                <Server className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider flex items-center space-x-1.5">
+                <Server className="w-3.5 h-3.5 text-primary" />
                 <span>Observed Nodes</span>
               </span>
-              <span className="text-[11px] font-mono text-slate-400">
+              <span className="text-[11px] font-mono text-foreground-muted">
                 {filteredNodes.length} shown
               </span>
             </div>
 
             {/* Filter Pills */}
-            <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-[11px] font-mono">
+            <div className="flex rounded-control bg-surface-secondary p-1 border border-border text-[11px] font-mono">
               {[
                 { id: 'all' as const, label: 'All' },
                 { id: 'earliest' as const, label: 'Earliest' },
@@ -358,10 +383,10 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveFilter(tab.id)}
-                  className={`flex-1 py-1 rounded-lg transition-all text-center ${
+                  className={`flex-1 py-1 rounded-control transition-all text-center cursor-pointer ${
                     activeFilter === tab.id
-                      ? 'bg-cyan-600/30 text-cyan-300 font-bold border border-cyan-500/40 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-surface text-primary font-bold border border-border shadow-xs'
+                      : 'text-foreground-muted hover:text-foreground'
                   }`}
                 >
                   {tab.label}
@@ -371,13 +396,13 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
 
             {/* Search Input */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-2.5" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Filter by IP, country, or org..."
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 font-mono focus:outline-none focus:border-cyan-500"
+                className="w-full pl-8 pr-3 py-1.5 bg-surface-secondary border border-border rounded-control text-xs text-foreground placeholder:text-foreground-subtle font-mono focus:outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -385,7 +410,7 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
           {/* Node Cards Scrollable List */}
           <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
             {filteredNodes.length === 0 ? (
-              <div className="py-12 text-center text-slate-500 text-xs font-mono">
+              <div className="py-12 text-center text-foreground-muted text-xs font-mono">
                 No nodes match the selected criteria.
               </div>
             ) : (
@@ -395,52 +420,52 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
                   <div
                     key={node.id}
                     onClick={() => handleSelectNode(node)}
-                    className={`p-3 rounded-xl border cursor-pointer transition-all space-y-2 ${
+                    className={`p-3 rounded-control border cursor-pointer transition-all space-y-2 ${
                       isSelected
-                        ? 'bg-cyan-950/30 border-cyan-500/80 shadow-[0_0_12px_rgba(6,182,212,0.15)]'
-                        : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
+                        ? 'bg-primary/10 border-primary shadow-xs'
+                        : 'bg-surface-secondary/40 border-border hover:bg-surface-secondary/80'
                     }`}
                   >
                     {/* Node Card Header */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center space-x-1.5 min-w-0">
-                        <span className="font-mono text-xs font-bold text-slate-200 truncate">
+                        <span className="font-mono text-xs font-bold text-foreground truncate">
                           {node.ip}
                         </span>
                         <button
                           type="button"
                           onClick={e => handleCopy(node.ip, e)}
-                          className="p-1 text-slate-500 hover:text-slate-300 rounded"
+                          className="p-1 text-foreground-muted hover:text-foreground rounded cursor-pointer"
                           title="Copy IP"
                         >
                           {copiedIp === node.ip ? (
-                            <Check className="w-3 h-3 text-emerald-400" />
+                            <Check className="w-3 h-3 text-success" />
                           ) : (
                             <Copy className="w-3 h-3" />
                           )}
                         </button>
                       </div>
 
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider shrink-0 ${
+                      <span className={`px-2 py-0.5 rounded-control text-[9px] font-mono font-bold uppercase tracking-wider shrink-0 ${
                         node.is_earliest
-                          ? 'bg-rose-950 text-rose-300 border border-rose-800'
+                          ? 'bg-danger-surface text-danger border border-danger-border'
                           : node.role === 'relay_node'
-                          ? 'bg-blue-950 text-blue-300 border border-blue-800'
-                          : 'bg-cyan-950 text-cyan-300 border border-cyan-800'
+                          ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                          : 'bg-primary/10 text-primary border border-primary/20'
                       }`}>
                         {node.role_label}
                       </span>
                     </div>
 
                     {/* Geolocation Details */}
-                    <div className="text-[11px] text-slate-400 font-mono space-y-0.5">
+                    <div className="text-[11px] text-foreground-muted font-mono space-y-0.5">
                       <div className="flex items-center space-x-1 truncate">
-                        <MapPin className="w-3 h-3 text-cyan-400 shrink-0" />
+                        <MapPin className="w-3 h-3 text-primary shrink-0" />
                         <span className="truncate">
                           {[node.city, node.country].filter(Boolean).join(', ') || 'Unknown Location'}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-[10px] text-slate-500">
+                      <div className="flex items-center justify-between text-[10px] text-foreground-subtle">
                         <span>{node.asn || 'ASN: N/A'}</span>
                         <span className="truncate max-w-[140px] text-right">{node.organization || 'N/A'}</span>
                       </div>
@@ -450,13 +475,13 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
                     {(node.is_hosting || node.is_proxy_vpn_tor) && (
                       <div className="flex items-center gap-1.5 pt-1">
                         {node.is_hosting && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-blue-950/80 text-blue-300 border border-blue-800 flex items-center space-x-1">
+                          <span className="px-1.5 py-0.2 rounded-control text-[9px] font-mono bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center space-x-1">
                             <Cloud className="w-2.5 h-2.5" />
                             <span>Hosting</span>
                           </span>
                         )}
                         {node.is_proxy_vpn_tor && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-rose-950/80 text-rose-300 border border-rose-800 flex items-center space-x-1">
+                          <span className="px-1.5 py-0.2 rounded-control text-[9px] font-mono bg-danger-surface text-danger border border-danger-border flex items-center space-x-1">
                             <Lock className="w-2.5 h-2.5" />
                             <span>VPN/Tor</span>
                           </span>
@@ -472,14 +497,14 @@ export const InvestigationMapTab: React.FC<InvestigationMapTabProps> = ({ email 
       </div>
 
       {/* Geolocation Confidence & Privacy Notice */}
-      <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-start gap-3 backdrop-blur-sm text-xs text-slate-400 font-mono">
-        <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+      <div className="p-4 rounded-card bg-surface border border-border flex items-start gap-3 shadow-xs text-xs text-foreground-muted font-mono">
+        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <span className="font-bold text-slate-300">
+          <span className="font-bold text-foreground">
             Geolocation Confidence & Infrastructure Route Notice:
           </span>
-          <p className="text-[11px] leading-relaxed text-slate-400">
-            Coordinates represent coarse city/regional estimates based on public IP registry allocations. They reflect network infrastructure routing nodes and do not establish street-level physical locations or the personal identity of the sender. The observed route sequence reflects email relay hops and is labeled exclusively as an <strong className="text-cyan-300 font-bold">observed infrastructure route</strong>.
+          <p className="text-[11px] leading-relaxed text-foreground-muted">
+            Coordinates represent coarse city/regional estimates based on public IP registry allocations. They reflect network infrastructure routing nodes and do not establish street-level physical locations or the personal identity of the sender. The observed route sequence reflects email relay hops and is labeled exclusively as an <strong className="text-primary font-bold">observed infrastructure route</strong>.
           </p>
         </div>
       </div>
