@@ -1,0 +1,8 @@
+# Vercel Ignore Configuration
+# Ignore backend directory and non-frontend infrastructure from Vercel deployments
+backend/
+Dockerfile
+compose.yaml
+nginx.conf
+alembic.ini
+docs/
