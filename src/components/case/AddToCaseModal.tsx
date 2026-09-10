@@ -8,6 +8,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import { Badge } from '../ui/Badge';
+import { API_BASE_URL } from '../../config/api';
 
 interface AddToCaseModalProps {
   email: EmailAnalysis;
@@ -46,7 +47,7 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
   const fetchCases = useCallback(async () => {
     setLoadingCases(true);
     try {
-      const res = await fetch('http://localhost:8000/api/cases?limit=100');
+      const res = await fetch(`${API_BASE_URL}/api/cases?limit=100`);
       if (res.ok) {
         const data = await res.json();
         const caseList = data.cases || [];
@@ -150,7 +151,7 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
 
     try {
       const payload = getEmailPayload();
-      const res = await fetch(`http://localhost:8000/api/cases/${selectedCaseId}/emails`, {
+      const res = await fetch(`${API_BASE_URL}/api/cases/${selectedCaseId}/emails`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -187,7 +188,7 @@ export const AddToCaseModal: React.FC<AddToCaseModalProps> = ({ email, isOpen, o
       const emailPayload = getEmailPayload();
 
       // Create Case with initial_email atomically
-      const createRes = await fetch('http://localhost:8000/api/cases', {
+      const createRes = await fetch(`${API_BASE_URL}/api/cases`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

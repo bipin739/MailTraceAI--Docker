@@ -33,6 +33,7 @@ import {
 } from 'recharts';
 import type { DashboardSummary } from '../types/dashboard';
 import { useTheme } from '../context/ThemeContext';
+import { API_BASE_URL } from '../config/api';
 
 const STATUS_CONFIG: Record<string, { label: string; badge: string }> = {
   open: { label: 'Open', badge: 'bg-surface-secondary text-foreground border-border' },
@@ -102,7 +103,7 @@ export const Dashboard: React.FC = () => {
     setError(null);
 
     try {
-      const res = await fetch('http://localhost:8000/api/dashboard/summary?days=30&recent_limit=5');
+      const res = await fetch(`${API_BASE_URL}/api/dashboard/summary?days=30&recent_limit=5`);
       if (!res.ok) {
         throw new Error(`Failed to load dashboard telemetry: HTTP ${res.status}`);
       }

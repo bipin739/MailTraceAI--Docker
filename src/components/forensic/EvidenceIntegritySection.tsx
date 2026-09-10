@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { EmailAnalysis, InvestigationTimelineItem } from '../../types/forensic';
 import { CopyButton } from './CopyButton';
+import { API_BASE_URL } from '../../config/api';
 
 interface EvidenceIntegritySectionProps {
   email: EmailAnalysis;
@@ -84,17 +85,13 @@ export const EvidenceIntegritySection: React.FC<EvidenceIntegritySectionProps> =
       email.id
     ].filter(Boolean) as string[]));
 
-    // Try standard localhost:8000 first, then relative Vite proxy, then 127.0.0.1
+    // Try backend API endpoints
     for (const cid of candidateIds) {
       if (remoteSucceeded) break;
 
       const endpoints = [
-        `http://localhost:8000/api/evidence/${encodeURIComponent(cid)}/timeline`,
-        `/api/evidence/${encodeURIComponent(cid)}/timeline`,
-        `http://127.0.0.1:8000/api/evidence/${encodeURIComponent(cid)}/timeline`,
-        `http://localhost:8000/api/audit/timeline/${encodeURIComponent(cid)}`,
-        `/api/audit/timeline/${encodeURIComponent(cid)}`,
-        `http://127.0.0.1:8000/api/audit/timeline/${encodeURIComponent(cid)}`
+        `${API_BASE_URL}/api/evidence/${encodeURIComponent(cid)}/timeline`,
+        `${API_BASE_URL}/api/audit/timeline/${encodeURIComponent(cid)}`
       ];
 
       for (const url of endpoints) {

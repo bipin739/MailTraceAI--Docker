@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { MOCK_REPORTS, SAMPLE_EMAILS } from '../data/mockData';
 import type { ForensicReport } from '../types';
+import { API_BASE_URL } from '../config/api';
 
 interface BackendReportItem {
   id: string;
@@ -45,7 +46,7 @@ export const Reports: React.FC = () => {
   const fetchReports = async () => {
     setLoadingReports(true);
     try {
-      const res = await fetch('http://localhost:8000/api/reports?limit=50');
+      const res = await fetch(`${API_BASE_URL}/api/reports?limit=50`);
       if (res.ok) {
         const data = await res.json();
         const list = data.reports || [];
@@ -68,7 +69,7 @@ export const Reports: React.FC = () => {
   const handleDownloadPDF = async (reportId: string, filename: string) => {
     setIsDownloading(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/reports/${reportId}/download`);
+      const res = await fetch(`${API_BASE_URL}/api/reports/${reportId}/download`);
       if (!res.ok) throw new Error(`Download failed: ${res.statusText}`);
 
       const blob = await res.blob();
@@ -94,7 +95,7 @@ export const Reports: React.FC = () => {
     setIsGeneratingSample(true);
     try {
       const sample = SAMPLE_EMAILS[0];
-      const res = await fetch('http://localhost:8000/api/reports/generate?format=json', {
+      const res = await fetch(`${API_BASE_URL}/api/reports/generate?format=json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

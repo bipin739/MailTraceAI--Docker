@@ -3,6 +3,7 @@ import { Globe, Server, Calendar, Shield, Clock, CheckCircle2, XCircle, Info, Al
 import type { EmailAnalysis, DomainIntelligence } from '../../types/forensic';
 import { resolveDomainIntelligence } from '../../utils/indicatorHelper';
 import { CopyButton } from './CopyButton';
+import { API_BASE_URL } from '../../config/api';
 
 interface DomainIntelligenceSectionProps {
   email: EmailAnalysis;
@@ -33,7 +34,7 @@ export const DomainIntelligenceSection: React.FC<DomainIntelligenceSectionProps>
       const existing = initialMap[dom];
       if (!existing || existing.domain_age_days === undefined || !existing.registration?.registration_date) {
         try {
-          const resp = await fetch(`http://localhost:8000/api/emails/lookup-domain/${encodeURIComponent(dom)}`);
+          const resp = await fetch(`${API_BASE_URL}/api/emails/lookup-domain/${encodeURIComponent(dom)}`);
           if (resp.ok && isMounted) {
             const data: DomainIntelligence = await resp.json();
             setLiveDomainIntel(prev => {

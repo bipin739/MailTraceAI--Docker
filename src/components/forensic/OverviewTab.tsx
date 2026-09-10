@@ -10,6 +10,7 @@ import { EvidenceIntegritySection } from './EvidenceIntegritySection';
 import { RelatedInvestigationsCard } from '../correlation/RelatedInvestigationsCard';
 import type { CampaignCorrelationResponse } from '../../types/correlation';
 import { User, Info, Layers, Activity } from 'lucide-react';
+import { API_BASE_URL } from '../../config/api';
 
 interface OverviewTabProps {
   email: EmailAnalysis;
@@ -24,7 +25,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ email }) => {
   useEffect(() => {
     if (!emailKey || !email) return;
     setLoadingCorrelations(true);
-    fetch('http://localhost:8000/api/correlation/email?min_score=0.15', {
+    fetch(`${API_BASE_URL}/api/correlation/email?min_score=0.15`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(email)

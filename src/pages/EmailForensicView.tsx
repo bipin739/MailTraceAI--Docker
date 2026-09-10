@@ -14,6 +14,7 @@ import { RawEmailTab } from '../components/forensic/RawEmailTab';
 import { InvestigationGraphTab } from '../components/forensic/InvestigationGraphTab';
 import { InvestigationMapTab } from '../components/forensic/InvestigationMapTab';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 export const EmailForensicView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,7 +43,7 @@ export const EmailForensicView: React.FC = () => {
       if (!hasML) {
         const textToAnalyze = resolved.plain_text_body || (resolved.html_body ? resolved.html_body.replace(/<[^>]+>/g, ' ') : '');
         if (resolved.subject || textToAnalyze) {
-          fetch('http://localhost:8000/api/emails/ml-classify', {
+          fetch(`${API_BASE_URL}/api/emails/ml-classify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -71,7 +72,7 @@ export const EmailForensicView: React.FC = () => {
 
       // Dynamically fetch AI Analyst assessment if not already cached
       if (!resolved.ai_analyst) {
-        fetch('http://localhost:8000/api/emails/ai-analyst', {
+        fetch(`${API_BASE_URL}/api/emails/ai-analyst`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(resolved)
@@ -95,7 +96,7 @@ export const EmailForensicView: React.FC = () => {
 
       // Dynamically fetch Investigation Graph if not already cached
       if (!resolved.investigation_graph) {
-        fetch('http://localhost:8000/api/emails/investigation-graph', {
+        fetch(`${API_BASE_URL}/api/emails/investigation-graph`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(resolved)

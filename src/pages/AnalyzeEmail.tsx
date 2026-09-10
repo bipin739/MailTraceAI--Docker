@@ -24,6 +24,7 @@ import { RiskBadge } from '../components/common/RiskBadge';
 import { HeaderProtocolStatus } from '../components/common/HeaderProtocolStatus';
 import { GeoTraceMap } from '../components/common/GeoTraceMap';
 import { AttributionGraph } from '../components/common/AttributionGraph';
+import { API_BASE_URL } from '../config/api';
 import {
   Dropdown,
   DropdownTrigger,
@@ -112,12 +113,7 @@ export const AnalyzeEmail: React.FC = () => {
       const formData = new FormData();
       formData.append('file', blob, 'pasted_email.eml');
 
-      let res: Response | null = null;
-      try {
-        res = await fetch('/api/emails/analyze', { method: 'POST', body: formData });
-      } catch {
-        res = await fetch('http://127.0.0.1:8000/api/emails/analyze', { method: 'POST', body: formData });
-      }
+      const res = await fetch(`${API_BASE_URL}/api/emails/analyze`, { method: 'POST', body: formData });
 
       if (res && res.ok) {
         const data = await res.json();
@@ -254,12 +250,7 @@ export const AnalyzeEmail: React.FC = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      let res: Response | null = null;
-      try {
-        res = await fetch('/api/emails/analyze', { method: 'POST', body: formData });
-      } catch {
-        res = await fetch('http://127.0.0.1:8000/api/emails/analyze', { method: 'POST', body: formData });
-      }
+      const res = await fetch(`${API_BASE_URL}/api/emails/analyze`, { method: 'POST', body: formData });
 
       if (res && res.ok) {
         const data = await res.json();
