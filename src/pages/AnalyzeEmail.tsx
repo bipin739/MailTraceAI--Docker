@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   SearchCode,
@@ -9,7 +9,11 @@ import {
   ExternalLink,
   FolderPlus,
   CheckCircle2,
-  Copy
+  Copy,
+  ChevronDown,
+  Check,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { SAMPLE_EMAILS } from '../data/mockData';
 import type { EmailAnalysisData } from '../types';
@@ -20,6 +24,17 @@ import { RiskBadge } from '../components/common/RiskBadge';
 import { HeaderProtocolStatus } from '../components/common/HeaderProtocolStatus';
 import { GeoTraceMap } from '../components/common/GeoTraceMap';
 import { AttributionGraph } from '../components/common/AttributionGraph';
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  DropdownHeader,
+  DropdownDivider
+} from '../components/ui/Dropdown';
+
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit
+const ALLOWED_FILE_EXTENSIONS = ['.eml', '.txt'];
 
 export const AnalyzeEmail: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -34,6 +49,14 @@ export const AnalyzeEmail: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'HEADERS' | 'RELAY_TRACE' | 'IOCS' | 'GRAPH'>('OVERVIEW');
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadingFileName, setUploadingFileName] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounter = useRef<number>(0);
+
+  const selectedSample = SAMPLE_EMAILS.find(e => e.id === selectedSampleId) || SAMPLE_EMAILS[0];
 
   useEffect(() => {
     const found = SAMPLE_EMAILS.find(e => e.id === selectedSampleId);
@@ -42,6 +65,42 @@ export const AnalyzeEmail: React.FC = () => {
       setRawInput(found.rawHeaders + '\n\n' + found.bodyText);
     }
   }, [selectedSampleId]);
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current += 1;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0;
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processUploadedFile(file);
+    }
+  };
 
   const handleRunAnalysis = async () => {
     if (!rawInput.trim()) return;
@@ -161,11 +220,27 @@ export const AnalyzeEmail: React.FC = () => {
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processUploadedFile = async (file: File) => {
+    // 1. Validate file extension (.eml or .txt case-insensitive)
+    const fileName = file.name || '';
+    const isAllowed = ALLOWED_FILE_EXTENSIONS.some(ext => fileName.toLowerCase().endsWith(ext));
+    if (!isAllowed) {
+      setUploadError(`Invalid file format: "${fileName}". Please upload an .eml or .txt email file.`);
+      return;
+    }
 
+    // 2. Validate file size (10 MB cap)
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      setUploadError(`File too large: "${fileName}" is ${sizeMB} MB. Maximum supported size is 10 MB.`);
+      return;
+    }
+
+    // Clear previous errors and indicate file processing
+    setUploadError(null);
+    setUploadingFileName(file.name);
     setIsAnalyzing(true);
+
     let textContent = '';
     try {
       textContent = await file.text();
@@ -236,6 +311,10 @@ export const AnalyzeEmail: React.FC = () => {
       console.warn('Backend API offline, constructing client-side fallback analysis', err);
     } finally {
       setIsAnalyzing(false);
+      setUploadingFileName(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
 
     // Dynamic header extraction fallback if backend is offline
@@ -296,6 +375,13 @@ export const AnalyzeEmail: React.FC = () => {
     navigate(`/analysis/${analysisId}`);
   };
 
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processUploadedFile(file);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Top Header */}
@@ -333,59 +419,193 @@ export const AnalyzeEmail: React.FC = () => {
         </div>
       </div>
 
-      {/* Preset Selector & Input Console */}
-      <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
-            <Radio className="w-3.5 h-3.5 text-primary" />
-            <label className="text-xs font-mono font-semibold text-foreground uppercase">
-              SELECT PRESET THREAT SAMPLE OR PASTE EML HEADERS:
-            </label>
+      {/* Ingestion Console: Dedicated File Dropzone + Preset & Raw Header Console */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Panel 1: Dedicated File Upload & Dropzone Card */}
+        <div
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`bg-surface border rounded-xl p-5 flex flex-col justify-between transition-all relative cursor-pointer group select-none ${
+            isDragging
+              ? 'border-primary bg-primary-subtle ring-2 ring-primary/40 border-dashed'
+              : 'border-border hover:border-primary/50 hover:bg-surface-secondary/40'
+          }`}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".eml,.txt"
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
+
+          <div>
+            <div className="flex items-center space-x-2 text-primary font-mono text-xs font-semibold uppercase tracking-wider mb-1.5">
+              <Upload className="w-3.5 h-3.5" />
+              <span>FORENSIC FILE INGESTION</span>
+            </div>
+            <h3 className="text-sm font-bold text-foreground font-sans">
+              Upload .EML / .TXT File
+            </h3>
+            <p className="text-xs text-foreground-muted font-mono mt-1 leading-relaxed">
+              Drop raw email files to parse routing relay hops, authentication headers, and extract forensic IOCs.
+            </p>
           </div>
 
-          <div className="flex items-center space-x-2.5">
-            <select
-              value={selectedSampleId}
-              onChange={(e) => setSelectedSampleId(e.target.value)}
-              className="bg-surface-secondary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
+          {/* Inner Drop Target Box */}
+          <div
+            className={`my-4 py-8 px-4 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-center transition-all ${
+              isDragging
+                ? 'border-primary bg-primary-subtle/80 scale-[1.01]'
+                : 'border-border bg-surface-secondary/60 group-hover:border-primary/40 group-hover:bg-surface-secondary'
+            }`}
+          >
+            {uploadingFileName ? (
+              <div className="flex flex-col items-center space-y-2 text-primary">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs font-mono font-semibold truncate max-w-[200px]">
+                  Parsing {uploadingFileName}…
+                </span>
+              </div>
+            ) : (
+              <>
+                <div className="w-11 h-11 rounded-full bg-primary-subtle flex items-center justify-center text-primary mb-2.5 group-hover:scale-110 transition-transform">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-mono font-semibold text-foreground">
+                  Drag & Drop .EML file here
+                </span>
+                <span className="text-[11px] font-mono text-foreground-muted mt-1">
+                  or <span className="text-primary underline font-medium">browse from computer</span>
+                </span>
+                <span className="text-[10px] font-mono text-foreground-subtle mt-3 px-2 py-0.5 rounded bg-surface border border-border">
+                  .EML, .TXT • UP TO 10 MB
+                </span>
+              </>
+            )}
+          </div>
+
+          {uploadError ? (
+            <div
+              className="p-2.5 rounded-lg bg-danger-surface border border-danger-border text-danger text-[11px] font-mono flex items-center justify-between animate-in fade-in"
+              onClick={(e) => e.stopPropagation()}
             >
-              {SAMPLE_EMAILS.map((sample) => (
-                <option key={sample.id} value={sample.id}>
-                  {sample.id} - {sample.category} ({sample.severity})
-                </option>
-              ))}
-            </select>
-
-            <label className="cursor-pointer flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-secondary hover:bg-surface text-xs font-mono text-foreground border border-border transition-colors btn-press">
-              <Upload className="w-3.5 h-3.5 text-primary" />
-              <span>UPLOAD .EML</span>
-              <input type="file" accept=".eml,.txt" onChange={handleFileUpload} className="hidden" />
-            </label>
-          </div>
+              <div className="flex items-center space-x-1.5 truncate">
+                <AlertTriangle className="w-3.5 h-3.5 text-danger flex-shrink-0" />
+                <span className="truncate">{uploadError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setUploadError(null);
+                }}
+                className="text-danger hover:opacity-80 p-0.5 ml-1 flex-shrink-0 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="text-[11px] font-mono text-foreground-muted text-center">
+              Click anywhere in this card to select a file
+            </div>
+          )}
         </div>
 
-        {/* Input Textarea */}
-        <div className="relative">
-          <textarea
-            value={rawInput}
-            onChange={(e) => setRawInput(e.target.value)}
-            rows={5}
-            placeholder="Paste raw email headers and body text here..."
-            className="w-full p-3.5 bg-surface-secondary border border-border rounded-lg font-mono text-xs text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary leading-relaxed"
-          />
-          <button
-            type="button"
-            onClick={handleRunAnalysis}
-            disabled={isAnalyzing}
-            className="absolute bottom-3 right-3 flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md bg-primary hover:bg-primary-hover text-primary-foreground font-mono font-semibold text-xs tracking-wider transition-colors btn-press disabled:opacity-50 cursor-pointer"
-          >
-            {isAnalyzing ? (
-              <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Zap className="w-3.5 h-3.5" />
-            )}
-            <span>{isAnalyzing ? 'PARSING...' : 'RUN FORENSIC ANALYSIS'}</span>
-          </button>
+        {/* Panel 2: Preset Selector & Raw Input Console */}
+        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 space-y-4 flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+            <div className="flex items-center space-x-2">
+              <Radio className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-mono font-semibold text-foreground uppercase">
+                LOAD PRESET SAMPLE OR PASTE HEADERS:
+              </span>
+            </div>
+
+            <Dropdown>
+              <DropdownTrigger>
+                <button
+                  type="button"
+                  className="flex items-center justify-between gap-2 px-3.5 py-1.5 min-w-[240px] sm:min-w-[280px] bg-surface-secondary hover:bg-surface text-foreground border border-border rounded-lg text-xs font-mono font-medium transition-colors btn-press cursor-pointer shadow-xs"
+                >
+                  <span className="truncate">
+                    {selectedSample.id} · {selectedSample.category}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-foreground-muted flex-shrink-0" />
+                </button>
+              </DropdownTrigger>
+
+              <DropdownMenu align="right" width="w-80">
+                <DropdownHeader>Preset Threat Samples</DropdownHeader>
+                {SAMPLE_EMAILS.map((sample) => {
+                  const isSelected = selectedSampleId === sample.id;
+                  return (
+                    <DropdownItem
+                      key={sample.id}
+                      active={isSelected}
+                      icon={
+                        isSelected ? (
+                          <Check className="w-3.5 h-3.5 text-primary" />
+                        ) : (
+                          <span className="w-3.5 h-3.5 inline-block" />
+                        )
+                      }
+                      onClick={() => {
+                        setUploadError(null);
+                        setSelectedSampleId(sample.id);
+                      }}
+                    >
+                      <span className="flex items-center justify-between w-full gap-2">
+                        <span className="font-mono text-xs truncate">
+                          {sample.id} · {sample.category}
+                        </span>
+                        <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-surface border border-border flex-shrink-0 text-foreground-muted">
+                          {sample.severity}
+                        </span>
+                      </span>
+                    </DropdownItem>
+                  );
+                })}
+
+                <DropdownDivider />
+
+                <DropdownHeader>Load From File</DropdownHeader>
+                <DropdownItem
+                  icon={<Upload className="w-3.5 h-3.5 text-primary" />}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <span className="font-mono text-xs">Upload .eml / .txt File</span>
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+
+          {/* Input Textarea & Run Button */}
+          <div className="relative flex-1 flex flex-col">
+            <textarea
+              value={rawInput}
+              onChange={(e) => setRawInput(e.target.value)}
+              rows={6}
+              placeholder="Paste raw email headers and body text here..."
+              className="w-full flex-1 p-3.5 bg-surface-secondary border border-border rounded-lg font-mono text-xs text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary leading-relaxed resize-y min-h-[140px]"
+            />
+            <button
+              type="button"
+              onClick={handleRunAnalysis}
+              disabled={isAnalyzing || Boolean(uploadingFileName)}
+              className="mt-3 sm:mt-0 sm:absolute sm:bottom-3 sm:right-3 flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-md bg-primary hover:bg-primary-hover text-primary-foreground font-mono font-semibold text-xs tracking-wider transition-colors btn-press disabled:opacity-50 cursor-pointer shadow-xs"
+            >
+              {isAnalyzing ? (
+                <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Zap className="w-3.5 h-3.5" />
+              )}
+              <span>{isAnalyzing ? 'PARSING...' : 'RUN FORENSIC ANALYSIS'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

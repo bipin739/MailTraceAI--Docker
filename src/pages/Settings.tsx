@@ -67,11 +67,11 @@ export const Settings: React.FC = () => {
             </h3>
           </div>
           <span className="text-[11px] font-mono text-foreground-muted">
-            4 Calibrated Palettes • Instant Live Preview
+            {THEME_OPTIONS.length} Calibrated Palettes • Instant Live Preview
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {THEME_OPTIONS.map((opt) => {
             const isSelected = theme === opt.id;
             return (
